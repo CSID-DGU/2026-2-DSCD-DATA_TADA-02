@@ -1,0 +1,2490 @@
+{
+  "is_demo": true,
+  "items": [
+    {
+      "area_code": "3120052",
+      "data_version": "synthetic-demo-20261106-v2",
+      "observations": [
+        {
+          "quarter": "2023Q1",
+          "total_sales_krw": 4204200000,
+          "store_count": 70,
+          "transaction_count": 420420
+        },
+        {
+          "quarter": "2023Q2",
+          "total_sales_krw": 4308564000,
+          "store_count": 71,
+          "transaction_count": 430856
+        },
+        {
+          "quarter": "2023Q3",
+          "total_sales_krw": 4666896000,
+          "store_count": 72,
+          "transaction_count": 466690
+        },
+        {
+          "quarter": "2023Q4",
+          "total_sales_krw": 4492566000,
+          "store_count": 73,
+          "transaction_count": 449257
+        },
+        {
+          "quarter": "2024Q1",
+          "total_sales_krw": 4794348000,
+          "store_count": 73,
+          "transaction_count": 479435
+        },
+        {
+          "quarter": "2024Q2",
+          "total_sales_krw": 4906200000,
+          "store_count": 74,
+          "transaction_count": 490620
+        },
+        {
+          "quarter": "2024Q3",
+          "total_sales_krw": 5282550000,
+          "store_count": 75,
+          "transaction_count": 528255
+        },
+        {
+          "quarter": "2024Q4",
+          "total_sales_krw": 5104008000,
+          "store_count": 76,
+          "transaction_count": 510401
+        },
+        {
+          "quarter": "2025Q1",
+          "total_sales_krw": 5418192000,
+          "store_count": 76,
+          "transaction_count": 541819
+        },
+        {
+          "quarter": "2025Q2",
+          "total_sales_krw": 5537532000,
+          "store_count": 77,
+          "transaction_count": 553753
+        },
+        {
+          "quarter": "2025Q3",
+          "total_sales_krw": 5931900000,
+          "store_count": 78,
+          "transaction_count": 593190
+        },
+        {
+          "quarter": "2025Q4",
+          "total_sales_krw": 5676372000,
+          "store_count": 78,
+          "transaction_count": 567637
+        },
+        {
+          "quarter": "2026Q1",
+          "total_sales_krw": 6075732000,
+          "store_count": 79,
+          "transaction_count": 607573
+        },
+        {
+          "quarter": "2026Q2",
+          "total_sales_krw": 6240000000,
+          "store_count": 80,
+          "transaction_count": 624000
+        }
+      ],
+      "forecast": {
+        "model_version": "illustration-only-no-trained-model",
+        "coverage_validated": false,
+        "interval_method": "개발용 가상 폭, 통계적 보장과 실제 모델 평가 없음",
+        "points": [
+          {
+            "quarter": "2026Q3",
+            "average_sales_krw": 81120000,
+            "sales_yoy_pct": 11.37094017094018,
+            "stores_yoy_pct": 4.410256410256408,
+            "lower80_krw": 70980000,
+            "upper80_krw": 91260000,
+            "lower90_krw": 66112800,
+            "upper90_krw": 96127200
+          },
+          {
+            "quarter": "2026Q4",
+            "average_sales_krw": 76440000,
+            "sales_yoy_pct": 11.609091158930385,
+            "stores_yoy_pct": 6.256410256410261,
+            "lower80_krw": 64974000,
+            "upper80_krw": 87906000,
+            "lower90_krw": 59623200,
+            "upper90_krw": 93256800
+          }
+        ]
+      },
+      "demand": {
+        "transactions": {
+          "unit": "건",
+          "age_basis": "분기 합계",
+          "weekday_basis": "해당 요일의 실제 일수로 나눈 일평균",
+          "time_basis": "분기 합계",
+          "age": [
+            {
+              "label": "10대",
+              "value": 24960.0,
+              "share_pct": 4.0
+            },
+            {
+              "label": "20대",
+              "value": 156000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "30대",
+              "value": 199680.0,
+              "share_pct": 32.0
+            },
+            {
+              "label": "40대",
+              "value": 124800.0,
+              "share_pct": 20.0
+            },
+            {
+              "label": "50대",
+              "value": 74880.0,
+              "share_pct": 12.0
+            },
+            {
+              "label": "60대 이상",
+              "value": 43680.0,
+              "share_pct": 7.0
+            }
+          ],
+          "weekday": [
+            {
+              "label": "월",
+              "value": 5280.0,
+              "share_pct": 11.0
+            },
+            {
+              "label": "화",
+              "value": 5760.0,
+              "share_pct": 12.0
+            },
+            {
+              "label": "수",
+              "value": 5760.0,
+              "share_pct": 12.0
+            },
+            {
+              "label": "목",
+              "value": 6240.0,
+              "share_pct": 13.0
+            },
+            {
+              "label": "금",
+              "value": 7200.0,
+              "share_pct": 15.0
+            },
+            {
+              "label": "토",
+              "value": 9600.0,
+              "share_pct": 20.0
+            },
+            {
+              "label": "일",
+              "value": 8160.0,
+              "share_pct": 17.0
+            }
+          ],
+          "time": [
+            {
+              "label": "00~06시",
+              "value": 6240.0,
+              "share_pct": 1.0
+            },
+            {
+              "label": "06~11시",
+              "value": 87360.0,
+              "share_pct": 14.0
+            },
+            {
+              "label": "11~14시",
+              "value": 156000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "14~17시",
+              "value": 187200.0,
+              "share_pct": 30.0
+            },
+            {
+              "label": "17~21시",
+              "value": 156000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "21~24시",
+              "value": 31200.0,
+              "share_pct": 5.0
+            }
+          ]
+        },
+        "floating_population": {
+          "unit": "명 (추정)",
+          "age_basis": "분기 합계",
+          "weekday_basis": "해당 요일의 실제 일수로 나눈 일평균",
+          "time_basis": "분기 합계",
+          "age": [
+            {
+              "label": "10대",
+              "value": 96000.0,
+              "share_pct": 4.0
+            },
+            {
+              "label": "20대",
+              "value": 600000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "30대",
+              "value": 768000.0,
+              "share_pct": 32.0
+            },
+            {
+              "label": "40대",
+              "value": 480000.0,
+              "share_pct": 20.0
+            },
+            {
+              "label": "50대",
+              "value": 288000.0,
+              "share_pct": 12.0
+            },
+            {
+              "label": "60대 이상",
+              "value": 168000.0,
+              "share_pct": 7.0
+            }
+          ],
+          "weekday": [
+            {
+              "label": "월",
+              "value": 20307.69,
+              "share_pct": 11.0
+            },
+            {
+              "label": "화",
+              "value": 22153.85,
+              "share_pct": 12.0
+            },
+            {
+              "label": "수",
+              "value": 22153.85,
+              "share_pct": 12.0
+            },
+            {
+              "label": "목",
+              "value": 24000.0,
+              "share_pct": 13.0
+            },
+            {
+              "label": "금",
+              "value": 27692.31,
+              "share_pct": 15.0
+            },
+            {
+              "label": "토",
+              "value": 36923.08,
+              "share_pct": 20.0
+            },
+            {
+              "label": "일",
+              "value": 31384.62,
+              "share_pct": 17.0
+            }
+          ],
+          "time": [
+            {
+              "label": "00~06시",
+              "value": 24000.0,
+              "share_pct": 1.0
+            },
+            {
+              "label": "06~11시",
+              "value": 336000.0,
+              "share_pct": 14.0
+            },
+            {
+              "label": "11~14시",
+              "value": 600000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "14~17시",
+              "value": 720000.0,
+              "share_pct": 30.0
+            },
+            {
+              "label": "17~21시",
+              "value": 600000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "21~24시",
+              "value": 120000.0,
+              "share_pct": 5.0
+            }
+          ]
+        }
+      },
+      "rentals": [
+        {
+          "id": "demo-3120052-rent-0",
+          "area_code": "3120052",
+          "title": "[가상] 성수 공방길 1층 코너",
+          "latitude": 37.543974999999996,
+          "longitude": 127.0566691,
+          "monthly_rent_krw": 3900000,
+          "deposit_krw": 50000000,
+          "area_m2": 66.1,
+          "floor": "1층",
+          "maintenance_fee_krw": 250000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120052-rent-1",
+          "area_code": "3120052",
+          "title": "[가상] 성수 창고길 테이크아웃형",
+          "latitude": 37.544675,
+          "longitude": 127.05706909999999,
+          "monthly_rent_krw": 2200000,
+          "deposit_krw": 30000000,
+          "area_m2": 29.8,
+          "floor": "1층",
+          "maintenance_fee_krw": 120000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120052-rent-2",
+          "area_code": "3120052",
+          "title": "[가상] 성수 작업실길 2층 채광형",
+          "latitude": 37.545375,
+          "longitude": 127.05746909999999,
+          "monthly_rent_krw": 2600000,
+          "deposit_krw": 35000000,
+          "area_m2": 79.2,
+          "floor": "2층",
+          "maintenance_fee_krw": 180000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        }
+      ],
+      "stores": [
+        {
+          "id": "demo-3120052-store-0",
+          "name": "[가상] 주철빛 커피실",
+          "latitude": 37.543275,
+          "longitude": 127.0566691,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4800
+            },
+            {
+              "name": "솔트크림 라테",
+              "price_krw": 6800
+            },
+            {
+              "name": "피칸 휘낭시에",
+              "price_krw": 3600
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120052-store-1",
+          "name": "[가상] 잔결 로스터리",
+          "latitude": 37.543974999999996,
+          "longitude": 127.05776909999999,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 5100
+            },
+            {
+              "name": "싱글오리진 필터",
+              "price_krw": 7200
+            },
+            {
+              "name": "버터 사블레",
+              "price_krw": 3100
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120052-store-2",
+          "name": "[가상] 작업실 오후",
+          "latitude": 37.544675,
+          "longitude": 127.0566691,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4500
+            },
+            {
+              "name": "흑당 오트라테",
+              "price_krw": 6200
+            },
+            {
+              "name": "바닐라 파운드",
+              "price_krw": 4900
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120052-store-3",
+          "name": "[가상] 모서리 다섯",
+          "latitude": 37.545375,
+          "longitude": 127.05776909999999,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4300
+            },
+            {
+              "name": "더블 에스프레소",
+              "price_krw": 4600
+            },
+            {
+              "name": "레몬 마들렌",
+              "price_krw": 3300
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120052-store-4",
+          "name": "[가상] 붉은벽 커피선반",
+          "latitude": 37.546074999999995,
+          "longitude": 127.0566691,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4900
+            },
+            {
+              "name": "자몽 에스프레소 토닉",
+              "price_krw": 6500
+            },
+            {
+              "name": "얼그레이 스콘",
+              "price_krw": 4200
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        }
+      ]
+    },
+    {
+      "area_code": "3120104",
+      "data_version": "synthetic-demo-20261106-v2",
+      "observations": [
+        {
+          "quarter": "2023Q1",
+          "total_sales_krw": 2695000000,
+          "store_count": 56,
+          "transaction_count": 215600
+        },
+        {
+          "quarter": "2023Q2",
+          "total_sales_krw": 2771625000,
+          "store_count": 57,
+          "transaction_count": 221730
+        },
+        {
+          "quarter": "2023Q3",
+          "total_sales_krw": 2960437500,
+          "store_count": 57,
+          "transaction_count": 236835
+        },
+        {
+          "quarter": "2023Q4",
+          "total_sales_krw": 2860125000,
+          "store_count": 58,
+          "transaction_count": 228810
+        },
+        {
+          "quarter": "2024Q1",
+          "total_sales_krw": 3104875000,
+          "store_count": 59,
+          "transaction_count": 248390
+        },
+        {
+          "quarter": "2024Q2",
+          "total_sales_krw": 3134375000,
+          "store_count": 59,
+          "transaction_count": 250750
+        },
+        {
+          "quarter": "2024Q3",
+          "total_sales_krw": 3386250000,
+          "store_count": 60,
+          "transaction_count": 270900
+        },
+        {
+          "quarter": "2024Q4",
+          "total_sales_krw": 3228750000,
+          "store_count": 60,
+          "transaction_count": 258300
+        },
+        {
+          "quarter": "2025Q1",
+          "total_sales_krw": 3484625000,
+          "store_count": 61,
+          "transaction_count": 278770
+        },
+        {
+          "quarter": "2025Q2",
+          "total_sales_krw": 3572750000,
+          "store_count": 62,
+          "transaction_count": 285820
+        },
+        {
+          "quarter": "2025Q3",
+          "total_sales_krw": 3778125000,
+          "store_count": 62,
+          "transaction_count": 302250
+        },
+        {
+          "quarter": "2025Q4",
+          "total_sales_krw": 3673687500,
+          "store_count": 63,
+          "transaction_count": 293895
+        },
+        {
+          "quarter": "2026Q1",
+          "total_sales_krw": 3882375000,
+          "store_count": 63,
+          "transaction_count": 310590
+        },
+        {
+          "quarter": "2026Q2",
+          "total_sales_krw": 4000000000,
+          "store_count": 64,
+          "transaction_count": 320000
+        }
+      ],
+      "forecast": {
+        "model_version": "illustration-only-no-trained-model",
+        "coverage_validated": false,
+        "interval_method": "개발용 가상 폭, 통계적 보장과 실제 모델 평가 없음",
+        "points": [
+          {
+            "quarter": "2026Q3",
+            "average_sales_krw": 65000000,
+            "sales_yoy_pct": 12.089462365591409,
+            "stores_yoy_pct": 5.083870967741944,
+            "lower80_krw": 56875000,
+            "upper80_krw": 73125000,
+            "lower90_krw": 52975000,
+            "upper90_krw": 77025000
+          },
+          {
+            "quarter": "2026Q4",
+            "average_sales_krw": 61250000,
+            "sales_yoy_pct": 10.546147433607246,
+            "stores_yoy_pct": 5.244444444444452,
+            "lower80_krw": 52062500,
+            "upper80_krw": 70437500,
+            "lower90_krw": 47775000,
+            "upper90_krw": 74725000
+          }
+        ]
+      },
+      "demand": {
+        "transactions": {
+          "unit": "건",
+          "age_basis": "분기 합계",
+          "weekday_basis": "해당 요일의 실제 일수로 나눈 일평균",
+          "time_basis": "분기 합계",
+          "age": [
+            {
+              "label": "10대",
+              "value": 12800.0,
+              "share_pct": 4.0
+            },
+            {
+              "label": "20대",
+              "value": 80000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "30대",
+              "value": 102400.0,
+              "share_pct": 32.0
+            },
+            {
+              "label": "40대",
+              "value": 64000.0,
+              "share_pct": 20.0
+            },
+            {
+              "label": "50대",
+              "value": 38400.0,
+              "share_pct": 12.0
+            },
+            {
+              "label": "60대 이상",
+              "value": 22400.0,
+              "share_pct": 7.0
+            }
+          ],
+          "weekday": [
+            {
+              "label": "월",
+              "value": 2707.69,
+              "share_pct": 11.0
+            },
+            {
+              "label": "화",
+              "value": 2953.85,
+              "share_pct": 12.0
+            },
+            {
+              "label": "수",
+              "value": 2953.85,
+              "share_pct": 12.0
+            },
+            {
+              "label": "목",
+              "value": 3200.0,
+              "share_pct": 13.0
+            },
+            {
+              "label": "금",
+              "value": 3692.31,
+              "share_pct": 15.0
+            },
+            {
+              "label": "토",
+              "value": 4923.08,
+              "share_pct": 20.0
+            },
+            {
+              "label": "일",
+              "value": 4184.62,
+              "share_pct": 17.0
+            }
+          ],
+          "time": [
+            {
+              "label": "00~06시",
+              "value": 3200.0,
+              "share_pct": 1.0
+            },
+            {
+              "label": "06~11시",
+              "value": 44800.0,
+              "share_pct": 14.0
+            },
+            {
+              "label": "11~14시",
+              "value": 80000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "14~17시",
+              "value": 96000.0,
+              "share_pct": 30.0
+            },
+            {
+              "label": "17~21시",
+              "value": 80000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "21~24시",
+              "value": 16000.0,
+              "share_pct": 5.0
+            }
+          ]
+        },
+        "floating_population": {
+          "unit": "명 (추정)",
+          "age_basis": "분기 합계",
+          "weekday_basis": "해당 요일의 실제 일수로 나눈 일평균",
+          "time_basis": "분기 합계",
+          "age": [
+            {
+              "label": "10대",
+              "value": 103200.0,
+              "share_pct": 4.0
+            },
+            {
+              "label": "20대",
+              "value": 645000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "30대",
+              "value": 825600.0,
+              "share_pct": 32.0
+            },
+            {
+              "label": "40대",
+              "value": 516000.0,
+              "share_pct": 20.0
+            },
+            {
+              "label": "50대",
+              "value": 309600.0,
+              "share_pct": 12.0
+            },
+            {
+              "label": "60대 이상",
+              "value": 180600.0,
+              "share_pct": 7.0
+            }
+          ],
+          "weekday": [
+            {
+              "label": "월",
+              "value": 21830.77,
+              "share_pct": 11.0
+            },
+            {
+              "label": "화",
+              "value": 23815.38,
+              "share_pct": 12.0
+            },
+            {
+              "label": "수",
+              "value": 23815.38,
+              "share_pct": 12.0
+            },
+            {
+              "label": "목",
+              "value": 25800.0,
+              "share_pct": 13.0
+            },
+            {
+              "label": "금",
+              "value": 29769.23,
+              "share_pct": 15.0
+            },
+            {
+              "label": "토",
+              "value": 39692.31,
+              "share_pct": 20.0
+            },
+            {
+              "label": "일",
+              "value": 33738.46,
+              "share_pct": 17.0
+            }
+          ],
+          "time": [
+            {
+              "label": "00~06시",
+              "value": 25800.0,
+              "share_pct": 1.0
+            },
+            {
+              "label": "06~11시",
+              "value": 361200.0,
+              "share_pct": 14.0
+            },
+            {
+              "label": "11~14시",
+              "value": 645000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "14~17시",
+              "value": 774000.0,
+              "share_pct": 30.0
+            },
+            {
+              "label": "17~21시",
+              "value": 645000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "21~24시",
+              "value": 129000.0,
+              "share_pct": 5.0
+            }
+          ]
+        }
+      },
+      "rentals": [
+        {
+          "id": "demo-3120104-rent-0",
+          "area_code": "3120104",
+          "title": "[가상] 연남 산책길 작은 1층",
+          "latitude": 37.5593702,
+          "longitude": 126.9224715,
+          "monthly_rent_krw": 2400000,
+          "deposit_krw": 35000000,
+          "area_m2": 36.4,
+          "floor": "1층",
+          "maintenance_fee_krw": 100000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120104-rent-1",
+          "area_code": "3120104",
+          "title": "[가상] 연남 골목 모퉁이 테라스형",
+          "latitude": 37.5600702,
+          "longitude": 126.9228715,
+          "monthly_rent_krw": 3200000,
+          "deposit_krw": 45000000,
+          "area_m2": 59.5,
+          "floor": "1층",
+          "maintenance_fee_krw": 170000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120104-rent-2",
+          "area_code": "3120104",
+          "title": "[가상] 연남 주택길 2층 좌석형",
+          "latitude": 37.5607702,
+          "longitude": 126.9232715,
+          "monthly_rent_krw": 2100000,
+          "deposit_krw": 30000000,
+          "area_m2": 72.7,
+          "floor": "2층",
+          "maintenance_fee_krw": 150000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        }
+      ],
+      "stores": [
+        {
+          "id": "demo-3120104-store-0",
+          "name": "[가상] 연두 산책점",
+          "latitude": 37.5586702,
+          "longitude": 126.9224715,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4700
+            },
+            {
+              "name": "바질 레몬 에이드",
+              "price_krw": 6500
+            },
+            {
+              "name": "딸기 크럼블",
+              "price_krw": 6200
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120104-store-1",
+          "name": "[가상] 구름결 찻장",
+          "latitude": 37.5593702,
+          "longitude": 126.9235715,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4500
+            },
+            {
+              "name": "말차 크림라테",
+              "price_krw": 6600
+            },
+            {
+              "name": "우유 푸딩",
+              "price_krw": 5300
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120104-store-2",
+          "name": "[가상] 연남 종이컵집",
+          "latitude": 37.5600702,
+          "longitude": 126.9224715,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 3900
+            },
+            {
+              "name": "시나몬 플랫화이트",
+              "price_krw": 5500
+            },
+            {
+              "name": "오렌지 쿠키",
+              "price_krw": 3200
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120104-store-3",
+          "name": "[가상] 정원 뒤 한 잔",
+          "latitude": 37.5607702,
+          "longitude": 126.9235715,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4900
+            },
+            {
+              "name": "청포도 아이스티",
+              "price_krw": 6300
+            },
+            {
+              "name": "당근 케이크",
+              "price_krw": 6500
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120104-store-4",
+          "name": "[가상] 오후 우편함",
+          "latitude": 37.561470199999995,
+          "longitude": 126.9224715,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4600
+            },
+            {
+              "name": "연유 라테",
+              "price_krw": 5900
+            },
+            {
+              "name": "무화과 스콘",
+              "price_krw": 4500
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        }
+      ]
+    },
+    {
+      "area_code": "3120100",
+      "data_version": "synthetic-demo-20261106-v2",
+      "observations": [
+        {
+          "quarter": "2023Q1",
+          "total_sales_krw": 1829520000,
+          "store_count": 44,
+          "transaction_count": 203280
+        },
+        {
+          "quarter": "2023Q2",
+          "total_sales_krw": 1848528000,
+          "store_count": 44,
+          "transaction_count": 205392
+        },
+        {
+          "quarter": "2023Q3",
+          "total_sales_krw": 2019330000,
+          "store_count": 45,
+          "transaction_count": 224370
+        },
+        {
+          "quarter": "2023Q4",
+          "total_sales_krw": 1917270000,
+          "store_count": 45,
+          "transaction_count": 213030
+        },
+        {
+          "quarter": "2024Q1",
+          "total_sales_krw": 2091528000,
+          "store_count": 46,
+          "transaction_count": 232392
+        },
+        {
+          "quarter": "2024Q2",
+          "total_sales_krw": 2111400000,
+          "store_count": 46,
+          "transaction_count": 234600
+        },
+        {
+          "quarter": "2024Q3",
+          "total_sales_krw": 2291814000,
+          "store_count": 47,
+          "transaction_count": 254646
+        },
+        {
+          "quarter": "2024Q4",
+          "total_sales_krw": 2185218000,
+          "store_count": 47,
+          "transaction_count": 242802
+        },
+        {
+          "quarter": "2025Q1",
+          "total_sales_krw": 2369088000,
+          "store_count": 48,
+          "transaction_count": 263232
+        },
+        {
+          "quarter": "2025Q2",
+          "total_sales_krw": 2389824000,
+          "store_count": 48,
+          "transaction_count": 265536
+        },
+        {
+          "quarter": "2025Q3",
+          "total_sales_krw": 2579850000,
+          "store_count": 49,
+          "transaction_count": 286650
+        },
+        {
+          "quarter": "2025Q4",
+          "total_sales_krw": 2468718000,
+          "store_count": 49,
+          "transaction_count": 274302
+        },
+        {
+          "quarter": "2026Q1",
+          "total_sales_krw": 2662200000,
+          "store_count": 50,
+          "transaction_count": 295800
+        },
+        {
+          "quarter": "2026Q2",
+          "total_sales_krw": 2700000000,
+          "store_count": 50,
+          "transaction_count": 300000
+        }
+      ],
+      "forecast": {
+        "model_version": "illustration-only-no-trained-model",
+        "coverage_validated": false,
+        "interval_method": "개발용 가상 폭, 통계적 보장과 실제 모델 평가 없음",
+        "points": [
+          {
+            "quarter": "2026Q3",
+            "average_sales_krw": 56160000,
+            "sales_yoy_pct": 10.802721088435362,
+            "stores_yoy_pct": 3.8775510204081653,
+            "lower80_krw": 49140000,
+            "upper80_krw": 63180000,
+            "lower90_krw": 45770400,
+            "upper90_krw": 66549600
+          },
+          {
+            "quarter": "2026Q4",
+            "average_sales_krw": 52920000,
+            "sales_yoy_pct": 11.039657020364423,
+            "stores_yoy_pct": 5.714285714285716,
+            "lower80_krw": 44982000,
+            "upper80_krw": 60858000,
+            "lower90_krw": 41277600,
+            "upper90_krw": 64562400
+          }
+        ]
+      },
+      "demand": {
+        "transactions": {
+          "unit": "건",
+          "age_basis": "분기 합계",
+          "weekday_basis": "해당 요일의 실제 일수로 나눈 일평균",
+          "time_basis": "분기 합계",
+          "age": [
+            {
+              "label": "10대",
+              "value": 12000.0,
+              "share_pct": 4.0
+            },
+            {
+              "label": "20대",
+              "value": 75000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "30대",
+              "value": 96000.0,
+              "share_pct": 32.0
+            },
+            {
+              "label": "40대",
+              "value": 60000.0,
+              "share_pct": 20.0
+            },
+            {
+              "label": "50대",
+              "value": 36000.0,
+              "share_pct": 12.0
+            },
+            {
+              "label": "60대 이상",
+              "value": 21000.0,
+              "share_pct": 7.0
+            }
+          ],
+          "weekday": [
+            {
+              "label": "월",
+              "value": 2538.46,
+              "share_pct": 11.0
+            },
+            {
+              "label": "화",
+              "value": 2769.23,
+              "share_pct": 12.0
+            },
+            {
+              "label": "수",
+              "value": 2769.23,
+              "share_pct": 12.0
+            },
+            {
+              "label": "목",
+              "value": 3000.0,
+              "share_pct": 13.0
+            },
+            {
+              "label": "금",
+              "value": 3461.54,
+              "share_pct": 15.0
+            },
+            {
+              "label": "토",
+              "value": 4615.38,
+              "share_pct": 20.0
+            },
+            {
+              "label": "일",
+              "value": 3923.08,
+              "share_pct": 17.0
+            }
+          ],
+          "time": [
+            {
+              "label": "00~06시",
+              "value": 3000.0,
+              "share_pct": 1.0
+            },
+            {
+              "label": "06~11시",
+              "value": 42000.0,
+              "share_pct": 14.0
+            },
+            {
+              "label": "11~14시",
+              "value": 75000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "14~17시",
+              "value": 90000.0,
+              "share_pct": 30.0
+            },
+            {
+              "label": "17~21시",
+              "value": 75000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "21~24시",
+              "value": 15000.0,
+              "share_pct": 5.0
+            }
+          ]
+        },
+        "floating_population": {
+          "unit": "명 (추정)",
+          "age_basis": "분기 합계",
+          "weekday_basis": "해당 요일의 실제 일수로 나눈 일평균",
+          "time_basis": "분기 합계",
+          "age": [
+            {
+              "label": "10대",
+              "value": 110400.0,
+              "share_pct": 4.0
+            },
+            {
+              "label": "20대",
+              "value": 690000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "30대",
+              "value": 883200.0,
+              "share_pct": 32.0
+            },
+            {
+              "label": "40대",
+              "value": 552000.0,
+              "share_pct": 20.0
+            },
+            {
+              "label": "50대",
+              "value": 331200.0,
+              "share_pct": 12.0
+            },
+            {
+              "label": "60대 이상",
+              "value": 193200.0,
+              "share_pct": 7.0
+            }
+          ],
+          "weekday": [
+            {
+              "label": "월",
+              "value": 23353.85,
+              "share_pct": 11.0
+            },
+            {
+              "label": "화",
+              "value": 25476.92,
+              "share_pct": 12.0
+            },
+            {
+              "label": "수",
+              "value": 25476.92,
+              "share_pct": 12.0
+            },
+            {
+              "label": "목",
+              "value": 27600.0,
+              "share_pct": 13.0
+            },
+            {
+              "label": "금",
+              "value": 31846.15,
+              "share_pct": 15.0
+            },
+            {
+              "label": "토",
+              "value": 42461.54,
+              "share_pct": 20.0
+            },
+            {
+              "label": "일",
+              "value": 36092.31,
+              "share_pct": 17.0
+            }
+          ],
+          "time": [
+            {
+              "label": "00~06시",
+              "value": 27600.0,
+              "share_pct": 1.0
+            },
+            {
+              "label": "06~11시",
+              "value": 386400.0,
+              "share_pct": 14.0
+            },
+            {
+              "label": "11~14시",
+              "value": 690000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "14~17시",
+              "value": 828000.0,
+              "share_pct": 30.0
+            },
+            {
+              "label": "17~21시",
+              "value": 690000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "21~24시",
+              "value": 138000.0,
+              "share_pct": 5.0
+            }
+          ]
+        }
+      },
+      "rentals": [
+        {
+          "id": "demo-3120100-rent-0",
+          "area_code": "3120100",
+          "title": "[가상] 망원 생활길 테이크아웃형",
+          "latitude": 37.554658499999995,
+          "longitude": 126.9104574,
+          "monthly_rent_krw": 1250000,
+          "deposit_krw": 18000000,
+          "area_m2": 26.4,
+          "floor": "1층",
+          "maintenance_fee_krw": 80000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120100-rent-1",
+          "area_code": "3120100",
+          "title": "[가상] 망원 시장길 1층 좌석형",
+          "latitude": 37.5553585,
+          "longitude": 126.9108574,
+          "monthly_rent_krw": 1850000,
+          "deposit_krw": 28000000,
+          "area_m2": 49.6,
+          "floor": "1층",
+          "maintenance_fee_krw": 110000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120100-rent-2",
+          "area_code": "3120100",
+          "title": "[가상] 망원 주택길 2층 작업형",
+          "latitude": 37.5560585,
+          "longitude": 126.9112574,
+          "monthly_rent_krw": 1450000,
+          "deposit_krw": 22000000,
+          "area_m2": 62.8,
+          "floor": "2층",
+          "maintenance_fee_krw": 100000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        }
+      ],
+      "stores": [
+        {
+          "id": "demo-3120100-store-0",
+          "name": "[가상] 모눈잔 커피",
+          "latitude": 37.5539585,
+          "longitude": 126.9104574,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 3500
+            },
+            {
+              "name": "흑임자 라테",
+              "price_krw": 5300
+            },
+            {
+              "name": "인절미 쿠키",
+              "price_krw": 3000
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120100-store-1",
+          "name": "[가상] 망원 두칸 찻집",
+          "latitude": 37.554658499999995,
+          "longitude": 126.91155739999999,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 3800
+            },
+            {
+              "name": "보리 밀크티",
+              "price_krw": 5100
+            },
+            {
+              "name": "쑥 마들렌",
+              "price_krw": 3200
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120100-store-2",
+          "name": "[가상] 골목의 여섯시",
+          "latitude": 37.5553585,
+          "longitude": 126.9104574,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4000
+            },
+            {
+              "name": "꿀 오트라테",
+              "price_krw": 5600
+            },
+            {
+              "name": "사과 타르트",
+              "price_krw": 5100
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120100-store-3",
+          "name": "[가상] 유리문 안쪽",
+          "latitude": 37.5560585,
+          "longitude": 126.91155739999999,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4200
+            },
+            {
+              "name": "콜드브루 라테",
+              "price_krw": 5500
+            },
+            {
+              "name": "버터 프레첼",
+              "price_krw": 3900
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120100-store-4",
+          "name": "[가상] 작은 원두방",
+          "latitude": 37.556758499999994,
+          "longitude": 126.9104574,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 3700
+            },
+            {
+              "name": "고소한 필터커피",
+              "price_krw": 5000
+            },
+            {
+              "name": "초코 브라우니",
+              "price_krw": 4100
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        }
+      ]
+    },
+    {
+      "area_code": "3120050",
+      "data_version": "synthetic-demo-20261106-v2",
+      "observations": [
+        {
+          "quarter": "2023Q1",
+          "total_sales_krw": 2186800000,
+          "store_count": 40,
+          "transaction_count": 198800
+        },
+        {
+          "quarter": "2023Q2",
+          "total_sales_krw": 2209520000,
+          "store_count": 40,
+          "transaction_count": 200865
+        },
+        {
+          "quarter": "2023Q3",
+          "total_sales_krw": 2360040000,
+          "store_count": 40,
+          "transaction_count": 214549
+        },
+        {
+          "quarter": "2023Q4",
+          "total_sales_krw": 2296779000,
+          "store_count": 41,
+          "transaction_count": 208798
+        },
+        {
+          "quarter": "2024Q1",
+          "total_sales_krw": 2451062000,
+          "store_count": 41,
+          "transaction_count": 222824
+        },
+        {
+          "quarter": "2024Q2",
+          "total_sales_krw": 2534700000,
+          "store_count": 42,
+          "transaction_count": 230427
+        },
+        {
+          "quarter": "2024Q3",
+          "total_sales_krw": 2692746000,
+          "store_count": 42,
+          "transaction_count": 244795
+        },
+        {
+          "quarter": "2024Q4",
+          "total_sales_krw": 2567502000,
+          "store_count": 42,
+          "transaction_count": 233409
+        },
+        {
+          "quarter": "2025Q1",
+          "total_sales_krw": 2790442000,
+          "store_count": 43,
+          "transaction_count": 253677
+        },
+        {
+          "quarter": "2025Q2",
+          "total_sales_krw": 2814866000,
+          "store_count": 43,
+          "transaction_count": 255897
+        },
+        {
+          "quarter": "2025Q3",
+          "total_sales_krw": 3045900000,
+          "store_count": 44,
+          "transaction_count": 276900
+        },
+        {
+          "quarter": "2025Q4",
+          "total_sales_krw": 2914692000,
+          "store_count": 44,
+          "transaction_count": 264972
+        },
+        {
+          "quarter": "2026Q1",
+          "total_sales_krw": 3150270000,
+          "store_count": 45,
+          "transaction_count": 286388
+        },
+        {
+          "quarter": "2026Q2",
+          "total_sales_krw": 3195000000,
+          "store_count": 45,
+          "transaction_count": 290455
+        }
+      ],
+      "forecast": {
+        "model_version": "illustration-only-no-trained-model",
+        "coverage_validated": false,
+        "interval_method": "개발용 가상 폭, 통계적 보장과 실제 모델 평가 없음",
+        "points": [
+          {
+            "quarter": "2026Q3",
+            "average_sales_krw": 73840000,
+            "sales_yoy_pct": 11.054545454545451,
+            "stores_yoy_pct": 4.113636363636375,
+            "lower80_krw": 64610000,
+            "upper80_krw": 83070000,
+            "lower90_krw": 60179600,
+            "upper90_krw": 87500400
+          },
+          {
+            "quarter": "2026Q4",
+            "average_sales_krw": 69580000,
+            "sales_yoy_pct": 11.292019877228899,
+            "stores_yoy_pct": 5.954545454545457,
+            "lower80_krw": 59143000,
+            "upper80_krw": 80017000,
+            "lower90_krw": 54272400,
+            "upper90_krw": 84887600
+          }
+        ]
+      },
+      "demand": {
+        "transactions": {
+          "unit": "건",
+          "age_basis": "분기 합계",
+          "weekday_basis": "해당 요일의 실제 일수로 나눈 일평균",
+          "time_basis": "분기 합계",
+          "age": [
+            {
+              "label": "10대",
+              "value": 11618.2,
+              "share_pct": 4.0
+            },
+            {
+              "label": "20대",
+              "value": 72613.75,
+              "share_pct": 25.0
+            },
+            {
+              "label": "30대",
+              "value": 92945.6,
+              "share_pct": 32.0
+            },
+            {
+              "label": "40대",
+              "value": 58091.0,
+              "share_pct": 20.0
+            },
+            {
+              "label": "50대",
+              "value": 34854.6,
+              "share_pct": 12.0
+            },
+            {
+              "label": "60대 이상",
+              "value": 20331.85,
+              "share_pct": 7.0
+            }
+          ],
+          "weekday": [
+            {
+              "label": "월",
+              "value": 2457.7,
+              "share_pct": 11.0
+            },
+            {
+              "label": "화",
+              "value": 2681.12,
+              "share_pct": 12.0
+            },
+            {
+              "label": "수",
+              "value": 2681.12,
+              "share_pct": 12.0
+            },
+            {
+              "label": "목",
+              "value": 2904.55,
+              "share_pct": 13.0
+            },
+            {
+              "label": "금",
+              "value": 3351.4,
+              "share_pct": 15.0
+            },
+            {
+              "label": "토",
+              "value": 4468.54,
+              "share_pct": 20.0
+            },
+            {
+              "label": "일",
+              "value": 3798.26,
+              "share_pct": 17.0
+            }
+          ],
+          "time": [
+            {
+              "label": "00~06시",
+              "value": 2904.55,
+              "share_pct": 1.0
+            },
+            {
+              "label": "06~11시",
+              "value": 40663.7,
+              "share_pct": 14.0
+            },
+            {
+              "label": "11~14시",
+              "value": 72613.75,
+              "share_pct": 25.0
+            },
+            {
+              "label": "14~17시",
+              "value": 87136.5,
+              "share_pct": 30.0
+            },
+            {
+              "label": "17~21시",
+              "value": 72613.75,
+              "share_pct": 25.0
+            },
+            {
+              "label": "21~24시",
+              "value": 14522.75,
+              "share_pct": 5.0
+            }
+          ]
+        },
+        "floating_population": {
+          "unit": "명 (추정)",
+          "age_basis": "분기 합계",
+          "weekday_basis": "해당 요일의 실제 일수로 나눈 일평균",
+          "time_basis": "분기 합계",
+          "age": [
+            {
+              "label": "10대",
+              "value": 117600.0,
+              "share_pct": 4.0
+            },
+            {
+              "label": "20대",
+              "value": 735000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "30대",
+              "value": 940800.0,
+              "share_pct": 32.0
+            },
+            {
+              "label": "40대",
+              "value": 588000.0,
+              "share_pct": 20.0
+            },
+            {
+              "label": "50대",
+              "value": 352800.0,
+              "share_pct": 12.0
+            },
+            {
+              "label": "60대 이상",
+              "value": 205800.0,
+              "share_pct": 7.0
+            }
+          ],
+          "weekday": [
+            {
+              "label": "월",
+              "value": 24876.92,
+              "share_pct": 11.0
+            },
+            {
+              "label": "화",
+              "value": 27138.46,
+              "share_pct": 12.0
+            },
+            {
+              "label": "수",
+              "value": 27138.46,
+              "share_pct": 12.0
+            },
+            {
+              "label": "목",
+              "value": 29400.0,
+              "share_pct": 13.0
+            },
+            {
+              "label": "금",
+              "value": 33923.08,
+              "share_pct": 15.0
+            },
+            {
+              "label": "토",
+              "value": 45230.77,
+              "share_pct": 20.0
+            },
+            {
+              "label": "일",
+              "value": 38446.15,
+              "share_pct": 17.0
+            }
+          ],
+          "time": [
+            {
+              "label": "00~06시",
+              "value": 29400.0,
+              "share_pct": 1.0
+            },
+            {
+              "label": "06~11시",
+              "value": 411600.0,
+              "share_pct": 14.0
+            },
+            {
+              "label": "11~14시",
+              "value": 735000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "14~17시",
+              "value": 882000.0,
+              "share_pct": 30.0
+            },
+            {
+              "label": "17~21시",
+              "value": 735000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "21~24시",
+              "value": 147000.0,
+              "share_pct": 5.0
+            }
+          ]
+        }
+      },
+      "rentals": [
+        {
+          "id": "demo-3120050-rent-0",
+          "area_code": "3120050",
+          "title": "[가상] 서울숲 산책길 창가형",
+          "latitude": 37.541501499999995,
+          "longitude": 127.0469586,
+          "monthly_rent_krw": 3400000,
+          "deposit_krw": 45000000,
+          "area_m2": 56.2,
+          "floor": "1층",
+          "maintenance_fee_krw": 220000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120050-rent-1",
+          "area_code": "3120050",
+          "title": "[가상] 서울숲 오솔길 소형 1층",
+          "latitude": 37.5422015,
+          "longitude": 127.0473586,
+          "monthly_rent_krw": 2150000,
+          "deposit_krw": 30000000,
+          "area_m2": 33.1,
+          "floor": "1층",
+          "maintenance_fee_krw": 130000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120050-rent-2",
+          "area_code": "3120050",
+          "title": "[가상] 서울숲 나무길 2층 테라스형",
+          "latitude": 37.5429015,
+          "longitude": 127.0477586,
+          "monthly_rent_krw": 2750000,
+          "deposit_krw": 42000000,
+          "area_m2": 92.6,
+          "floor": "2층",
+          "maintenance_fee_krw": 200000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        }
+      ],
+      "stores": [
+        {
+          "id": "demo-3120050-store-0",
+          "name": "[가상] 그늘자리 커피",
+          "latitude": 37.5408015,
+          "longitude": 127.0469586,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 5000
+            },
+            {
+              "name": "메이플 오트라테",
+              "price_krw": 6800
+            },
+            {
+              "name": "호두 바나나 브레드",
+              "price_krw": 5500
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120050-store-1",
+          "name": "[가상] 잎맥 다방",
+          "latitude": 37.541501499999995,
+          "longitude": 127.04805859999999,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4600
+            },
+            {
+              "name": "유자 얼그레이",
+              "price_krw": 6500
+            },
+            {
+              "name": "말차 테린느",
+              "price_krw": 6400
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120050-store-2",
+          "name": "[가상] 나무결 브루잉",
+          "latitude": 37.5422015,
+          "longitude": 127.0469586,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 5200
+            },
+            {
+              "name": "아이스 드립",
+              "price_krw": 6900
+            },
+            {
+              "name": "크림 스콘",
+              "price_krw": 4700
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120050-store-3",
+          "name": "[가상] 솔바람 찻잔",
+          "latitude": 37.5429015,
+          "longitude": 127.04805859999999,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4800
+            },
+            {
+              "name": "라벤더 밀크티",
+              "price_krw": 6700
+            },
+            {
+              "name": "라임 치즈케이크",
+              "price_krw": 6900
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120050-store-4",
+          "name": "[가상] 숲길 한 모금",
+          "latitude": 37.543601499999994,
+          "longitude": 127.0469586,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4400
+            },
+            {
+              "name": "토마토 바질 에이드",
+              "price_krw": 6200
+            },
+            {
+              "name": "아몬드 비스코티",
+              "price_krw": 3500
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        }
+      ]
+    },
+    {
+      "area_code": "3120053",
+      "data_version": "synthetic-demo-20261106-v2",
+      "observations": [
+        {
+          "quarter": "2023Q1",
+          "total_sales_krw": 2993760000,
+          "store_count": 81,
+          "transaction_count": 352207
+        },
+        {
+          "quarter": "2023Q2",
+          "total_sales_krw": 3062208000,
+          "store_count": 82,
+          "transaction_count": 360260
+        },
+        {
+          "quarter": "2023Q3",
+          "total_sales_krw": 3310704000,
+          "store_count": 83,
+          "transaction_count": 389495
+        },
+        {
+          "quarter": "2023Q4",
+          "total_sales_krw": 3143376000,
+          "store_count": 83,
+          "transaction_count": 369809
+        },
+        {
+          "quarter": "2024Q1",
+          "total_sales_krw": 3394944000,
+          "store_count": 84,
+          "transaction_count": 399405
+        },
+        {
+          "quarter": "2024Q2",
+          "total_sales_krw": 3468000000,
+          "store_count": 85,
+          "transaction_count": 408000
+        },
+        {
+          "quarter": "2024Q3",
+          "total_sales_krw": 3727584000,
+          "store_count": 86,
+          "transaction_count": 438539
+        },
+        {
+          "quarter": "2024Q4",
+          "total_sales_krw": 3595536000,
+          "store_count": 87,
+          "transaction_count": 423004
+        },
+        {
+          "quarter": "2025Q1",
+          "total_sales_krw": 3860736000,
+          "store_count": 88,
+          "transaction_count": 454204
+        },
+        {
+          "quarter": "2025Q2",
+          "total_sales_krw": 3938784000,
+          "store_count": 89,
+          "transaction_count": 463386
+        },
+        {
+          "quarter": "2025Q3",
+          "total_sales_krw": 4165200000,
+          "store_count": 89,
+          "transaction_count": 490024
+        },
+        {
+          "quarter": "2025Q4",
+          "total_sales_krw": 4030560000,
+          "store_count": 90,
+          "transaction_count": 474184
+        },
+        {
+          "quarter": "2026Q1",
+          "total_sales_krw": 4306848000,
+          "store_count": 91,
+          "transaction_count": 506688
+        },
+        {
+          "quarter": "2026Q2",
+          "total_sales_krw": 4416000000,
+          "store_count": 92,
+          "transaction_count": 519529
+        }
+      ],
+      "forecast": {
+        "model_version": "illustration-only-no-trained-model",
+        "coverage_validated": false,
+        "interval_method": "개발용 가상 폭, 통계적 보장과 실제 모델 평가 없음",
+        "points": [
+          {
+            "quarter": "2026Q3",
+            "average_sales_krw": 49920000,
+            "sales_yoy_pct": 12.2468913857678,
+            "stores_yoy_pct": 5.231460674157318,
+            "lower80_krw": 43680000,
+            "upper80_krw": 56160000,
+            "lower90_krw": 40684800,
+            "upper90_krw": 59155200
+          },
+          {
+            "quarter": "2026Q4",
+            "average_sales_krw": 47040000,
+            "sales_yoy_pct": 11.237060855067282,
+            "stores_yoy_pct": 5.902222222222209,
+            "lower80_krw": 39984000,
+            "upper80_krw": 54096000,
+            "lower90_krw": 36691200,
+            "upper90_krw": 57388800
+          }
+        ]
+      },
+      "demand": {
+        "transactions": {
+          "unit": "건",
+          "age_basis": "분기 합계",
+          "weekday_basis": "해당 요일의 실제 일수로 나눈 일평균",
+          "time_basis": "분기 합계",
+          "age": [
+            {
+              "label": "10대",
+              "value": 20781.16,
+              "share_pct": 4.0
+            },
+            {
+              "label": "20대",
+              "value": 129882.25,
+              "share_pct": 25.0
+            },
+            {
+              "label": "30대",
+              "value": 166249.28,
+              "share_pct": 32.0
+            },
+            {
+              "label": "40대",
+              "value": 103905.8,
+              "share_pct": 20.0
+            },
+            {
+              "label": "50대",
+              "value": 62343.48,
+              "share_pct": 12.0
+            },
+            {
+              "label": "60대 이상",
+              "value": 36367.03,
+              "share_pct": 7.0
+            }
+          ],
+          "weekday": [
+            {
+              "label": "월",
+              "value": 4396.01,
+              "share_pct": 11.0
+            },
+            {
+              "label": "화",
+              "value": 4795.65,
+              "share_pct": 12.0
+            },
+            {
+              "label": "수",
+              "value": 4795.65,
+              "share_pct": 12.0
+            },
+            {
+              "label": "목",
+              "value": 5195.29,
+              "share_pct": 13.0
+            },
+            {
+              "label": "금",
+              "value": 5994.57,
+              "share_pct": 15.0
+            },
+            {
+              "label": "토",
+              "value": 7992.75,
+              "share_pct": 20.0
+            },
+            {
+              "label": "일",
+              "value": 6793.84,
+              "share_pct": 17.0
+            }
+          ],
+          "time": [
+            {
+              "label": "00~06시",
+              "value": 5195.29,
+              "share_pct": 1.0
+            },
+            {
+              "label": "06~11시",
+              "value": 72734.06,
+              "share_pct": 14.0
+            },
+            {
+              "label": "11~14시",
+              "value": 129882.25,
+              "share_pct": 25.0
+            },
+            {
+              "label": "14~17시",
+              "value": 155858.7,
+              "share_pct": 30.0
+            },
+            {
+              "label": "17~21시",
+              "value": 129882.25,
+              "share_pct": 25.0
+            },
+            {
+              "label": "21~24시",
+              "value": 25976.45,
+              "share_pct": 5.0
+            }
+          ]
+        },
+        "floating_population": {
+          "unit": "명 (추정)",
+          "age_basis": "분기 합계",
+          "weekday_basis": "해당 요일의 실제 일수로 나눈 일평균",
+          "time_basis": "분기 합계",
+          "age": [
+            {
+              "label": "10대",
+              "value": 124800.0,
+              "share_pct": 4.0
+            },
+            {
+              "label": "20대",
+              "value": 780000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "30대",
+              "value": 998400.0,
+              "share_pct": 32.0
+            },
+            {
+              "label": "40대",
+              "value": 624000.0,
+              "share_pct": 20.0
+            },
+            {
+              "label": "50대",
+              "value": 374400.0,
+              "share_pct": 12.0
+            },
+            {
+              "label": "60대 이상",
+              "value": 218400.0,
+              "share_pct": 7.0
+            }
+          ],
+          "weekday": [
+            {
+              "label": "월",
+              "value": 26400.0,
+              "share_pct": 11.0
+            },
+            {
+              "label": "화",
+              "value": 28800.0,
+              "share_pct": 12.0
+            },
+            {
+              "label": "수",
+              "value": 28800.0,
+              "share_pct": 12.0
+            },
+            {
+              "label": "목",
+              "value": 31200.0,
+              "share_pct": 13.0
+            },
+            {
+              "label": "금",
+              "value": 36000.0,
+              "share_pct": 15.0
+            },
+            {
+              "label": "토",
+              "value": 48000.0,
+              "share_pct": 20.0
+            },
+            {
+              "label": "일",
+              "value": 40800.0,
+              "share_pct": 17.0
+            }
+          ],
+          "time": [
+            {
+              "label": "00~06시",
+              "value": 31200.0,
+              "share_pct": 1.0
+            },
+            {
+              "label": "06~11시",
+              "value": 436800.0,
+              "share_pct": 14.0
+            },
+            {
+              "label": "11~14시",
+              "value": 780000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "14~17시",
+              "value": 936000.0,
+              "share_pct": 30.0
+            },
+            {
+              "label": "17~21시",
+              "value": 780000.0,
+              "share_pct": 25.0
+            },
+            {
+              "label": "21~24시",
+              "value": 156000.0,
+              "share_pct": 5.0
+            }
+          ]
+        }
+      },
+      "rentals": [
+        {
+          "id": "demo-3120053-rent-0",
+          "area_code": "3120053",
+          "title": "[가상] 건대입구 학원길 소형 1층",
+          "latitude": 37.5398236,
+          "longitude": 127.069418,
+          "monthly_rent_krw": 1750000,
+          "deposit_krw": 25000000,
+          "area_m2": 36.4,
+          "floor": "1층",
+          "maintenance_fee_krw": 100000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120053-rent-1",
+          "area_code": "3120053",
+          "title": "[가상] 건대입구 먹자골목 코너형",
+          "latitude": 37.5405236,
+          "longitude": 127.069818,
+          "monthly_rent_krw": 2850000,
+          "deposit_krw": 38000000,
+          "area_m2": 59.5,
+          "floor": "1층",
+          "maintenance_fee_krw": 160000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120053-rent-2",
+          "area_code": "3120053",
+          "title": "[가상] 건대입구 대학가 2층 좌석형",
+          "latitude": 37.5412236,
+          "longitude": 127.070218,
+          "monthly_rent_krw": 1900000,
+          "deposit_krw": 28000000,
+          "area_m2": 82.6,
+          "floor": "2층",
+          "maintenance_fee_krw": 140000,
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        }
+      ],
+      "stores": [
+        {
+          "id": "demo-3120053-store-0",
+          "name": "[가상] 캠퍼스 빈칸 커피",
+          "latitude": 37.5391236,
+          "longitude": 127.069418,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 3300
+            },
+            {
+              "name": "초코 바나나 프라페",
+              "price_krw": 5400
+            },
+            {
+              "name": "플레인 크로플",
+              "price_krw": 3900
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120053-store-1",
+          "name": "[가상] 페이지사이 카페",
+          "latitude": 37.5398236,
+          "longitude": 127.07051799999999,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 3600
+            },
+            {
+              "name": "쿠키크림 라테",
+              "price_krw": 5200
+            },
+            {
+              "name": "블루베리 베이글",
+              "price_krw": 4200
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120053-store-2",
+          "name": "[가상] 건대 모퉁이 잔",
+          "latitude": 37.5405236,
+          "longitude": 127.069418,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 3800
+            },
+            {
+              "name": "복숭아 아이스티",
+              "price_krw": 4500
+            },
+            {
+              "name": "시나몬 롤",
+              "price_krw": 4300
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120053-store-3",
+          "name": "[가상] 늦은 종소리",
+          "latitude": 37.5412236,
+          "longitude": 127.07051799999999,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 4000
+            },
+            {
+              "name": "카라멜 플랫화이트",
+              "price_krw": 5500
+            },
+            {
+              "name": "초코칩 쿠키",
+              "price_krw": 3300
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        },
+        {
+          "id": "demo-3120053-store-4",
+          "name": "[가상] 한칸 공부방 커피",
+          "latitude": 37.5419236,
+          "longitude": 127.069418,
+          "menu": [
+            {
+              "name": "아메리카노",
+              "price_krw": 3400
+            },
+            {
+              "name": "바닐라 콜드브루",
+              "price_krw": 4900
+            },
+            {
+              "name": "햄치즈 토스트",
+              "price_krw": 5100
+            }
+          ],
+          "observed_at": "2026-11-06",
+          "source_url": null,
+          "is_demo": true
+        }
+      ]
+    }
+  ]
+}

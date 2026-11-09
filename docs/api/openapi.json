@@ -1,0 +1,1999 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DATA TADA 상권 분석 API",
+    "description": "카페 상권 최대 5개를 비교합니다. Supabase 모드는 서울시 통계와 발표용 입지 예시를 구분합니다.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health/live": {
+      "get": {
+        "tags": [
+          "operations"
+        ],
+        "summary": "Live",
+        "operationId": "live_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "tags": [
+          "operations"
+        ],
+        "summary": "Ready",
+        "operationId": "ready_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "tags": [
+          "operations"
+        ],
+        "summary": "Metric Endpoint",
+        "operationId": "metric_endpoint_metrics_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "404": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "500": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/config": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Config",
+        "operationId": "config_api_v1_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/areas": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Areas",
+        "operationId": "areas_api_v1_areas_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 80,
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "district",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 40,
+              "default": "",
+              "title": "District"
+            }
+          },
+          {
+            "name": "dong",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 40,
+              "default": "",
+              "title": "Dong"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2000,
+              "minimum": 1,
+              "default": 2000,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/comparisons": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Comparisons",
+        "operationId": "comparisons_api_v1_comparisons_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryContext"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/areas/{area_code}/analysis": {
+      "get": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Detail",
+        "operationId": "detail_api_v1_areas__area_code__analysis_get",
+        "parameters": [
+          {
+            "name": "area_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Area Code"
+            }
+          },
+          {
+            "name": "quarter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^20\\d{2}Q[1-4]$",
+              "default": "2026Q2",
+              "title": "Quarter"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/areas/{area_code}/nearby-stores": {
+      "get": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Nearby",
+        "operationId": "nearby_api_v1_areas__area_code__nearby_stores_get",
+        "parameters": [
+          {
+            "name": "area_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Area Code"
+            }
+          },
+          {
+            "name": "listing_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "title": "Listing Id"
+            }
+          },
+          {
+            "name": "radius_m",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Radius",
+              "default": 300
+            }
+          },
+          {
+            "name": "quarter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^20\\d{2}Q[1-4]$",
+              "default": "2026Q2",
+              "title": "Quarter"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Store"
+                  },
+                  "title": "Response Nearby Api V1 Areas  Area Code  Nearby Stores Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/explanations": {
+      "post": {
+        "tags": [
+          "explanations"
+        ],
+        "summary": "Explanations",
+        "operationId": "explanations_api_v1_explanations_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplanationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExplanationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExplanationResponse"
+                }
+              }
+            },
+            "description": "Accepted"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExplanationResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Area": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "district": {
+            "type": "string",
+            "title": "District"
+          },
+          "administrative_dong": {
+            "type": "string",
+            "title": "Administrative Dong"
+          },
+          "latitude": {
+            "type": "number",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "title": "Longitude"
+          },
+          "area_m2": {
+            "type": "number",
+            "title": "Area M2"
+          },
+          "radius_m": {
+            "type": "number",
+            "title": "Radius M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "category",
+          "district",
+          "administrative_dong",
+          "latitude",
+          "longitude",
+          "area_m2",
+          "radius_m"
+        ],
+        "title": "Area"
+      },
+      "CatalogResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Area"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "crs": {
+            "type": "string",
+            "title": "Crs",
+            "default": "EPSG:4326"
+          },
+          "marker_meaning": {
+            "type": "string",
+            "title": "Marker Meaning",
+            "default": "원은 탐색용 면적 환산 표시이며 실제 상권 경계가 아닙니다."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "CatalogResponse"
+      },
+      "ComparisonItem": {
+        "properties": {
+          "area": {
+            "$ref": "#/components/schemas/Area"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CurrentMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rentals": {
+            "items": {
+              "$ref": "#/components/schemas/Rental"
+            },
+            "type": "array",
+            "title": "Rentals"
+          },
+          "missing_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Missing Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "area",
+          "metrics",
+          "rentals"
+        ],
+        "title": "ComparisonItem"
+      },
+      "ComparisonResponse": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "items"
+        ],
+        "title": "ComparisonResponse"
+      },
+      "ConfigResponse": {
+        "properties": {
+          "data_mode": {
+            "type": "string",
+            "title": "Data Mode"
+          },
+          "llm_enabled": {
+            "type": "boolean",
+            "title": "Llm Enabled"
+          },
+          "llm_auth_required": {
+            "type": "boolean",
+            "title": "Llm Auth Required"
+          },
+          "max_candidates": {
+            "type": "integer",
+            "title": "Max Candidates"
+          },
+          "industries": {
+            "items": {
+              "$ref": "#/components/schemas/Industry"
+            },
+            "type": "array",
+            "title": "Industries"
+          },
+          "quarters": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Quarters"
+          },
+          "demo_area_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Demo Area Codes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data_mode",
+          "llm_enabled",
+          "llm_auth_required",
+          "max_candidates",
+          "industries",
+          "quarters",
+          "demo_area_codes"
+        ],
+        "title": "ConfigResponse"
+      },
+      "CurrentMetrics": {
+        "properties": {
+          "total_sales_krw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Sales Krw"
+          },
+          "store_count": {
+            "type": "integer",
+            "title": "Store Count"
+          },
+          "transaction_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transaction Count"
+          },
+          "average_sales_krw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Sales Krw"
+          },
+          "transactions_per_store": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transactions Per Store"
+          },
+          "average_payment_krw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Payment Krw"
+          },
+          "sales_yoy_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sales Yoy Pct"
+          },
+          "stores_yoy_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stores Yoy Pct"
+          },
+          "average_sales_yoy_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Sales Yoy Pct"
+          },
+          "competition_type": {
+            "type": "string",
+            "title": "Competition Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_sales_krw",
+          "store_count",
+          "transaction_count",
+          "average_sales_krw",
+          "transactions_per_store",
+          "average_payment_krw",
+          "sales_yoy_pct",
+          "stores_yoy_pct",
+          "average_sales_yoy_pct",
+          "competition_type"
+        ],
+        "title": "CurrentMetrics"
+      },
+      "DetailResponse": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "area": {
+            "$ref": "#/components/schemas/Area"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CurrentMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/Observation"
+            },
+            "type": "array",
+            "title": "Observations"
+          },
+          "forecast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Forecast"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "demand": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Distribution"
+            },
+            "type": "object",
+            "title": "Demand"
+          },
+          "rentals": {
+            "items": {
+              "$ref": "#/components/schemas/Rental"
+            },
+            "type": "array",
+            "title": "Rentals"
+          },
+          "stores": {
+            "items": {
+              "$ref": "#/components/schemas/Store"
+            },
+            "type": "array",
+            "title": "Stores"
+          },
+          "boundary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boundary"
+          },
+          "missing_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Missing Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "area",
+          "current",
+          "observations",
+          "forecast",
+          "demand",
+          "rentals",
+          "stores"
+        ],
+        "title": "DetailResponse"
+      },
+      "Distribution": {
+        "properties": {
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "age_basis": {
+            "type": "string",
+            "title": "Age Basis"
+          },
+          "weekday_basis": {
+            "type": "string",
+            "title": "Weekday Basis"
+          },
+          "time_basis": {
+            "type": "string",
+            "title": "Time Basis"
+          },
+          "age": {
+            "items": {
+              "$ref": "#/components/schemas/DistributionBin"
+            },
+            "type": "array",
+            "title": "Age"
+          },
+          "weekday": {
+            "items": {
+              "$ref": "#/components/schemas/DistributionBin"
+            },
+            "type": "array",
+            "title": "Weekday"
+          },
+          "time": {
+            "items": {
+              "$ref": "#/components/schemas/DistributionBin"
+            },
+            "type": "array",
+            "title": "Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unit",
+          "age_basis",
+          "weekday_basis",
+          "time_basis",
+          "age",
+          "weekday",
+          "time"
+        ],
+        "title": "Distribution"
+      },
+      "DistributionBin": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "share_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Share Pct"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "value",
+          "share_pct"
+        ],
+        "title": "DistributionBin"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "request_id"
+        ],
+        "title": "ErrorBody"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse"
+      },
+      "ExplanationBlock": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "text",
+          "evidence_ids"
+        ],
+        "title": "ExplanationBlock"
+      },
+      "ExplanationContent": {
+        "properties": {
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "blocks": {
+            "items": {
+              "$ref": "#/components/schemas/ExplanationBlock"
+            },
+            "type": "array",
+            "title": "Blocks"
+          },
+          "caveats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Caveats"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "summary",
+          "blocks",
+          "caveats"
+        ],
+        "title": "ExplanationContent"
+      },
+      "ExplanationRequest": {
+        "properties": {
+          "area_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "minItems": 1,
+            "title": "Area Codes"
+          },
+          "industry_code": {
+            "type": "string",
+            "const": "CS100010",
+            "title": "Industry Code",
+            "default": "CS100010"
+          },
+          "quarter": {
+            "type": "string",
+            "pattern": "^20\\d{2}Q[1-4]$",
+            "title": "Quarter",
+            "default": "2026Q2"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "comparison",
+              "detail"
+            ],
+            "title": "Scope"
+          },
+          "section": {
+            "$ref": "#/components/schemas/Section"
+          },
+          "demand_metric": {
+            "type": "string",
+            "enum": [
+              "transactions",
+              "floating_population"
+            ],
+            "title": "Demand Metric",
+            "default": "transactions"
+          },
+          "location_view": {
+            "type": "string",
+            "enum": [
+              "rentals",
+              "stores"
+            ],
+            "title": "Location View",
+            "default": "rentals"
+          },
+          "listing_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listing Id"
+          },
+          "radius_m": {
+            "type": "integer",
+            "enum": [
+              100,
+              300,
+              500
+            ],
+            "title": "Radius M",
+            "default": 300
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "area_codes",
+          "scope",
+          "section"
+        ],
+        "title": "ExplanationRequest"
+      },
+      "ExplanationResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "running",
+              "disabled",
+              "unavailable",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "cache_key": {
+            "type": "string",
+            "title": "Cache Key"
+          },
+          "cache_hit": {
+            "type": "boolean",
+            "title": "Cache Hit",
+            "default": false
+          },
+          "content": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExplanationContent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "retry_after_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry After Seconds"
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "cache_key",
+          "prompt_version"
+        ],
+        "title": "ExplanationResponse"
+      },
+      "Forecast": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "interval_method": {
+            "type": "string",
+            "title": "Interval Method"
+          },
+          "coverage_validated": {
+            "type": "boolean",
+            "title": "Coverage Validated",
+            "default": false
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/ForecastPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_version",
+          "interval_method",
+          "points"
+        ],
+        "title": "Forecast"
+      },
+      "ForecastPoint": {
+        "properties": {
+          "quarter": {
+            "type": "string",
+            "title": "Quarter"
+          },
+          "average_sales_krw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Sales Krw"
+          },
+          "sales_yoy_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sales Yoy Pct"
+          },
+          "stores_yoy_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stores Yoy Pct"
+          },
+          "lower80_krw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lower80 Krw"
+          },
+          "upper80_krw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper80 Krw"
+          },
+          "lower90_krw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lower90 Krw"
+          },
+          "upper90_krw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper90 Krw"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quarter",
+          "average_sales_krw",
+          "sales_yoy_pct",
+          "stores_yoy_pct"
+        ],
+        "title": "ForecastPoint"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "HealthResponse"
+      },
+      "Industry": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "Industry"
+      },
+      "MenuItem": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "price_krw": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Krw"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "price_krw"
+        ],
+        "title": "MenuItem"
+      },
+      "Metadata": {
+        "properties": {
+          "data_mode": {
+            "type": "string",
+            "enum": [
+              "demo",
+              "supabase"
+            ],
+            "title": "Data Mode",
+            "default": "demo"
+          },
+          "data_version": {
+            "type": "string",
+            "title": "Data Version"
+          },
+          "metric_version": {
+            "type": "string",
+            "title": "Metric Version",
+            "default": "metrics-v1"
+          },
+          "industry_code": {
+            "type": "string",
+            "title": "Industry Code",
+            "default": "CS100010"
+          },
+          "quarter": {
+            "type": "string",
+            "title": "Quarter"
+          },
+          "warning": {
+            "type": "string",
+            "title": "Warning",
+            "default": "분석 수치, 예측, 매물과 메뉴는 개발용 가상 자료입니다. 실제 상권 위치 목록과 구분합니다."
+          }
+        },
+        "type": "object",
+        "required": [
+          "data_version",
+          "quarter"
+        ],
+        "title": "Metadata"
+      },
+      "Observation": {
+        "properties": {
+          "quarter": {
+            "type": "string",
+            "title": "Quarter"
+          },
+          "total_sales_krw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Sales Krw"
+          },
+          "store_count": {
+            "type": "integer",
+            "title": "Store Count"
+          },
+          "transaction_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transaction Count"
+          },
+          "average_sales_krw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Sales Krw"
+          },
+          "sales_yoy_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sales Yoy Pct"
+          },
+          "stores_yoy_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stores Yoy Pct"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quarter",
+          "total_sales_krw",
+          "store_count",
+          "transaction_count",
+          "average_sales_krw",
+          "sales_yoy_pct",
+          "stores_yoy_pct"
+        ],
+        "title": "Observation"
+      },
+      "QueryContext": {
+        "properties": {
+          "area_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "minItems": 1,
+            "title": "Area Codes"
+          },
+          "industry_code": {
+            "type": "string",
+            "const": "CS100010",
+            "title": "Industry Code",
+            "default": "CS100010"
+          },
+          "quarter": {
+            "type": "string",
+            "pattern": "^20\\d{2}Q[1-4]$",
+            "title": "Quarter",
+            "default": "2026Q2"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "area_codes"
+        ],
+        "title": "QueryContext"
+      },
+      "Radius": {
+        "type": "integer",
+        "enum": [
+          100,
+          300,
+          500
+        ],
+        "title": "Radius"
+      },
+      "ReadyResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "data_mode": {
+            "type": "string",
+            "title": "Data Mode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "data_mode"
+        ],
+        "title": "ReadyResponse"
+      },
+      "Rental": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "area_code": {
+            "type": "string",
+            "title": "Area Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "latitude": {
+            "type": "number",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "title": "Longitude"
+          },
+          "monthly_rent_krw": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Rent Krw"
+          },
+          "deposit_krw": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit Krw"
+          },
+          "area_m2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area M2"
+          },
+          "floor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Floor"
+          },
+          "maintenance_fee_krw": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maintenance Fee Krw"
+          },
+          "observed_at": {
+            "type": "string",
+            "title": "Observed At"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "area_code",
+          "title",
+          "latitude",
+          "longitude",
+          "monthly_rent_krw",
+          "deposit_krw",
+          "area_m2",
+          "floor",
+          "maintenance_fee_krw",
+          "observed_at"
+        ],
+        "title": "Rental"
+      },
+      "Section": {
+        "type": "string",
+        "enum": [
+          "profitability",
+          "competition",
+          "demand",
+          "rent",
+          "location"
+        ],
+        "title": "Section"
+      },
+      "Store": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "latitude": {
+            "type": "number",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "title": "Longitude"
+          },
+          "menu": {
+            "items": {
+              "$ref": "#/components/schemas/MenuItem"
+            },
+            "type": "array",
+            "title": "Menu"
+          },
+          "observed_at": {
+            "type": "string",
+            "title": "Observed At"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance M"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "latitude",
+          "longitude",
+          "menu",
+          "observed_at"
+        ],
+        "title": "Store"
+      }
+    }
+  }
+}
