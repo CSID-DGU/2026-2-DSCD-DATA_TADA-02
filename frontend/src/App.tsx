@@ -9,7 +9,6 @@ import type { Area, Comparison, ComparisonItem, Config, Detail, Section, Store }
 
 type Route = { view: 'map' | 'comparison' | 'detail'; section: Section; codes: string[]; code: string };
 const sectionLabels: Record<Section, string> = { profitability: '수익성', competition: '경쟁 상황', demand: '수요성', rent: '임대료', location: '입지와 주변 환경' };
-const defaults: Route = { view: 'map', section: 'profitability', codes: [], code: '' };
 const number = (value: number | null | undefined, digits = 0) => value == null ? '자료 없음' : value.toLocaleString('ko-KR', { maximumFractionDigits: digits });
 const money = (value: number | null | undefined) => value == null ? '미확보' : `${number(value / 10000)}만 원`;
 
@@ -137,7 +136,7 @@ export default function App() {
       <div className="candidate-toolbar"><div className="candidate-chips" aria-label="선택한 후보 상권">{selected.map((area, i) => <span className="candidate-chip" key={area.code}><b>{i + 1}</b>{area.name}{route.view === 'map' ? <button aria-label={`${area.name} 선택 해제`} onClick={() => toggle(area.code)}>×</button> : <button aria-label={`${area.name} 상세 보기`} onClick={() => openDetail(area.code)}>↗</button>}</span>)}{!selected.length && <span className="muted">아직 선택한 후보가 없습니다.</span>}</div><span className="muted">{route.codes.length} / 5개</span>{route.view !== 'map' && <button onClick={() => navigate({ ...route, view: 'map' })}>후보 변경</button>}</div>
       {route.view === 'map' ? <>
         <MapPicker areas={areas} selected={route.codes} onToggle={toggle} />
-        <div className="map-actions"><button onClick={() => { setRoute({ ...defaults, codes: config.demo_area_codes }); setNotice('발표에 사용할 상권 5개를 선택했습니다.'); }}>발표 예시 상권 5개 선택</button><button className="primary" disabled={!route.codes.length} onClick={() => navigate({ ...route, view: 'comparison', section: 'profitability' })}>선택한 {route.codes.length}개 상권 비교하기 →</button></div>
+        <div className="map-actions"><button className="primary" disabled={!route.codes.length} onClick={() => navigate({ ...route, view: 'comparison', section: 'profitability' })}>선택한 {route.codes.length}개 상권 비교하기 →</button></div>
       </> : !route.codes.length ? <div className="panel"><p>비교할 상권을 먼저 선택하세요.</p><button onClick={() => navigate({ ...route, view: 'map' })}>상권 선택</button></div> : <>
         <nav className="section-tabs" aria-label="분석 항목">{tabs.map(tab => <button key={tab} className={section === tab ? 'active' : ''} aria-current={section === tab ? 'page' : undefined} onClick={() => navigate({ ...route, section: tab })}>{sectionLabels[tab]}</button>)}</nav>
         {route.view === 'detail' && <label className="detail-area-switch">다른 후보 상세 보기<select value={route.code || route.codes[0]} onChange={e => openDetail(e.target.value)}>{selected.map(a => <option key={a.code} value={a.code}>{a.name}</option>)}</select></label>}
