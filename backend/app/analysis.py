@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from .db import Database
 from .schemas import (
     Area, ComparisonItem, ComparisonResponse, CurrentMetrics, DetailResponse,
-    Metadata, Observation, QueryContext,
+    Metadata, Observation, QueryContext, Store,
 )
 
 
@@ -87,7 +87,7 @@ class AnalysisService:
         current = self.current(observations, quarter)
         meta = Metadata(data_version=snapshot["data_version"], quarter=quarter, data_mode=self.db.data_mode)
         if self.db.data_mode == "supabase":
-            meta.warning = "매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 예측은 Ridge 기준 모델 결과이며 임대 매물과 메뉴는 발표용 가상 자료입니다."
+            meta.warning = "매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 예측은 Ridge 기준 모델 결과입니다. 임대 광고와 카페 메뉴는 수집 시점의 공개 자료입니다."
         return DetailResponse(
             meta=meta, area=area, current=current, observations=observations,
             forecast=snapshot["forecast"], demand=snapshot["demand"],
@@ -105,13 +105,25 @@ class AnalysisService:
         ])
 
     def nearby(self, code: str, quarter: str, listing_id: str, radius_m: int):
-        detail = self.detail(code, quarter)
-        listing = next((r for r in detail.rentals if r.id == listing_id), None)
-        if listing is None:
-            raise HTTPException(404, "이 상권의 기준 매물을 찾을 수 없습니다.")
+        if self.db.remote:
+            self.area(code)
+            result = self.db.remote.nearby_candidates(code, listing_id, radius_m)
+            if result is None:
+                raise HTTPException(404, "이 상권의 기준 매물을 찾을 수 없습니다.")
+            latitude, longitude, candidates = result
+            stores = [Store.model_validate(item) for item in candidates]
+        else:
+            detail = self.detail(code, quarter)
+            listing = next((r for r in detail.rentals if r.id == listing_id), None)
+            if listing is None:
+                raise HTTPException(404, "이 상권의 기준 매물을 찾을 수 없습니다.")
+            latitude, longitude, stores = listing.latitude, listing.longitude, detail.stores
         results = []
-        for store in detail.stores:
-            distance = distance_m(listing.latitude, listing.longitude, store.latitude, store.longitude)
+        for store in stores:
+            distance = distance_m(latitude, longitude, store.latitude, store.longitude)
             if distance <= radius_m:
                 results.append(store.model_copy(update={"distance_m": round(distance, 1)}))
-        return sorted(results, key=lambda s: s.distance_m)
+        return sorted(results, key=lambda s: (s.distance_m, s.id))
+
+    def brand_menu(self, store_id: str):
+        return self.db.remote.brand_menu(store_id) if self.db.remote else []

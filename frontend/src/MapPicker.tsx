@@ -125,7 +125,7 @@ export default function MapPicker({ areas, selected, onToggle }: { areas: Area[]
   </div>;
 }
 
-export function LocationMap({ area, rentals, stores, selectedId, radius, onSelect }: { area: Area; rentals: Rental[]; stores: Store[]; selectedId: string; radius?: number; onSelect: (id: string) => void }) {
+export function LocationMap({ area, rentals, stores, selectedId, radius, onSelect, demo }: { area: Area; rentals: Rental[]; stores: Store[]; selectedId: string; radius?: number; onSelect: (id: string) => void; demo: boolean }) {
   const element = useRef<HTMLDivElement>(null);
   const [tileError, setTileError] = useState(false);
   useEffect(() => {
@@ -134,19 +134,22 @@ export function LocationMap({ area, rentals, stores, selectedId, radius, onSelec
     const layer = L.layerGroup().addTo(map);
     map.eachLayer(item => { if (item instanceof L.TileLayer) item.on('tileerror', () => setTileError(true)); });
     const listing = rentals.find(r => r.id === selectedId);
-    if (radius && listing) L.circle([listing.latitude, listing.longitude], { radius, color: '#009da5', dashArray: '7 6', fillOpacity: .07 }).addTo(layer);
+    const ring = radius && listing ? L.circle([listing.latitude, listing.longitude], { radius, color: '#009da5', dashArray: '7 6', fillOpacity: .07 }).addTo(layer) : null;
     for (const rental of rentals) {
       const selected = rental.id === selectedId;
       L.circleMarker([rental.latitude, rental.longitude], { radius: selected ? 13 : 9, color: '#fff', weight: 3, fillColor: selected ? '#071d43' : '#009da5', fillOpacity: 1 })
         .bindTooltip(escape(rental.title)).on('click', () => onSelect(rental.id)).addTo(layer);
     }
     for (const store of stores) {
-      L.circleMarker([store.latitude, store.longitude], { radius: 9, color: '#fff', weight: 3, fillColor: '#009da5', fillOpacity: 1 }).bindTooltip(escape(store.name)).addTo(layer);
-      label(layer, store.latitude, store.longitude, store.name);
+      L.circleMarker([store.latitude, store.longitude], { radius: stores.length > 15 ? 6 : 9, color: '#fff', weight: 2, fillColor: '#009da5', fillOpacity: 1 }).bindTooltip(escape(store.name)).addTo(layer);
+      if (stores.length <= 12) label(layer, store.latitude, store.longitude, store.name);
     }
-    if (listing) map.setView([listing.latitude, listing.longitude], 16);
+    if (ring) map.fitBounds(ring.getBounds(), { padding: [22, 22], maxZoom: 17 });
+    else if (rentals.length + stores.length > 0) {
+      map.fitBounds(L.latLngBounds([...rentals, ...stores].map(item => [item.latitude, item.longitude])), { padding: [24, 24], maxZoom: 17 });
+    }
     const observer = new ResizeObserver(() => map.invalidateSize()); observer.observe(element.current);
     return () => { observer.disconnect(); map.remove(); };
   }, [area, rentals, stores, selectedId, radius, onSelect]);
-  return <div className="map-shell"><div ref={element} className="map-canvas detail-map" role="region" aria-label="예시 매물과 주변 카페 지도" /><p className="map-caption">개발용 예시 위치입니다. 실제 상권 경계 자료는 아직 연결되지 않았습니다.</p>{tileError && <p role="status">배경지도 연결을 확인하세요. 목록의 매물 정보는 계속 볼 수 있습니다.</p>}</div>;
+  return <div className="map-shell"><div ref={element} className="map-canvas detail-map" role="region" aria-label="임대 매물과 카페 지도" /><p className="map-caption">{demo ? '개발용 예시 위치입니다.' : '공개 자료에서 확보한 위치입니다.'}</p>{tileError && <p role="status">배경지도를 불러오지 못했습니다. 왼쪽 목록에서 위치와 조건을 볼 수 있습니다.</p>}</div>;
 }

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { ComparisonItem } from './types';
 import './rent-comparison.css';
 
@@ -15,18 +14,19 @@ function range(values: number[], divisor: number, unit: string) {
   return min === max ? number(min) + unit : number(min) + '~' + number(max) + unit;
 }
 
-export default function RentComparison({ items, open }: { items: ComparisonItem[]; open: (code: string) => void }) {
-  const [floor, setFloor] = useState('');
+export default function RentComparison({ items, open, floor, setFloor, demo }: {
+  items: ComparisonItem[]; open: (code: string) => void; floor: string; setFloor: (floor: string) => void; demo: boolean;
+}) {
   const rentals = items.flatMap(item => item.rentals);
   const floors = [...new Set(rentals.map(rental => rental.floor).filter((value): value is string => !!value))]
     .sort((a, b) => a.localeCompare(b, 'ko', { numeric: true }));
-  const activeFloor = floors.includes(floor) ? floor : '';
+  const activeFloor = floor;
   const maxRent = Math.max(0, ...valuesOf(rentals, rental => rental.monthly_rent_krw));
   const step = Math.max(10000, 10 ** Math.floor(Math.log10(maxRent / 4 || 10000)));
   const tick = Math.max(step, Math.ceil(maxRent / (4 * step)) * step);
   const limit = tick * 4;
 
-  return <section className="panel rent-overview" aria-label="발표용 임대 매물 비교">
+  return <section className="panel rent-overview" aria-label="임대 매물 비교">
     <div className="rent-toolbar">
       <p>점 하나는 매물 한 건의 월세입니다. 면적과 보증금도 함께 확인하세요.</p>
       <label>층 조건 <select value={activeFloor} onChange={event => setFloor(event.target.value)}>
@@ -65,6 +65,7 @@ export default function RentComparison({ items, open }: { items: ComparisonItem[
         })}</tbody>
       </table>
     </div>
-    <p className="rent-note">발표용 매물의 표시값을 비교합니다. 상권 전체의 평균이나 시세를 추정한 값은 아닙니다.</p>
+    <p className="rent-note">{demo ? '개발용 예시 매물의 조건입니다.' :
+      '수집된 광고의 조건입니다. 권리금 매물은 광고에 명시된 월세와 보증금만 비교에 사용합니다.'}</p>
   </section>;
 }

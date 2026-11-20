@@ -1,22 +1,27 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from './api';
 import { DemandCharts, TrendChart } from './Charts';
-import ExplanationPanel from './ExplanationPanel';
+import ExplanationPanel, { DemoExplanationPanel } from './ExplanationPanel';
+import { compareCommentary, detailCommentary, PRESENTATION_CODES, PRESENTATION_DATA_VERSION, PRESENTATION_QUARTER } from './demoCommentary';
+import { StoreCard } from './LocationStores';
 import RentComparison from './RentComparison';
 import MapPicker, { LocationMap } from './MapPicker';
 import { toggleCandidate, visibleCandidates } from './selection.mjs';
 import type { Area, Comparison, ComparisonItem, Config, Detail, Section, Store } from './types';
 
 type Route = { view: 'map' | 'comparison' | 'detail'; section: Section; codes: string[]; code: string };
-const sectionLabels: Record<Section, string> = { profitability: '수익성', competition: '경쟁 상황', demand: '수요성', rent: '임대료', location: '입지와 주변 환경' };
+const sectionLabels: Record<Section, string> = { profitability: '매출', competition: '경쟁 상황', demand: '수요성', rent: '임대료', location: '입지와 주변 환경' };
 const number = (value: number | null | undefined, digits = 0) => value == null ? '자료 없음' : value.toLocaleString('ko-KR', { maximumFractionDigits: digits });
 const money = (value: number | null | undefined) => value == null ? '미확보' : `${number(value / 10000)}만 원`;
+const listingMoney = (value: number | null) => value == null ? '미확보' :
+  value % 10000 === 0 ? `${number(value / 10000)}만 원` : `${number(value)}원`;
+const NO_STORES: Store[] = [];
 
 function parseRoute(): Route {
   const params = new URLSearchParams(location.hash.slice(1));
   const view = params.get('view');
   const section = params.get('section');
-  return { view: view === 'comparison' || view === 'detail' ? view : 'map', section: section && section in sectionLabels ? section as Section : 'profitability',
+  return { view: view === 'comparison' || view === 'detail' ? view : 'map', section: section && Object.hasOwn(sectionLabels, section) ? section as Section : 'profitability',
     codes: [...new Set((params.get('areas') || '').split(',').filter(Boolean))].slice(0, 5), code: params.get('area') || '' };
 }
 
@@ -42,10 +47,10 @@ export default function App() {
   const [recent, setRecent] = useState(true);
   const [demandMetric, setDemandMetric] = useState<'transactions' | 'floating_population'>('transactions');
   const [locationView, setLocationView] = useState<'rentals' | 'stores'>('rentals');
+  const [rentFloor, setRentFloor] = useState('');
   const [listingId, setListingId] = useState('');
   const [radius, setRadius] = useState<100 | 300 | 500>(300);
-  const [stores, setStores] = useState<Store[]>([]);
-  const [nearbyError, setNearbyError] = useState('');
+  const [nearby, setNearby] = useState<{ key: string; items: Store[]; error?: string } | null>(null);
   const [accessToken, setAccessToken] = useState('');
   const [loadVersion, setLoadVersion] = useState(0);
 
@@ -92,16 +97,20 @@ export default function App() {
     // Section changes reuse the same data payload while changing the commentary context.
   }, [config, route.view, route.code, codesKey, loadVersion]);
 
+  const nearbyKey = detail && listingId ? `${detail.area.code}:${detail.meta.quarter}:${listingId}:${radius}` : '';
+  const nearbyResult = nearby?.key === nearbyKey ? nearby : null;
+  const stores = listingId ? nearbyResult?.items ?? NO_STORES : detail?.stores ?? NO_STORES;
+
   useEffect(() => {
     if (route.view !== 'detail' || route.section !== 'location' || locationView !== 'stores' || !listingId || !detail) return;
     let active = true;
     const controller = new AbortController();
-    setStores([]); setNearbyError('');
-    api<Store[]>(`/areas/${detail.area.code}/nearby-stores?listing_id=${encodeURIComponent(listingId)}&radius_m=${radius}`, { signal: controller.signal })
-      .then(values => { if (active) setStores(values); })
-      .catch(err => { if (active && err.name !== 'AbortError') setNearbyError(err.message); });
+    const params = new URLSearchParams({ listing_id: listingId, radius_m: String(radius), quarter: detail.meta.quarter });
+    api<Store[]>(`/areas/${detail.area.code}/nearby-stores?${params}`, { signal: controller.signal })
+      .then(values => { if (active) setNearby({ key: nearbyKey, items: values }); })
+      .catch(err => { if (active && err.name !== 'AbortError') setNearby({ key: nearbyKey, items: [], error: err.message }); });
     return () => { active = false; controller.abort(); };
-  }, [detail, listingId, radius, locationView, route.view, route.section]);
+  }, [detail, listingId, radius, nearbyKey, locationView, route.view, route.section]);
 
   const toggle = useCallback((code: string) => {
     setRoute(previous => {
@@ -116,6 +125,18 @@ export default function App() {
   const selected = areas.filter(a => route.codes.includes(a.code)).sort((a, b) => route.codes.indexOf(a.code) - route.codes.indexOf(b.code));
   const visible = visibleCandidates(comparison?.items || [], offset, width);
   const [first, last] = [visible.start + 1, Math.min((comparison?.items.length || 0), visible.start + width)];
+  const floor = comparison?.items.some(item => item.rentals.some(rental => rental.floor === rentFloor)) ? rentFloor : '';
+  const snapshot = route.view === 'detail' ? (detail?.area.code === route.code ? detail.meta : undefined) : comparison?.meta;
+  const hasExampleData = (snapshot?.data_version === PRESENTATION_DATA_VERSION ||
+    snapshot?.data_version === 'seoul-cafe-20261106-locations-20261120') && snapshot.quarter === PRESENTATION_QUARTER;
+  const comparisonIsCurrent = comparison && comparison.items.map(item => item.area.code).join(',') === codesKey;
+  const hasExampleCandidates = route.codes.length === PRESENTATION_CODES.length && PRESENTATION_CODES.every(code => route.codes.includes(code));
+  const showExampleCommentary = config?.llm_enabled === false && hasExampleData && !loading &&
+    section !== 'rent' && section !== 'location';
+  const demoCommentary = showExampleCommentary ? (
+    route.view === 'comparison' && comparisonIsCurrent && hasExampleCandidates ? compareCommentary(section, floor) :
+    route.view === 'detail' ? detailCommentary(route.code, section) : null
+  ) : null;
   const context: Record<string, unknown> = { scope: route.view === 'detail' ? 'detail' : 'comparison', section,
     area_codes: route.view === 'detail' ? [detail?.area.code || route.code] : [...route.codes].sort(), quarter: '2026Q2' };
   if (route.view === 'detail' && section === 'demand') context.demand_metric = demandMetric;
@@ -131,7 +152,7 @@ export default function App() {
       <p className="breadcrumb">상권 분석 / {route.view === 'map' ? '관심 상권 선택' : route.view === 'detail' ? '상권 상세분석' : '후보 상권 비교'}</p>
       {route.view === 'detail' && <button className="back-link" onClick={() => navigate({ ...route, view: 'comparison', section: section === 'location' ? 'rent' : section })}>← 후보 상권 비교로 돌아가기</button>}
       <div className="page-heading"><div><h1>{route.view === 'map' ? '어떤 상권을 비교해 볼까요?' : route.view === 'detail' ? `${detail?.area.name || areas.find(a => a.code === route.code)?.name || ''} 상세분석` : '후보 상권 비교'}</h1><p>{route.view === 'map' ? '지도에서 관심 있는 상권을 최대 5개까지 선택하세요.' : route.view === 'comparison' ? '관심 있는 상권의 카페를 같은 기준으로 비교해 보세요.' : '선택한 상권의 흐름과 주변 정보를 확인하세요.'}</p></div><div className="context-controls"><label className="sr-only" htmlFor="industry">업종</label><select id="industry" aria-label="업종"><option>카페</option></select><select aria-label="기준 분기"><option>2026년 2분기</option></select><span className="badge demo-badge">{isDemo ? '개발용 가상 분석' : '서울시 상권 통계'}</span></div></div>
-      <div className="notice info">{isDemo ? '상권 위치를 제외한 분석과 입지 자료는 개발용 가상 예시입니다.' : '매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 예측은 Ridge 기준 모델 결과이며 매물과 메뉴는 발표용 가상 예시입니다.'}</div>
+      <div className="notice info">{isDemo ? '상권 위치를 제외한 분석과 입지 자료는 개발용 가상 예시입니다.' : '매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 예측은 Ridge 기준 모델 결과이며 임대 광고와 카페 메뉴는 수집 시점의 공개 자료입니다.'}</div>
       {notice && <p className="notice alert" role="alert">{notice}</p>}
       <div className="candidate-toolbar"><div className="candidate-chips" aria-label="선택한 후보 상권">{selected.map((area, i) => <span className="candidate-chip" key={area.code}><b>{i + 1}</b>{area.name}{route.view === 'map' ? <button aria-label={`${area.name} 선택 해제`} onClick={() => toggle(area.code)}>×</button> : <button aria-label={`${area.name} 상세 보기`} onClick={() => openDetail(area.code)}>↗</button>}</span>)}{!selected.length && <span className="muted">아직 선택한 후보가 없습니다.</span>}</div><span className="muted">{route.codes.length} / 5개</span>{route.view !== 'map' && <button onClick={() => navigate({ ...route, view: 'map' })}>후보 변경</button>}</div>
       {route.view === 'map' ? <>
@@ -139,12 +160,17 @@ export default function App() {
         <div className="map-actions"><button className="primary" disabled={!route.codes.length} onClick={() => navigate({ ...route, view: 'comparison', section: 'profitability' })}>선택한 {route.codes.length}개 상권 비교하기 →</button></div>
       </> : !route.codes.length ? <div className="panel"><p>비교할 상권을 먼저 선택하세요.</p><button onClick={() => navigate({ ...route, view: 'map' })}>상권 선택</button></div> : <>
         <nav className="section-tabs" aria-label="분석 항목">{tabs.map(tab => <button key={tab} className={section === tab ? 'active' : ''} aria-current={section === tab ? 'page' : undefined} onClick={() => navigate({ ...route, section: tab })}>{sectionLabels[tab]}</button>)}</nav>
+        {demoCommentary && <div className="explanation-jump"><button onClick={() => {
+          const title = document.getElementById('explanation-title');
+          title?.closest('section')?.scrollIntoView({ block: 'start' });
+          title?.focus({ preventScroll: true });
+        }}>AI 상권 해설 바로 보기 ↓</button></div>}
         {route.view === 'detail' && <label className="detail-area-switch">다른 후보 상세 보기<select value={route.code || route.codes[0]} onChange={e => openDetail(e.target.value)}>{selected.map(a => <option key={a.code} value={a.code}>{a.name}</option>)}</select></label>}
         {loading && <p role="status" className="panel">분석 자료를 불러오고 있습니다.</p>}
         {error && <div role="alert" className="notice alert">{error} <button onClick={() => setLoadVersion(v => v + 1)}>다시 시도</button></div>}
         {!loading && comparison && route.view === 'comparison' && <>
-          <div className="section-title"><div><h2>{section === 'profitability' ? '점포당 평균 매출' : section === 'competition' ? '상권의 변화와 경쟁 상황' : section === 'demand' ? '거래 규모와 결제금액 한눈에 비교' : '발표용 임대 매물 조건 비교'}</h2><p className="muted">{section === 'rent' ? '발표용으로 만든 매물의 보증금, 월세와 면적을 비교합니다.' : '분기 기준 / 변화율은 전년 동분기 대비'}</p></div>{(section === 'profitability' || section === 'competition') && <div className="carousel-controls"><button aria-label="이전 후보 카드" disabled={visible.start === 0} onClick={() => setOffset(visible.start - 1)}>←</button><span aria-live="polite">{first}~{last} / 전체 {comparison.items.length}개</span><button aria-label="다음 후보 카드" disabled={last >= comparison.items.length} onClick={() => setOffset(visible.start + 1)}>→</button></div>}</div>
-          {section === 'profitability' || section === 'competition' ? <div className="comparison-cards">{visible.values.map(item => <ComparisonCard key={item.area.code} item={item} section={section} maximum={Math.max(...comparison.items.map(i => i.metrics?.average_sales_krw || 0))} open={() => openDetail(item.area.code)} />)}</div> : section === 'demand' ? <DemandComparison items={comparison.items} open={code => openDetail(code)} /> : <RentComparison items={comparison.items} open={code => openDetail(code, 'rent')} />}
+          <div className="section-title"><div><h2>{section === 'profitability' ? '점포당 평균 매출' : section === 'competition' ? '상권의 변화와 경쟁 상황' : section === 'demand' ? '거래 규모와 결제금액 한눈에 비교' : '임대 매물 조건 비교'}</h2><p className="muted">{section === 'rent' ? '매물에 표시된 보증금, 월세와 면적을 비교합니다.' : '분기 기준 / 변화율은 전년 동분기 대비'}</p></div>{(section === 'profitability' || section === 'competition') && <div className="carousel-controls"><button aria-label="이전 후보 카드" disabled={visible.start === 0} onClick={() => setOffset(visible.start - 1)}>←</button><span aria-live="polite">{first}~{last} / 전체 {comparison.items.length}개</span><button aria-label="다음 후보 카드" disabled={last >= comparison.items.length} onClick={() => setOffset(visible.start + 1)}>→</button></div>}</div>
+          {section === 'profitability' || section === 'competition' ? <div className="comparison-cards">{visible.values.map(item => <ComparisonCard key={item.area.code} item={item} section={section} maximum={Math.max(...comparison.items.map(i => i.metrics?.average_sales_krw || 0))} open={() => openDetail(item.area.code)} />)}</div> : section === 'demand' ? <DemandComparison items={comparison.items} open={code => openDetail(code)} /> : <RentComparison items={comparison.items} demo={isDemo} open={code => openDetail(code, 'rent')} floor={floor} setFloor={setRentFloor} />}
           {section !== 'rent' && <div className="notice info">평균 매출은 같은 상권, 업종, 분기의 총매출을 점포 수로 나눈 값입니다. 개별 점포의 매출과 다를 수 있으며 일부 점포에 매출이 집중될 수 있습니다.</div>}
         </>}
         {!loading && detail && route.view === 'detail' && (detail.current || section === 'demand' || section === 'location' ? <>
@@ -156,15 +182,33 @@ export default function App() {
           {section === 'demand' && <><div className="segmented sub-tabs"><button className={demandMetric === 'transactions' ? 'active' : ''} onClick={() => setDemandMetric('transactions')}>거래 건수</button><button className={demandMetric === 'floating_population' ? 'active' : ''} onClick={() => setDemandMetric('floating_population')}>유동인구</button></div>{detail.demand[demandMetric] ? <><section className="panel metric-summary"><div><h2>누가, 언제 {demandMetric === 'transactions' ? '결제하고' : '지나고'} 있을까요?</h2><p className="muted">2026년 2분기 / 카페 기준 거래와 상권 전체 유동인구는 서로 다른 자료입니다.</p></div>{demandMetric === 'transactions' && <div><span>분기 총거래 건수</span><strong>{detail.current?.transaction_count == null ? '자료 없음' : number(detail.current.transaction_count) + '건'}</strong></div>}</section><DemandCharts distribution={detail.demand[demandMetric]} /></> : <p className="panel">해당 분포 자료가 없습니다.</p>}<p className="notice info">거래 건수는 고유 고객 수와 다르며, 유동인구는 카페 구매자 수와 다릅니다. 요일은 일평균, 연령과 시간대는 분기 합계입니다.</p></>}
           {section === 'location' && <>
             <div className="segmented sub-tabs"><button className={locationView === 'rentals' ? 'active' : ''} onClick={() => setLocationView('rentals')}>임대매물</button><button className={locationView === 'stores' ? 'active' : ''} onClick={() => setLocationView('stores')}>주변 점포</button></div>
-            {locationView === 'stores' && <div className="panel location-filter"><label>기준 매물<select value={listingId} onChange={e => setListingId(e.target.value)}>{detail.rentals.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}</select></label><label>탐색 반경<select value={radius} onChange={e => setRadius(Number(e.target.value) as 100 | 300 | 500)}>{[100, 300, 500].map(r => <option key={r} value={r}>{r}m</option>)}</select></label></div>}
-            {nearbyError && locationView === 'stores' && <p className="notice alert" role="alert">{nearbyError}</p>}
-            <div className="location-layout"><aside className="panel location-list">{locationView === 'rentals' ? <><h2>예시 매물 {detail.rentals.length}개</h2><RentalList rentals={detail.rentals} selectedId={listingId} select={selectListing} nearby={() => setLocationView('stores')} /></> : <><h2>반경 {radius}m 내 예시 카페 {stores.length}곳</h2>{stores.map(store => <article key={store.id} className="store-row"><h3>{store.name}</h3><small>{number(store.distance_m)}m / 확인일 {store.observed_at}</small>{store.menu.length ? store.menu.map(menu => <p key={menu.name}>{menu.name}<strong>{menu.price_krw == null ? '가격 미확보' : `${number(menu.price_krw)}원`}</strong></p>) : <p className="muted">메뉴와 가격 미확보</p>}</article>)}{!listingId && <p>먼저 기준 매물을 선택하세요.</p>}</>}</aside><LocationMap area={detail.area} rentals={locationView === 'stores' ? detail.rentals.filter(r => r.id === listingId) : detail.rentals} stores={locationView === 'stores' ? stores : []} selectedId={listingId} radius={locationView === 'stores' ? radius : undefined} onSelect={selectListing} /></div>
+            {locationView === 'stores' && detail.rentals.length > 0 && <div className="panel location-filter">
+              <label>카페 조회 기준<select value={listingId} onChange={e => setListingId(e.target.value)}>
+                <option value="">상권 안의 카페</option>
+                {detail.rentals.map(r => <option key={r.id} value={r.id}>{[r.title, r.floor].filter(Boolean).join(' / ')}</option>)}
+              </select></label>
+              {listingId && <label>탐색 반경<select value={radius} onChange={e => setRadius(Number(e.target.value) as 100 | 300 | 500)}>{[100, 300, 500].map(r => <option key={r} value={r}>{r}m</option>)}</select></label>}
+            </div>}
+            <div className="location-layout">
+              <aside className="panel location-list">{locationView === 'rentals' ? <>
+                <h2>{isDemo ? '예시 매물' : '임대 매물'} {detail.rentals.length}건</h2>
+                <RentalList rentals={detail.rentals} selectedId={listingId} select={selectListing} nearby={() => setLocationView('stores')} />
+              </> : <>
+                <h2>{listingId ? `반경 ${radius}m 내 카페` : '상권 안의 카페'}{(!listingId || (nearbyResult && !nearbyResult.error)) && ` ${stores.length}곳`}</h2>
+                {nearbyResult?.error && listingId ? <p role="alert">{nearbyResult.error}</p> :
+                  listingId && !nearbyResult ? <p role="status">주변 카페를 불러오는 중입니다.</p> :
+                  stores.length === 0 ? <p className="muted">이 범위에서 수집된 카페가 없습니다.</p> :
+                  stores.map(store => <StoreCard key={store.id} store={store} />)}
+              </>}</aside>
+              <LocationMap area={detail.area} rentals={locationView === 'stores' ? detail.rentals.filter(r => r.id === listingId) : detail.rentals} stores={locationView === 'stores' ? stores : NO_STORES} selectedId={listingId} radius={locationView === 'stores' && listingId ? radius : undefined} onSelect={selectListing} demo={isDemo} />
+            </div>
           </>}
         </> : <div className="panel"><h2>이 분기의 카페 자료 없음</h2><p>{detail.missing_reason}</p><p>자료가 없다는 뜻이며 매출이나 점포 수가 0이라는 뜻은 아닙니다.</p></div>)}
         {!loading && (comparison || detail) && <>
           <details className="panel methods"><summary>계산 근거와 자료 기준 보기</summary><p>금액의 원래 단위는 원입니다. 점포당 평균 매출 = 분기 총매출 ÷ 같은 분기 카페 점포 수, 점포당 거래 건수 = 총거래 건수 ÷ 점포 수, 건당 평균 결제금액 = 총매출 ÷ 총거래 건수입니다.</p><p>전년 동분기 대비 변화율 = (현재 값 ÷ 1년 전 같은 분기 값 - 1) × 100입니다. 분모가 0이거나 자료가 없으면 값을 계산하지 않습니다. 임대광고 조건은 환산하거나 평균 매출과 비율로 결합하지 않습니다.</p><p>미래 경쟁 유형을 확정하지 않습니다. 현재 유형은 총매출과 점포 수 변화의 부호를 조합하며, 한쪽이 0이면 경계로 표시합니다. 경쟁 사분면은 사용자 화면에 표시하지 않습니다.</p></details>
-          {config.llm_auth_required && <label className="auth-input">해설 서비스 접근 인증<input type="password" value={accessToken} autoComplete="off" onChange={e => setAccessToken(e.target.value)} placeholder="접근 토큰, 이 화면의 메모리에만 보관" /></label>}
-          {!(route.view === 'detail' && section === 'location' && locationView === 'stores' && !listingId) && <ExplanationPanel request={context} config={config} accessToken={accessToken} />}
+          {demoCommentary && <DemoExplanationPanel {...demoCommentary} />}
+          {config.llm_enabled && config.llm_auth_required && <label className="auth-input">해설 서비스 접근 인증<input type="password" value={accessToken} autoComplete="off" onChange={e => setAccessToken(e.target.value)} placeholder="접근 토큰, 이 화면의 메모리에만 보관" /></label>}
+          {config.llm_enabled && !(route.view === 'detail' && section === 'location' && locationView === 'stores' && !listingId) && <ExplanationPanel request={context} config={config} accessToken={accessToken} />}
         </>}
       </>}
       <footer>상권 평균과 예측은 개별 신규점의 매출이나 창업 성공을 보장하지 않습니다. 실제 판단에는 현장 확인과 추가 자료 검토가 필요합니다.</footer>
@@ -185,6 +229,14 @@ function DemandComparison({ items, open }: { items: ComparisonItem[]; open: (cod
 
 function RentalList({ rentals, selectedId, select, nearby }: { rentals: Detail['rentals']; selectedId?: string; select?: (id: string) => void; nearby?: () => void }) {
   return <div className="rental-list">{rentals.map(r => <article key={r.id} className={`rental-item ${selectedId === r.id ? 'selected' : ''}`}>
-    {select ? <button className="rental-name" onClick={() => select(r.id)} aria-pressed={selectedId === r.id}>{r.title}</button> : <h3>{r.title}</h3>}<strong className="rent-price">월세 {money(r.monthly_rent_krw)}</strong><p>보증금 {money(r.deposit_krw)}</p><p>{r.area_m2 == null ? '면적 미확보' : `${number(r.area_m2, 1)}㎡`} / {r.floor || '층 미확보'}</p><small>관리비 {money(r.maintenance_fee_krw)} / 확인일 {r.observed_at}</small>{r.source_url && <a href={r.source_url} target="_blank" rel="noreferrer">광고 원문 보기</a>}{nearby && selectedId === r.id && <button className="primary" onClick={nearby}>이 매물 주변 점포 보기 →</button>}
-  </article>)}{!rentals.length && <p className="muted">이 상권에는 발표용 매물 예시가 없습니다.</p>}</div>;
+    {select ? <button className="rental-name" onClick={() => select(r.id)} aria-pressed={selectedId === r.id}>{r.title}</button> : <h3>{r.title}</h3>}
+    <strong className="rent-price">월세 {listingMoney(r.monthly_rent_krw)}</strong>
+    <p>보증금 {listingMoney(r.deposit_krw)}</p>
+    <p>{r.area_m2 == null ? '면적 미확보' : `${number(r.area_m2, 1)}㎡`} / {r.floor || '층 미확보'}</p>
+    <small>{[r.source_name, `확인일 ${r.observed_at.slice(0, 10)}`].filter(Boolean).join(' / ')}</small>
+    {r.maintenance_fee_krw != null && <p>관리비 {listingMoney(r.maintenance_fee_krw)}</p>}
+    {r.is_transfer && <small>권리금 매물의 월세 및 보증금입니다.</small>}
+    {r.source_url && <a href={r.source_url} target="_blank" rel="noopener noreferrer">광고 원문 보기</a>}
+    {nearby && selectedId === r.id && <button className="primary" onClick={nearby}>이 매물 주변 점포 보기 →</button>}
+  </article>)}{!rentals.length && <p className="muted">이 상권에서 수집된 임대 매물이 없습니다.</p>}</div>;
 }

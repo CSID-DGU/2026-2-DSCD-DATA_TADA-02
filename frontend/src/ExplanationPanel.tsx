@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
+import type { Commentary } from './demoCommentary';
 import type { Config, Explanation } from './types';
+
+export function DemoExplanationPanel({ question, lead, paragraphs, note }: Commentary) {
+  return <section className="panel explanation demo-explanation" aria-labelledby="explanation-title" aria-live="polite">
+    <div className="section-title"><h2 id="explanation-title" tabIndex={-1}><span aria-hidden="true">✧</span> AI 상권 해설</h2><span className="badge">발표용 예시</span></div>
+    <p className="explanation-question">{question}</p>
+    <p className="explanation-summary">{lead}</p>
+    {paragraphs.map(paragraph => <p className="explanation-paragraph" key={paragraph}>{paragraph}</p>)}
+    {note && <p className="explanation-note">{note}</p>}
+  </section>;
+}
 
 export default function ExplanationPanel({ request, config, accessToken }: { request: Record<string, unknown>; config: Config; accessToken: string }) {
   const [result, setResult] = useState<Explanation | null>(null);
