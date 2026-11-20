@@ -19,19 +19,21 @@ Supabase 모드는 서울시 상권 통계와 Ridge 기준 모델 예측을 읽�
 
 ## 문서
 
-- [아키텍처와 10.31 화면 반영 설계](docs/architecture.md)
+- [팀 협업 규칙과 개인 작업 로그](CONTRIBUTING.md)
+- [서버 구조, 데이터 흐름과 주요 코드](docs/server.md)
+- [Supabase와 로컬 DB 스키마](docs/database.md)
+- [Supabase 연결 및 Data API 호출 방법](docs/supabase-api.md)
 - [API 명세서](docs/api/API_SPEC.md)
 - [자동 생성 OpenAPI](docs/api/openapi.json)
-- [서버 측정과 LLM 모델 비교 계획](docs/observability-and-tests.md)
-- [검증 결과와 남은 범위](docs/verification.md)
 - [Cloud Run 배포 설정과 재배포 방법](docs/cloud-run.md)
+- [서버 측정과 LLM 모델 비교 계획](docs/observability-and-tests.md)
+- [10.31 화면 설계를 반영한 초기 아키텍처 기록](docs/architecture.md)
+- [초기 검증 결과](docs/verification.md)
 - [지도 이식 출처](docs/map-reuse.md)
 
 ## 로컬 실행
 
 Windows 정규 CPython 3.13과 Node.js 24를 사용한다. `.env.example`을 `.env`로 복사하면 로컬 기본값으로 실행할 수 있다. 기본값은 SQLite, 가상 자료와 LLM 비활성이다. `.env`는 Git에서 제외된다.
-
-이 컴퓨터의 Codex에서는 Python DLL 접근 제한 때문에 첫 실행부터 `require_escalated`와 PowerShell `Start-Process`를 사용한다. free-threaded Python으로 대체하지 않는다.
 
 의존성 설치는 다음 형태다. Python 의존성이 이미 있으면 재설치할 필요 없다.
 
@@ -49,7 +51,7 @@ npm run build
 Set-Location -LiteralPath '..'
 ```
 
-프로젝트 루트에서 서버를 실행한다. 이 컴퓨터에 설정된 `.env`는 Supabase 모드를 사용한다.
+프로젝트 루트에서 서버를 실행한다.
 
 ```powershell
 $p = Start-Process -FilePath 'C:\Program Files\Python313\python.exe' -ArgumentList '-m','uvicorn','backend.app.main:app','--host','127.0.0.1','--port','8000' -WorkingDirectory (Get-Location).Path -Wait -PassThru -NoNewWindow
@@ -61,9 +63,9 @@ exit $p.ExitCode
 - 생존/준비: `/health/live`, `/health/ready`
 - 지표: `/metrics`
 
-화면에서 `발표 예시 상권 5개 선택`을 누르면 해당 상권을 비교할 수 있다. Supabase 모드에서는 각 상권의 실제 통계와 기준 예측을 읽고, 별도 스키마에 저장한 발표용 매물과 메뉴를 보여준다. 지도에서 다른 상권을 골라 그 상권에 확보된 통계도 조회할 수 있다.
+지도에서 상권을 직접 선택하고 `선택한 상권 비교하기` 버튼으로 이동한다. Supabase 모드에서는 선택한 상권에 확보된 실제 통계와 기준 예측을 읽는다. 예시 매물과 메뉴가 있는 상권에는 해당 자료도 함께 표시한다.
 
-다른 환경에서 Supabase 모드를 쓰려면 `DATA_MODE=supabase`를 설정하고, 서버 전용 읽기 계정의 접속 주소를 `SUPABASE_DATABASE_URL`에 넣는다. `SUPABASE_SSLROOTCERT`에는 Supabase의 DB 루트 인증서 경로를 지정한다. 접속 주소는 서버 설정에만 저장한다.
+Supabase 모드의 환경 변수와 조회 요청 예시는 [Supabase 연결 및 Data API 호출 방법](docs/supabase-api.md)을 참고한다.
 
 프론트 개발 중에는 `frontend`에서 `npm run dev`를 실행한다. Vite는 API를 8000번 FastAPI에 프록시한다.
 
@@ -104,4 +106,4 @@ Cloud Build의 Docker 이미지 빌드와 Cloud Run의 실제 웹/API 응답을 
 
 ## Git 관리 범위
 
-서버, 프론트 소스와 lockfile, 명세와 그림, 스크립트, 배포 설정, 공개 DB 루트 인증서, 실제 위치 목록과 가상 fixture를 `jsw` 브랜치에서 관리한다. 기존 `jsw/`, 발표/연구 자료, `.env`, DB, 실행 로그, `node_modules`, 빌드 결과와 프로젝트 메모는 제외된다.
+서버와 프론트 소스 및 lockfile, 기술 문서, `docs/work-logs/`의 개인 작업 로그, 스크립트, 배포 설정, 공개 DB 루트 인증서, 상권 위치 목록과 가상 자료를 Git에서 관리한다. 기존 `jsw/` 연구 폴더, 발표 자료, `.env`, DB 파일, 실행 로그, `node_modules`, 빌드 결과와 로컬 프로젝트 메모는 제외된다.
