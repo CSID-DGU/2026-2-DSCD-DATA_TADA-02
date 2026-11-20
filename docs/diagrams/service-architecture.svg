@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1140" viewBox="0 0 1800 1140">
+<rect width="100%" height="100%" fill="#f3f9fc"/>
+<text x="50" y="66" font-family="Malgun Gothic, sans-serif" font-size="36" font-weight="700" fill="#0a1f43">DATA TADA 서비스 아키텍처</text>
+<text x="50" y="105" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">중앙 FastAPI 서버가 분석 자료와 LLM을 연결합니다. 쿠버네티스와 독립 작업 큐는 사용하지 않습니다.</text>
+<rect x="480" y="155" width="790" height="645" rx="15" fill="#eaf6f8" stroke="#009da5" stroke-width="2"/>
+<text x="502" y="199" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="700" fill="#0a1f43">Cloud Run / Docker 컨테이너 1개 (배포 설계)</text>
+<rect x="510" y="230" width="730" height="100" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
+<text x="532" y="271" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">React 정적 화면</text>
+<text x="532" y="311" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">Vite 빌드 결과, FastAPI가 같은 주소에서 제공</text>
+<rect x="510" y="355" width="730" height="170" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
+<text x="532" y="396" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">FastAPI + Uvicorn</text>
+<text x="532" y="436" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">입력 검증 → 분석 조회와 계산 → JSON 응답</text>
+<text x="532" y="467" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">비교 4개 / 상세 4개, 최대 5개 후보</text>
+<text x="532" y="498" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">요청 ID, 공통 오류, 생존/준비 확인, 응답시간</text>
+<rect x="510" y="550" width="730" height="210" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
+<text x="532" y="591" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">페이지별 해설 서비스</text>
+<text x="532" y="631" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">필요한 근거 구성 → 캐시/생성 잠금 확인</text>
+<text x="532" y="662" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">LLM 호출 → 형식과 근거 ID 검사 → DB 저장</text>
+<text x="532" y="693" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">현재 페이지부터 생성, 모델/프롬프트별 캐시 분리</text>
+<text x="532" y="724" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">키 미설정 시 비활성, 실패해도 지표 조회 유지</text>
+<rect x="45" y="335" width="330" height="235" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
+<text x="67" y="376" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">사용자 브라우저</text>
+<text x="67" y="416" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">지도에서 후보 1~5개 선택</text>
+<text x="67" y="447" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">카드 이동 / 표 비교</text>
+<text x="67" y="478" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">상권 1개 상세와 차트</text>
+<text x="67" y="509" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">하단 LLM 해설 표시</text>
+<rect x="45" y="650" width="330" height="130" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
+<text x="67" y="691" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">배경지도 공급자</text>
+<text x="67" y="731" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">Leaflet → OSM 타일</text>
+<text x="67" y="762" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">상권 선택 원은 경계 아님</text>
+<polyline points="375,390 510,390" fill="none" stroke="#009da5" stroke-width="3"/>
+<polygon points="510,390 498.2941876694152,395.654551943446 498.2941876694152,384.345448056554" fill="#009da5"/>
+<rect x="380" y="352" width="94" height="20" fill="#f3f9fc"/>
+<text x="385" y="366" font-family="Malgun Gothic, sans-serif" font-size="16" font-weight="400" fill="#009da5">HTTPS 요청</text>
+<polyline points="510,465 375,465" fill="none" stroke="#009da5" stroke-width="3"/>
+<polygon points="375,465 386.7058123305848,459.345448056554 386.7058123305848,470.654551943446" fill="#009da5"/>
+<rect x="382" y="479" width="99" height="21" fill="#f3f9fc"/>
+<text x="387" y="493" font-family="Malgun Gothic, sans-serif" font-size="16" font-weight="400" fill="#009da5">화면 / JSON</text>
+<polyline points="205,650 205,570" fill="none" stroke="#009da5" stroke-width="3"/>
+<polygon points="205,570 210.654551943446,581.7058123305848 199.345448056554,581.7058123305848" fill="#009da5"/>
+<rect x="70" y="605" width="149" height="21" fill="#f3f9fc"/>
+<text x="75" y="619" font-family="Malgun Gothic, sans-serif" font-size="16" font-weight="400" fill="#009da5">브라우저 직접 통신</text>
+<rect x="1390" y="225" width="365" height="230" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
+<text x="1412" y="266" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">Cloud SQL / MySQL</text>
+<text x="1412" y="306" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">실제 상권 위치 목록</text>
+<text x="1412" y="337" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">과거/예측 분석 스냅샷</text>
+<text x="1412" y="368" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">매물, 메뉴, 자료 버전</text>
+<text x="1412" y="399" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">해설 캐시와 생성 잠금</text>
+<polyline points="1240,390 1390,390" fill="none" stroke="#009da5" stroke-width="3"/>
+<polygon points="1390,390 1378.2941876694151,395.654551943446 1378.2941876694151,384.345448056554" fill="#009da5"/>
+<rect x="1245" y="350" width="115" height="21" fill="#f3f9fc"/>
+<text x="1250" y="364" font-family="Malgun Gothic, sans-serif" font-size="16" font-weight="400" fill="#009da5">SQL 조회/저장</text>
+<polyline points="1390,420 1270,420" fill="none" stroke="#536a89" stroke-width="3"/>
+<polygon points="1270,420 1281.7058123305849,414.345448056554 1281.7058123305849,425.654551943446" fill="#536a89"/>
+<rect x="1390" y="550" width="365" height="190" rx="15" fill="#f3fbfb" stroke="#cbdce7" stroke-width="2"/>
+<text x="1412" y="591" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">LLM provider</text>
+<text x="1412" y="631" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">현재 OpenAI 연결 경계</text>
+<text x="1412" y="662" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">모델명은 환경변수로 교체</text>
+<text x="1412" y="693" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">현재 실제 호출은 비활성</text>
+<polyline points="1240,605 1390,605" fill="none" stroke="#009da5" stroke-width="3"/>
+<polygon points="1390,605 1378.2941876694151,610.654551943446 1378.2941876694151,599.345448056554" fill="#009da5"/>
+<rect x="1245" y="567" width="111" height="21" fill="#f3f9fc"/>
+<text x="1250" y="581" font-family="Malgun Gothic, sans-serif" font-size="16" font-weight="400" fill="#009da5">HTTPS + 근거</text>
+<polyline points="1390,680 1240,680" fill="none" stroke="#009da5" stroke-width="3"/>
+<polygon points="1240,680 1251.7058123305849,674.345448056554 1251.7058123305849,685.654551943446" fill="#009da5"/>
+<rect x="1255" y="695" width="96" height="21" fill="#f3f9fc"/>
+<text x="1260" y="709" font-family="Malgun Gothic, sans-serif" font-size="16" font-weight="400" fill="#009da5">구조화 응답</text>
+<rect x="45" y="880" width="470" height="185" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
+<text x="67" y="921" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">오프라인 Python 배치</text>
+<text x="67" y="961" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">원자료 정리와 지표 계산</text>
+<text x="67" y="992" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">검증된 모델로 예측 후 DB 반영</text>
+<text x="67" y="1023" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">현재는 명시적인 가상 자료 import</text>
+<polyline points="515,995 1335,995 1335,470 1510,470 1510,455" fill="none" stroke="#009da5" stroke-width="3" stroke-dasharray="9 7"/>
+<polygon points="1510,455 1515.654551943446,466.7058123305848 1504.345448056554,466.7058123305848" fill="#009da5"/>
+<rect x="645" y="967" width="319" height="21" fill="#f3f9fc"/>
+<text x="650" y="981" font-family="Malgun Gothic, sans-serif" font-size="16" font-weight="400" fill="#009da5">배치 반영, 사용자 요청마다 모델 학습 없음</text>
+<rect x="570" y="850" width="650" height="105" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
+<text x="592" y="891" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">개발 / 배포</text>
+<text x="592" y="931" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">GitHub → Docker 빌드 → Cloud Run, 현재 커밋/푸시 없음</text>
+<polyline points="895,850 895,800" fill="none" stroke="#009da5" stroke-width="3" stroke-dasharray="9 7"/>
+<polygon points="895,800 900.654551943446,811.7058123305848 889.345448056554,811.7058123305848" fill="#009da5"/>
+<rect x="910" y="812" width="96" height="21" fill="#f3f9fc"/>
+<text x="915" y="826" font-family="Malgun Gothic, sans-serif" font-size="16" font-weight="400" fill="#009da5">이미지 배포</text>
+<rect x="1390" y="840" width="365" height="220" rx="15" fill="white" stroke="#cbdce7" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="1412" y="881" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">관측과 평가</text>
+<text x="1412" y="921" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">현재: 구조화 로그, /metrics</text>
+<text x="1412" y="952" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">후속: Cloud Monitoring</text>
+<text x="1412" y="983" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">후속: OpenTelemetry</text>
+<text x="1412" y="1014" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">후속: Langfuse 모델 비교</text>
+<polyline points="1270,755 1305,755 1305,820 1390,820 1390,880" fill="none" stroke="#536a89" stroke-width="3" stroke-dasharray="9 7"/>
+<polygon points="1390,880 1384.345448056554,868.2941876694152 1395.654551943446,868.2941876694152" fill="#536a89"/>
+<text x="570" y="1048" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#536a89">실선: 구현한 통신 경로와 기본 코드</text>
+<text x="570" y="1081" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#536a89">점선: 후속 연결 / 배포 환경은 아직 검증하지 않음</text>
+</svg>

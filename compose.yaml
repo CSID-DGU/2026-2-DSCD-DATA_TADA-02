@@ -1,0 +1,40 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: data_tada
+      MYSQL_USER: data_tada
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  init:
+    build: .
+    command: ["python", "scripts/import_demo.py"]
+    environment:
+      APP_ENV: production
+      DATA_MODE: demo
+      SEED_ON_START: "false"
+      DATABASE_URL: mysql+pymysql://data_tada:${MYSQL_PASSWORD}@mysql:3306/data_tada?charset=utf8mb4
+    depends_on:
+      mysql:
+        condition: service_healthy
+  server:
+    build: .
+    ports: ["127.0.0.1:8000:8080"]
+    environment:
+      APP_ENV: production
+      DATA_MODE: demo
+      SEED_ON_START: "false"
+      DATABASE_URL: mysql+pymysql://data_tada:${MYSQL_PASSWORD}@mysql:3306/data_tada?charset=utf8mb4
+      LLM_ENABLED: "false"
+    depends_on:
+      init:
+        condition: service_completed_successfully
+volumes:
+  mysql_data:
