@@ -100,4 +100,6 @@ class Database:
             return {row.payload["area_code"]: row.payload for row in rows}
 
     def snapshot(self, code: str, quarter: str) -> dict | None:
+        if self.remote:
+            return self.remote.snapshots([code], quarter, include_stores=True).get(code)
         return self.snapshots([code], quarter).get(code)

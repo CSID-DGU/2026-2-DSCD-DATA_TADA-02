@@ -1,5 +1,13 @@
 # JSW 작업 로그
 
+## 2026-11-20 임대 매물과 카페 실데이터 화면 연결 및 배포
+
+- [위치 조회 모듈](../../backend/app/location_data.py)과 [운영 읽기 권한](../../scripts/sql/location_service_access.sql)을 추가했다. 운영 임대 비교와 입지 상세가 Supabase의 수집 매물, 카페, 메뉴를 읽으며 매물 원문 링크를 제공한다.
+- 기준 매물 반경 100m, 300m, 500m 안의 카페를 조회한다. 매물이 없거나 상권 기준을 선택하면 경계 안의 카페를 표시한다. 매장별 가격과 본사 자료는 분리하고 기프트 상품에 가격의 출처를 표시했다. [화면](../../frontend/src/App.tsx) / [카페 메뉴](../../frontend/src/LocationStores.tsx)
+- 현행 운영 이미지의 프런트 소스를 기준으로 배포 중인 지도 선택, 매출 탭과 통계 해설을 재현했다. 기존 발표용 매물과 주변 카페로 만든 해설은 실데이터 화면에서 표시하지 않는다. 원래 작업 폴더의 미커밋 변경은 보존했다.
+- 정규 Python 3.13 백엔드 테스트 20개, 프런트 테스트 2개와 빌드가 통과했다. 로컬, 검증용 및 공개 API를 수집 원본과 대조했다. 공개 화면에서 성수역 매물 26건과 300m 내 카페 52곳, 매장 메뉴 가격, 강남 마이스 관광특구의 매물 0건과 카페 32곳을 확인했다.
+- Cloud Build `d6b4caff-c6ff-4d61-9afb-28a5fd5f7167`의 이미지를 Cloud Run에 배포했다. 공개 트래픽 100%가 `data-tada-live-locations-1120b`로 향하고 있다. [배포 기록](../cloud-run.md)
+
 ## 2026-11-20 수집한 임대 매물과 카페 자료 Supabase 적재
 
 - [적재 스크립트](../../scripts/upload_location_collection.py), [DB 구조 SQL](../../scripts/sql/location_collection_schema.sql), [적재 SQL](../../scripts/sql/location_collection_publish.sql)을 추가했다. 수집 원본 CSV 13개와 두 수집 요약을 비공개 `data_tada` 스키마에 저장하고 기존 실데이터 테이블에 매물과 점포, 매장별 메뉴를 연결했다. [DB 문서](../database.md)

@@ -1,4 +1,4 @@
-"""Read the published statistical snapshot and separate presentation fixtures."""
+"""Read the published statistical snapshot and collected locations."""
 from calendar import monthrange
 from datetime import date
 from pathlib import Path
@@ -6,6 +6,7 @@ from pathlib import Path
 from sqlalchemy import create_engine, text
 
 from .config import ROOT, Settings
+from .location_data import CAFE_FIELDS, RENTAL_FIELDS, area_stores, brand_menu, nearby_candidates, rentals_by_area
 
 CATALOG = text("""
     select area_code as code, name, category, coalesce(district, '') as district,
@@ -19,7 +20,7 @@ CATALOG = text("""
 SNAPSHOTS = text("""
     select a.code, history.observations, m.sales_shares, m.transaction_count,
            p.floating_population_count, p.floating_population_shares,
-           run.model_version, forecasts.points, d.rentals, d.stores
+           run.model_version, forecasts.points
     from unnest(cast(:codes as text[])) as a(code)
     left join lateral (
         select jsonb_agg(jsonb_build_object(
@@ -48,10 +49,9 @@ SNAPSHOTS = text("""
         where f.area_code = a.code and f.industry_code = 'CS100010'
           and f.origin_quarter_start = :quarter and f.model_version = run.model_version
     ) forecasts on true
-    left join data_tada_demo.location_examples d on d.area_code = a.code and d.is_demo
 """)
 
-DATA_VERSION = "seoul-cafe-20261106-v1"
+DATA_VERSION = "seoul-cafe-20261106-locations-20261120"
 
 
 def quarter_start(quarter: str) -> date:
@@ -113,15 +113,20 @@ class SupabaseData:
     def check_ready(self):
         with self.engine.connect() as conn:
             conn.execute(text("select 1 from data_tada.quarterly_metrics limit 1")).scalar_one()
+            conn.execute(text(RENTAL_FIELDS + " limit 0"))
+            conn.execute(text(CAFE_FIELDS + " limit 0"))
+            conn.execute(text("select 1 from data_tada.service_cafe_brand_menus limit 0"))
 
     def areas(self) -> list[dict]:
         with self.engine.connect() as conn:
             return [dict(row) for row in conn.execute(CATALOG).mappings()]
 
-    def snapshots(self, codes: list[str], quarter: str) -> dict:
+    def snapshots(self, codes: list[str], quarter: str, *, include_stores: bool = False) -> dict:
         start = quarter_start(quarter)
         with self.engine.connect() as conn:
             rows = conn.execute(SNAPSHOTS, {"codes": codes, "quarter": start}).mappings().all()
+            rentals = rentals_by_area(conn, codes)
+            cafes = {code: area_stores(conn, code) for code in codes} if include_stores else {}
         result = {}
         for row in rows:
             observations = row["observations"] or []
@@ -150,7 +155,15 @@ class SupabaseData:
                     "points": points,
                 } if points else None,
                 "demand": {key: value for key, value in demand.items() if value is not None},
-                "rentals": row["rentals"] or [],
-                "stores": row["stores"] or [],
+                "rentals": rentals.get(row["code"], []),
+                "stores": cafes.get(row["code"], []),
             }
         return result
+
+    def nearby_candidates(self, code, listing_id, radius):
+        with self.engine.connect() as conn:
+            return nearby_candidates(conn, code, listing_id, radius)
+
+    def brand_menu(self, store_id):
+        with self.engine.connect() as conn:
+            return brand_menu(conn, store_id)
