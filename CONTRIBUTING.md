@@ -19,9 +19,12 @@
 
 ## 변경을 공유하는 순서
 
-1. 작업을 시작할 때 팀이 합의한 기준 브랜치와 겹치는 작업이 있는지 확인한다. 충돌 가능성이 있는 파일은 담당자와 먼저 공유한다.
-2. 변경의 영향에 맞춰 관련 문서도 갱신한다. API 요청과 응답은 [API 명세](docs/api/API_SPEC.md), 테이블과 제약 조건은 [DB 스키마](docs/database.md)에 기록한다. 연결 방식은 [Supabase 연결 안내](docs/supabase-api.md), 요청 흐름은 [서버 구조](docs/server.md), 운영 절차는 [Cloud Run 배포 안내](docs/cloud-run.md)에 기록한다.
-3. 작업 로그와 `git diff --cached`를 확인한 뒤 커밋한다. 리뷰를 요청할 때 주요 변경, 검증 결과, 실행이나 배포에 필요한 조건을 함께 전달한다.
-4. 원격 커밋, 운영 배포, DB 반영 여부는 각각 완료한 상태를 기록한다. 운영 데이터 변경이 필요한 경우 실행할 SQL, 대상 환경, 기존 데이터 영향과 복구 방법을 작업 로그 또는 PR에 남긴다.
+1. **개인 브랜치를 만든다.** 브랜치 이름은 본인의 영문 소문자 이니셜로 정한다. 지승우의 브랜치는 `jsw`다. 처음 만드는 경우 `git fetch origin`으로 최신 원격 정보를 받고, `git switch -c jsw origin/main`에서 `jsw`를 본인 이니셜로 바꿔 실행한다. 이미 브랜치가 있으면 그 브랜치에서 작업한다. 충돌 가능성이 있는 파일은 담당자와 먼저 공유한다.
+2. **변경과 작업 로그를 작성한다.** API 요청과 응답은 [API 명세](docs/api/API_SPEC.md), 테이블과 제약 조건은 [DB 스키마](docs/database.md)에 기록한다. 연결 방식은 [Supabase 연결 안내](docs/supabase-api.md), 요청 흐름은 [서버 구조](docs/server.md), 운영 절차는 [Cloud Run 배포 안내](docs/cloud-run.md)에 기록한다.
+3. **커밋 전 `main`을 반영한다.** 개인 브랜치에서 `git pull origin main`을 반드시 실행한다. Git이 통합 방식을 요구하면 `git pull --no-rebase origin main`을 사용한다. 미커밋 변경 때문에 pull이 중단되면 변경을 보존한 뒤 원격 변경을 반영한다. 충돌이 발생하면 파일을 확인해 해결하고 관련 검증을 다시 실행한다.
+4. **작업 단위마다 커밋하고 푸시한다.** 백업을 위해 변경 작업 한 건이 끝날 때마다 작업 파일과 개인 로그를 함께 커밋한다. `git diff --cached`로 포함한 파일을 확인한다. 첫 푸시는 `git push -u origin jsw`, 이후는 `git push origin jsw`에 본인 이니셜을 넣어 실행한다. 직접 푸시는 개인 브랜치로 제한한다.
+5. **GitHub 웹에서 PR을 직접 연다.** 푸시 후 저장소의 **Pull requests > New pull request**에서 `base`를 `main`, `compare`를 본인 브랜치로 지정한다. PR에는 주요 변경, 검증 결과, 실행이나 배포에 필요한 조건을 적는다. 운영 데이터 변경이 필요한 경우 실행할 SQL, 대상 환경, 기존 데이터 영향과 복구 방법도 기록한다.
+
+Codex와 Claude Code로 작업할 때도 같은 순서를 적용한다. 에이전트는 변경 작업을 커밋하고 개인 브랜치에 푸시하는 단계까지 수행한다. PR은 팀원이 GitHub 웹에서 직접 연다. [Codex 지침](AGENTS.md) / [Claude Code 지침](CLAUDE.md)
 
 [JSW 작업 로그](docs/work-logs/jsw_log.md)
