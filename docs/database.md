@@ -25,9 +25,12 @@
 | `data_tada.rental_area_memberships` | 상권과 임대 광고의 연결 1건 | 참고 테이블 |
 | `data_tada.cafe_stores` | 카페 점포 1곳 | 참고 테이블 |
 | `data_tada.cafe_menus` | 카페별 메뉴 1건 | 참고 테이블 |
+| `data_tada.cafe_area_memberships` | 상권과 카페 점포의 연결 1건 | 참고 테이블 |
+| `data_tada.location_collection_runs` | 임대 및 카페 수집 스냅샷 1회 | 출처별 건수, 검증값과 적재 시각 |
+| `data_tada.location_collection_rows` | 수집 CSV의 원본 행 1건 | 원문과 보조 자료 보존 |
 | `data_tada_demo.location_examples` | 상권별 가상 매물 및 주변 카페 묶음 | API 조회 / 화면 입지 예시 |
 
-참고 테이블 네 개는 현재 서비스 SQL과 서비스 계정의 조회 범위 밖에 있다. 화면의 매물, 주변 카페, 메뉴는 `data_tada_demo.location_examples`의 예시다. 아래 컬럼 목록에서 ‘필수’는 `NOT NULL`이며, ‘선택’은 DB에서 `NULL`을 허용한다는 뜻이다. PK는 행을 고유하게 식별하는 기본 키, FK는 다른 테이블의 행을 참조하는 외래 키다.
+수집 자료를 보관하는 참고 테이블은 현재 서비스 SQL과 서비스 계정의 조회 범위 밖에 있다. 화면의 매물, 주변 카페, 메뉴는 `data_tada_demo.location_examples`의 예시다. 아래 컬럼 목록에서 ‘필수’는 `NOT NULL`이며, ‘선택’은 DB에서 `NULL`을 허용한다는 뜻이다. PK는 행을 고유하게 식별하는 기본 키, FK는 다른 테이블의 행을 참조하는 외래 키다.
 
 ## Supabase 통계 및 예측
 
@@ -109,6 +112,7 @@
 | `bigint` | | `deposit_krw`, `monthly_rent_krw` |
 | `double precision` | | `latitude`, `longitude` |
 | `timestamptz` | `checked_at` | |
+| `jsonb` | | `collection_payload` |
 
 - PK는 `listing_id`다. `source_url`은 고유하다. 보증금과 월세(원)는 음수를 허용하지 않는다. 좌표를 저장할 때 위도와 경도가 함께 있어야 한다. 층과 전용/계약 면적은 광고의 원문 표기다.
 
@@ -124,12 +128,13 @@
 
 | 자료형 | 필수 | 선택 |
 | --- | --- | --- |
-| `text` | `store_id`, `area_code`, `name`, `permit_status`, `profile_match_status` | `address`, `source_url` |
+| `text` | `store_id`, `name`, `profile_match_status` | `area_code`, `address`, `permit_status`, `source_url` |
 | `double precision` | | `latitude`, `longitude` |
 | `date` | | `permit_opened_on` |
 | `timestamptz` | `collection_as_of` | |
+| `jsonb` | | `collection_payload` |
 
-- PK는 `store_id`다. `area_code`는 `areas`를 참조한다. `profile_match_status`는 `matched`, `ambiguous`, `unmatched` 중 하나다.
+- PK는 `store_id`다. `area_code`는 `areas`에 등록된 연결 상권 중 코드가 가장 작은 값이다. 등록된 연결 상권이 없으면 `NULL`이다. 등록된 전체 연결은 `cafe_area_memberships`에서 조회한다. 공단 상가업소 원천은 인허가 자료가 아니므로 해당 행의 `permit_status`는 `NULL`이다. 수집한 공단 점포는 기존 매장 프로필과 별도로 매칭하지 않아 `profile_match_status`가 `unmatched`다.
 
 ### `data_tada.cafe_menus`
 
@@ -139,8 +144,20 @@
 | `integer` | `menu_index` | |
 | `bigint` | | `price_krw` |
 | `timestamptz` | `checked_at` | |
+| `jsonb` | | `collection_payload` |
 
 - PK는 `(store_id, menu_index)`다. `store_id`는 `cafe_stores`를 참조한다. 메뉴 순번과 가격은 음수를 허용하지 않는다. `price_status`가 `observed`이면 가격이 필수이며, `not_disclosed_or_variable`이면 가격은 `NULL`이다.
+
+### `data_tada.cafe_area_memberships`
+
+- PK는 `(area_code, store_id)`다. 상권 코드와 점포 ID는 각각 `areas`, `cafe_stores`를 참조한다. 점포 하나가 여러 상권에 들어가면 각 관계를 저장한다.
+
+### 수집 원본
+
+- `location_collection_runs`의 PK는 `snapshot_id`다. `manifest`에는 수집 요약과 출처별 건수 및 검증값이 있다. `uploaded_at`이 채워진 스냅샷은 적재 검증을 통과했다.
+- `location_collection_rows`의 PK는 `(snapshot_id, dataset, row_number)`다. `payload`는 해당 CSV 행을 담은 JSON 객체다. 상권 집계, 임대 정보 완비 목록, LH 공고, 브랜드 메뉴 및 기프트 상품, 점포별 브랜드, 미연결 메뉴 후보를 찾을 수 있다. `areas`에 미등록된 공간 연결도 원본 `rental_memberships`와 `cafe_memberships`에 보존한다.
+- 매물, 카페 점포 및 매장별 메뉴의 `collection_payload`에도 각 CSV 행을 보관한다. 메뉴별 출처와 기준일을 확인할 수 있다. [적재 코드](../scripts/upload_location_collection.py)에서 CSV와 `dataset`의 대응을 확인할 수 있다.
+- 적재 코드에 `--rental`과 `--cafe`로 수집 결과 폴더를, `--notices`로 LH 공고 CSV를 넘긴다. 기본 실행은 입력 건수와 식별자 검증만 수행한다. `--apply`로 DB에 저장하며 로컬 환경의 `SUPABASE_ACCESS_TOKEN`을 사용한다. 적재를 마친 동일 수집 스냅샷은 재실행 시 DB의 검증값과 행 수를 확인한다.
 
 ### `data_tada_demo.location_examples`
 
@@ -167,6 +184,7 @@
 | `forecast_run_idx` | `quarterly_forecasts(model_version, industry_code, origin_quarter_start)` |
 | `rental_memberships_listing_idx` | `rental_area_memberships(listing_id)` |
 | `cafe_stores_area_idx` | `cafe_stores(area_code)` |
+| `cafe_area_memberships_store_idx` | `cafe_area_memberships(store_id)` |
 
 ## 애플리케이션 DB와 초기화
 
