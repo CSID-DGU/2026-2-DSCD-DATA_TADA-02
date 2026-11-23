@@ -10,7 +10,7 @@
 <rect x="510" y="355" width="730" height="170" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
 <text x="532" y="396" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">FastAPI + Uvicorn</text>
 <text x="532" y="436" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">입력 검증 → 분석 조회와 계산 → JSON 응답</text>
-<text x="532" y="467" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">비교 4개 / 상세 4개, 최대 5개 후보</text>
+<text x="532" y="467" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">비교 4개 / 상세 3개, 최대 3개 후보</text>
 <text x="532" y="498" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">요청 ID, 공통 오류, 생존/준비 확인, 응답시간</text>
 <rect x="510" y="550" width="730" height="210" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
 <text x="532" y="591" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">페이지별 해설 서비스</text>
@@ -20,7 +20,7 @@
 <text x="532" y="724" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">키 미설정 시 비활성, 실패해도 지표 조회 유지</text>
 <rect x="45" y="335" width="330" height="235" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
 <text x="67" y="376" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">사용자 브라우저</text>
-<text x="67" y="416" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">지도에서 후보 1~5개 선택</text>
+<text x="67" y="416" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">지도에서 후보 1~3개 선택</text>
 <text x="67" y="447" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">카드 이동 / 표 비교</text>
 <text x="67" y="478" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">상권 1개 상세와 차트</text>
 <text x="67" y="509" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">하단 LLM 해설 표시</text>

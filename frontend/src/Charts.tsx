@@ -1,46 +1,41 @@
 import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { Detail, Distribution } from './types';
 
-export function TrendChart({ detail, competition, recent }: { detail: Detail; competition: boolean; recent: boolean }) {
+export function TrendChart({ detail, recent }: { detail: Detail; recent: boolean }) {
   const isDemo = detail.meta.data_mode === 'demo';
   const forecastLabel = isDemo ? '가상 예측' : 'Ridge 기준 예측';
   const observations = recent ? detail.observations.slice(-12) : detail.observations;
   const data: Record<string, unknown>[] = observations.map((row, i) => ({ quarter: row.quarter,
     actual: row.average_sales_krw === null ? null : row.average_sales_krw / 10000,
-    sales: row.sales_yoy_pct, stores: row.stores_yoy_pct,
+    total: row.total_sales_krw == null ? null : row.total_sales_krw / 1e8,
+    forecastTotal: i === observations.length - 1 && row.total_sales_krw != null ? row.total_sales_krw / 1e8 : null,
     forecast: i === observations.length - 1 && row.average_sales_krw !== null ? row.average_sales_krw / 10000 : null,
-    forecastSales: i === observations.length - 1 ? row.sales_yoy_pct : null,
-    forecastStores: i === observations.length - 1 ? row.stores_yoy_pct : null,
   }));
-  for (const point of detail.forecast?.points || []) data.push({ quarter: point.quarter,
-    forecast: point.average_sales_krw == null ? null : point.average_sales_krw / 10000, forecastSales: point.sales_yoy_pct, forecastStores: point.stores_yoy_pct,
+  for (const point of detail.forecast?.points.slice(0, 2) || []) data.push({ quarter: point.quarter,
+    forecast: point.average_sales_krw == null ? null : point.average_sales_krw / 10000,
+    forecastTotal: point.total_sales_krw == null ? null : point.total_sales_krw / 1e8,
     range80: point.lower80_krw != null && point.upper80_krw != null ? [point.lower80_krw / 10000, point.upper80_krw / 10000] : null,
     range90: point.lower90_krw != null && point.upper90_krw != null ? [point.lower90_krw / 10000, point.upper90_krw / 10000] : null,
   });
-  return <div className="chart-container" role="img" aria-label={(competition ? '총매출과 점포 수의 전년 동분기 대비 변화율' : '점포당 분기 평균 매출') + ', 실선은 과거, 점선은 ' + forecastLabel}>
+  return <div className="chart-container" role="img" aria-label={'총매출액(억 원)과 점포당 평균 매출(만 원), 실선은 과거, 점선은 ' + forecastLabel}>
     <ResponsiveContainer width="100%" height={360}>
       <ComposedChart data={data} margin={{ top: 20, right: 25, bottom: 10, left: 15 }} accessibilityLayer>
         <CartesianGrid stroke="#dce7ef" strokeDasharray="4 4" vertical={false} />
         <XAxis dataKey="quarter" tick={{ fill: '#526784', fontSize: 12 }} tickFormatter={v => String(v).replace('20', '')} />
-        <YAxis tick={{ fill: '#526784', fontSize: 12 }} domain={competition ? ['auto', 'auto'] : [0, 'auto']} unit={competition ? '%' : ''} />
+        <YAxis yAxisId="total" tick={{ fill: '#377ce7', fontSize: 12 }} domain={[0, 'auto']} width={65} label={{ value: '총매출 (억 원)', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }} />
+        <YAxis yAxisId="average" orientation="right" tick={{ fill: '#008c93', fontSize: 12 }} domain={[0, 'auto']} width={75} label={{ value: '점포당 (만 원)', angle: 90, position: 'insideRight', style: { fontSize: 12 } }} />
         <Tooltip formatter={(value, name) => [Array.isArray(value) ? value.map(v => Number(v).toLocaleString()).join(' ~ ') : Number(value).toLocaleString(undefined, { maximumFractionDigits: 1 }), name]} />
         <Legend />
-        <ReferenceLine x={observations.at(-1)?.quarter} stroke="#7c8da9" strokeDasharray="6 5" />
-        {competition ? <>
-          <ReferenceLine y={0} stroke="#879bb5" />
-          <Line dataKey="sales" name="총매출 변화율" stroke="#009da5" strokeWidth={3} connectNulls={false} />
-          <Line dataKey="stores" name="점포 수 변화율" stroke="#377ce7" strokeWidth={3} connectNulls={false} />
-          <Line dataKey="forecastSales" name={'총매출 ' + forecastLabel} stroke="#009da5" strokeWidth={2} strokeDasharray="7 5" />
-          <Line dataKey="forecastStores" name={'점포 수 ' + forecastLabel} stroke="#377ce7" strokeWidth={2} strokeDasharray="7 5" />
-        </> : <>
-          {isDemo && <Area dataKey="range90" name="가상 90% 범위" fill="#b9eceb" fillOpacity={.35} stroke="none" />}
-          {isDemo && <Area dataKey="range80" name="가상 80% 범위" fill="#6fd3d2" fillOpacity={.4} stroke="none" />}
-          <Line dataKey="actual" name={isDemo ? '과거 예시 (만원/분기)' : '관측 통계 (만원/분기)'} stroke="#009da5" strokeWidth={3} />
-          <Line dataKey="forecast" name={forecastLabel} stroke="#009da5" strokeWidth={2} strokeDasharray="7 5" />
-        </>}
+        <ReferenceLine yAxisId="total" x={observations.at(-1)?.quarter} stroke="#7c8da9" strokeDasharray="6 5" label={{ value: '예측 시작', position: 'insideTopRight', fontSize: 12 }} />
+        {isDemo && <Area yAxisId="average" dataKey="range90" name="가상 90% 범위 (만 원)" fill="#b9eceb" fillOpacity={.35} stroke="none" />}
+        {isDemo && <Area yAxisId="average" dataKey="range80" name="가상 80% 범위 (만 원)" fill="#6fd3d2" fillOpacity={.4} stroke="none" />}
+        <Line yAxisId="total" dataKey="total" name="총매출액 (억 원)" stroke="#377ce7" strokeWidth={3} connectNulls={false} />
+        <Line yAxisId="total" dataKey="forecastTotal" name={'총매출 ' + forecastLabel + ' (억 원)'} stroke="#377ce7" strokeWidth={2} strokeDasharray="7 5" />
+        <Line yAxisId="average" dataKey="actual" name="점포당 평균 매출 (만 원)" stroke="#009da5" strokeWidth={3} connectNulls={false} />
+        <Line yAxisId="average" dataKey="forecast" name={'점포당 ' + forecastLabel + ' (만 원)'} stroke="#009da5" strokeWidth={2} strokeDasharray="7 5" />
       </ComposedChart>
     </ResponsiveContainer>
-    <details className="chart-data"><summary>그래프 수치 표로 보기</summary><div className="table-scroll"><table><thead><tr><th>분기</th><th>{competition ? '총매출 변화율 (%)' : '점포당 평균 매출 (만원)'}</th>{competition && <th>점포 수 변화율 (%)</th>}</tr></thead><tbody>{data.map(row => <tr key={String(row.quarter)}><td>{String(row.quarter)}</td><td>{formatNumber(row[competition ? 'sales' : 'actual'] ?? row[competition ? 'forecastSales' : 'forecast'])}</td>{competition && <td>{formatNumber(row.stores ?? row.forecastStores)}</td>}</tr>)}</tbody></table></div></details>
+    <details className="chart-data"><summary>그래프 수치 표로 보기</summary><div className="table-scroll"><table><thead><tr><th>분기</th><th>총매출액 (억 원)</th><th>점포당 평균 매출 (만 원)</th><th>자료 구분</th></tr></thead><tbody>{data.map((row, i) => <tr key={String(row.quarter)}><td>{String(row.quarter)}</td><td>{formatNumber(row.total ?? row.forecastTotal)}</td><td>{formatNumber(row.actual ?? row.forecast)}</td><td>{i < observations.length ? (isDemo ? '과거 예시' : '관측 통계') : forecastLabel}</td></tr>)}</tbody></table></div></details>
   </div>;
 }
 

@@ -34,7 +34,7 @@ export default function ExplanationPanel({ request, config, accessToken }: { req
   }, [serialized, retry, config.llm_auth_required, accessToken]);
 
   return <section className="panel explanation" aria-labelledby="explanation-title" aria-live="polite">
-    <div className="section-title"><h2 id="explanation-title"><span aria-hidden="true">✧</span> AI 상권 해설</h2><span className="badge">{result?.cache_hit ? '저장된 해설' : config.llm_enabled ? '근거 기반 해설' : '연결 준비'}</span></div>
+    <div className="section-title"><h2 id="explanation-title"><span aria-hidden="true">✧</span> {request.section === 'competition' ? 'AI 종합 해설' : 'AI 상권 해설'}</h2><span className="badge">{result?.cache_hit ? '저장된 해설' : config.llm_enabled ? '근거 기반 해설' : '연결 준비'}</span></div>
     {config.llm_auth_required && !accessToken ? <p>상단의 서비스 접근 인증을 입력하면 해설을 볼 수 있습니다.</p> : error ? <p role="alert">{error}</p> : !result ? <p>이 페이지의 분석 근거를 확인하고 있습니다.</p> : result.content ? <>
       <p className="explanation-summary">{result.content.summary}</p>
       {result.content.blocks.map((block, i) => <div className="explanation-row" key={i}><span className="number">{i + 1}</span><strong>{block.title}</strong><p>{block.text}</p></div>)}

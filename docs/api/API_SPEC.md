@@ -1,6 +1,6 @@
 # API 명세서 v0.1
 
-- 기준: 2026-11-06 서버 코드와 자동 생성 [OpenAPI JSON](openapi.json).
+- 기준: 2026-11-20 서버 코드와 자동 생성 [OpenAPI JSON](openapi.json).
 - 개발 주소: `http://127.0.0.1:8000`.
 - 대화형 명세: `/docs`, 읽기용 명세: `/redoc`, 원본 명세: `/openapi.json`.
 - 공통 형식: JSON, 요청 `Content-Type: application/json`.
@@ -13,7 +13,7 @@
 
 | 필드 | 타입 | 필수/기본값 | 조건 |
 | --- | --- | --- | --- |
-| area_codes | string[] | POST 분석/해설에서 필수 | 1~5개, 중복 불가, 실제 목록의 코드 |
+| area_codes | string[] | POST 분석/해설에서 필수 | 1~3개, 중복 불가, 실제 목록의 코드 |
 | industry_code | string | `CS100010` | 현재 다른 업종은 422 |
 | quarter | string | `2026Q2` | `YYYYQ1`~`YYYYQ4`, 잘못된 형식은 422 |
 
@@ -52,7 +52,7 @@
 
 `GET /api/v1/config`
 
-- 아웃풋: `data_mode`, `llm_enabled`, `llm_auth_required`, `max_candidates=5`, `industries`, `quarters`, `demo_area_codes`.
+- 아웃풋: `data_mode`, `llm_enabled`, `llm_auth_required`, `max_candidates=3`, `industries`, `quarters`, `demo_area_codes`. 가상 자료가 있는 상권은 5개이며, 한 번에 비교할 수 있는 상권은 3개다.
 - 용도: 프론트가 지원하지 않는 업종이나 기준 분기를 임의로 보여주지 않도록 한다.
 - 보안: API 키와 접근 토큰 값은 응답하지 않는다.
 
@@ -79,16 +79,16 @@
 
 ```json
 {
-  "area_codes": ["3120052", "3120104", "3120100", "3120050", "3120053"],
+  "area_codes": ["3120052", "3120104", "3120100"],
   "industry_code": "CS100010",
   "quarter": "2026Q2"
 }
 ```
 
 - 아웃풋: `meta`, `items[]`.
-- 항목: `area`, `metrics`, `rentals[]`, `missing_reason`.
-- 순서: 요청의 `area_codes` 순서를 유지한다. 카드 표시 범위는 프론트에서 처리하며 서버는 5개 전체를 반환한다.
-- 화면 재사용: 수익성/경쟁/수요성/임대료를 바꿔도 같은 비교 응답을 사용할 수 있다.
+- 항목: `area`, `metrics`, `rentals[]`, `observations[]`, `missing_reason`. 과거 분기 자료는 종합해설의 전년 비교와 매출 추이에 사용한다.
+- 순서: 요청의 `area_codes` 순서를 유지한다. 카드 표시 범위는 프론트에서 처리하며 서버는 선택한 최대 3개 전체를 반환한다. 비교와 해설 모두 4개 이상을 요청하면 422다.
+- 화면 재사용: 종합해설/매출/수요성/임대료를 바꿔도 같은 비교 응답을 사용할 수 있다. 기존 section ID `competition`은 종합해설, `profitability`는 매출에 대응한다.
 
 | metrics 필드 | 뜻과 계산 | 단위/결측 |
 | --- | --- | --- |
@@ -100,6 +100,7 @@
 | average_payment_krw | 총매출 / 거래 건수 | 원/건, 분모 0이면 null |
 | sales_yoy_pct | (현재 총매출 / 전년 같은 분기 총매출 - 1) × 100 | %, 전년 분모 0/결측이면 null |
 | stores_yoy_pct | 점포 수의 전년 동분기 대비 변화율 | % |
+| transactions_yoy_pct | 총 거래 건수의 전년 동분기 대비 변화율 | %, 전년 분모 0/결측이면 null |
 | average_sales_yoy_pct | 점포당 평균 매출의 전년 동분기 대비 변화율 | % |
 | competition_type | 두 원지표 변화 부호의 현재 조합 | 유형명, 자료 부족, 변화 없음/경계 |
 
@@ -115,7 +116,7 @@
 | current | 비교 화면과 동일한 현재 지표 |
 | observations[] | 과거 분기, 총매출, 점포 수, 거래 건수, 평균 매출, 두 원지표 YoY |
 | forecast | `model_version`, `interval_method`, `coverage_validated`, `points[]` |
-| forecast.points[] | 미래 분기, 평균 매출, 두 원지표 YoY, 평균 매출 80/90% 하한/상한 |
+| forecast.points[] | 미래 분기, `total_sales_krw` 총매출, 평균 매출, 두 원지표 YoY, 평균 매출 80/90% 하한/상한 |
 | demand | `transactions`, `floating_population`별 분포 |
 | rentals[] | 광고 원조건 |
 | stores[] | 메뉴와 가격을 포함한 개발용 주변 점포 원자료 |
@@ -133,7 +134,7 @@
 `id`, `area_code`, `title`, 좌표, `monthly_rent_krw`, `deposit_krw`, `area_m2`, `floor`, `maintenance_fee_krw`, `observed_at`, `source_url`, `is_demo`.
 
 - 없는 관리비는 null이다. 0원이라고 표시하지 않는다.
-- 월세를 평당으로 환산하거나 희망 면적에 곱하지 않는다.
+- 매물 상세에는 원래 계약 조건을 표시한다. 비교 화면은 조건에 맞는 매물의 월세 합계를 면적 합계로 나눠 설정 면적으로 환산한다. 예상 월세를 점포당 분기 평균 매출 ÷ 3으로 나눠 월 환산 매출 대비 비율을 계산하며, 보증금/관리비는 포함하지 않는다. 가상 매물의 참고값으로 실제 시세나 특정 면적 점포의 예상 매출을 뜻하지 않는다.
 - `observed_at`은 자료 확인 시점이다. 현재 계약 가능한 매물임을 뜻하지 않는다.
 
 ## 5. 기준 매물 주변 점포
@@ -155,7 +156,7 @@
 {
   "scope": "comparison",
   "section": "competition",
-  "area_codes": ["3120052", "3120104", "3120100", "3120050", "3120053"],
+  "area_codes": ["3120052", "3120104", "3120100"],
   "quarter": "2026Q2",
   "industry_code": "CS100010"
 }
@@ -171,6 +172,8 @@
 | location_view | rentals / stores, 기본 rentals |
 | listing_id | 주변 점포 해설이면 필수, 다른 페이지에 지정하면 422 |
 | radius_m | 100 / 300 / 500, 기본 300 |
+| rental_area_m2 | 임대료 비교의 기준 면적, 기본 66.1157㎡, 0 초과 3305.785 이하 |
+| rental_floor | 임대료 비교의 층 조건, 기본 빈 문자열(전체 층), 최대 40자 |
 
 필터별 세부 설명은 후속 조정할 수 있다. 현재 생성은 서버에서 구성한 해당 페이지 근거만 사용한다.
 
@@ -198,7 +201,7 @@
   },
   "message": null,
   "retry_after_seconds": null,
-  "prompt_version": "page-commentary-v1",
+  "prompt_version": "page-commentary-v2-report12",
   "model": "사용자가 환경변수로 지정한 모델",
   "evidence": {"data_mode": "demo", "quarter": "2026Q2", "facts": {"3120052.sales_yoy_pct": 12.3}}
 }
