@@ -4,9 +4,9 @@ import './rent-comparison.css';
 
 const num = (n: number | null, digits = 1) => n == null ? '자료 없음' : n.toLocaleString('ko-KR', { maximumFractionDigits: digits });
 
-export default function RentComparison({ items, open, areaPyeong, setAreaPyeong, floor, setFloor }: {
+export default function RentComparison({ items, open, areaPyeong, setAreaPyeong, floor, setFloor, demo }: {
   items: ComparisonItem[]; open: (code: string) => void; areaPyeong: number; setAreaPyeong: (n: number) => void;
-  floor: string; setFloor: (floor: string) => void;
+  floor: string; setFloor: (floor: string) => void; demo: boolean;
 }) {
   const floors = [...new Set(items.flatMap(i => i.rentals.flatMap(r => r.floor ? [r.floor] : [])))].sort();
   const estimates = items.map(item => estimateRent(item.rentals, areaPyeong * PYEONG_M2, item.metrics?.average_sales_krw, floor));
@@ -22,6 +22,6 @@ export default function RentComparison({ items, open, areaPyeong, setAreaPyeong,
         <td>{e.count}건<br /><button className="text-link" onClick={() => open(item.area.code)}>매물 상세 보기</button></td>
       </tr>; })}</tbody></table></div>
     <details className="rent-note"><summary>임대료 계산 기준</summary><p>예상 월 임대료 = 조건에 맞는 매물의 월세 합계 ÷ 면적 합계 × 설정 면적입니다. 매출 대비 비율 = 예상 월 임대료 ÷ (점포당 분기 평균 매출 ÷ 3) × 100입니다. 보증금과 관리비는 포함하지 않습니다.</p></details>
-    <p className="notice info">발표용 가상 매물로 계산한 참고값입니다. 실제 시세나 설정 면적의 실제 매물 가격을 의미하지 않으며, 상권 평균 매출은 해당 면적 점포의 예상 매출과 다를 수 있습니다.</p>
+    <p className="notice info">{demo ? '개발용 가상 매물로 계산한 참고값입니다.' : '수집 시점의 공개 임대 광고로 계산한 참고값입니다.'} 실제 시세나 설정 면적의 실제 매물 가격을 의미하지 않으며, 상권 평균 매출은 해당 면적 점포의 예상 매출과 다를 수 있습니다.</p>
   </section>;
 }

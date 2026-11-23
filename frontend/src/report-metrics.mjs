@@ -13,5 +13,5 @@ export function averageOutlook(salesRate, storeRate, transactionRate) {
   if (salesRate == null || storeRate == null || transactionRate == null) return '전년 동분기 비교 자료 부족';
   const sales = salesRate > storeRate ? '증가' : salesRate < storeRate ? '감소' : '유지';
   const transactions = transactionRate > storeRate ? '증가' : transactionRate < storeRate ? '감소' : '유지';
-  return `점포당 평균 매출 ${sales} · 평균 거래 ${transactions}`;
+  return `점포당 평균 매출 ${sales}, 평균 거래 ${transactions}`;
 }

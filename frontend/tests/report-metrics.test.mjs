@@ -21,9 +21,9 @@ test('rent uses area-weighted unit rent and monthly, not quarterly, sales', () =
 });
 
 test('same growth directions can imply different per-store conditions', () => {
-  assert.match(averageOutlook(20, 10, 15), /매출 증가 · 평균 거래 증가/);
-  assert.match(averageOutlook(10, 20, 15), /매출 감소 · 평균 거래 감소/);
-  assert.match(averageOutlook(-5, -20, -10), /매출 증가 · 평균 거래 증가/);
-  assert.match(averageOutlook(10, 10, 10), /매출 유지 · 평균 거래 유지/);
+  assert.match(averageOutlook(20, 10, 15), /매출 증가, 평균 거래 증가/);
+  assert.match(averageOutlook(10, 20, 15), /매출 감소, 평균 거래 감소/);
+  assert.match(averageOutlook(-5, -20, -10), /매출 증가, 평균 거래 증가/);
+  assert.match(averageOutlook(10, 10, 10), /매출 유지, 평균 거래 유지/);
   assert.match(averageOutlook(null, 10, 10), /자료 부족/);
 });

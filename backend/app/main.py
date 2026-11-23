@@ -17,9 +17,8 @@ from .config import ROOT, Settings
 from .db import Database
 from .explanations import ExplanationService
 from .schemas import (
-    MAX_CANDIDATES,
-    CatalogResponse, ComparisonResponse, ConfigResponse, DetailResponse, ErrorResponse, HealthResponse, ReadyResponse,
-    BrandMenuItem, CatalogResponse, ComparisonResponse, ConfigResponse, DetailResponse, ErrorResponse, HealthResponse, ReadyResponse,
+    MAX_CANDIDATES, BrandMenuItem, CatalogResponse, ComparisonResponse, ConfigResponse,
+    DetailResponse, ErrorResponse, HealthResponse, ReadyResponse,
     ExplanationRequest, ExplanationResponse, QueryContext, Store,
 )
 from .telemetry import Metrics, event, request_id_var, span
@@ -49,7 +48,7 @@ def create_app(settings: Settings | None = None, provider=None) -> FastAPI:
         db.dispose()
 
     app = FastAPI(title="DATA TADA 상권 분석 API", version="0.1.0", lifespan=lifespan,
-                  description=f"카페 상권 최대 {MAX_CANDIDATES}개를 비교합니다. Supabase 모드는 서울시 통계와 발표용 입지 예시를 구분합니다.",
+                  description=f"카페 상권 최대 {MAX_CANDIDATES}개를 비교합니다. Supabase 모드는 서울시 통계와 수집한 임대 광고 및 카페 메뉴를 제공합니다.",
                   responses={422: {"model": ErrorResponse}, 404: {"model": ErrorResponse},
                              500: {"model": ErrorResponse}})
     app.state.db = db

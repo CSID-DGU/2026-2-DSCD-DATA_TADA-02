@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from './api';
 import { DemandCharts, TrendChart } from './Charts';
 import ExplanationPanel, { DemoExplanationPanel } from './ExplanationPanel';
-import { compareCommentary, detailCommentary, PRESENTATION_CODES, PRESENTATION_DATA_VERSION, PRESENTATION_QUARTER } from './demoCommentary';
+import { detailCommentary, PRESENTATION_DATA_VERSION, PRESENTATION_QUARTER } from './demoCommentary';
 import { StoreCard } from './LocationStores';
 import RentComparison from './RentComparison';
 import { OverviewCard } from './OverviewComparison';
@@ -24,7 +24,7 @@ function parseRoute(): Route {
   const params = new URLSearchParams(location.hash.slice(1));
   const view = params.get('view');
   const section = params.get('section');
-  return { view: view === 'comparison' || view === 'detail' ? view : 'map', section: section && section in sectionLabels ? section as Section : view === 'detail' ? 'profitability' : 'competition',
+  return { view: view === 'comparison' || view === 'detail' ? view : 'map', section: section && Object.hasOwn(sectionLabels, section) ? section as Section : view === 'detail' ? 'profitability' : 'competition',
     codes: [...new Set((params.get('areas') || '').split(',').filter(Boolean))].slice(0, MAX_CANDIDATES), code: params.get('area') || '' };
 }
 
@@ -52,7 +52,6 @@ export default function App() {
   const [rentalFloor, setRentalFloor] = useState('');
   const [demandMetric, setDemandMetric] = useState<'transactions' | 'floating_population'>('transactions');
   const [locationView, setLocationView] = useState<'rentals' | 'stores'>('rentals');
-  const [rentFloor, setRentFloor] = useState('');
   const [listingId, setListingId] = useState('');
   const [radius, setRadius] = useState<100 | 300 | 500>(300);
   const [nearby, setNearby] = useState<{ key: string; items: Store[]; error?: string } | null>(null);
@@ -131,23 +130,16 @@ export default function App() {
   const selected = areas.filter(a => route.codes.includes(a.code)).sort((a, b) => route.codes.indexOf(a.code) - route.codes.indexOf(b.code));
   const visible = visibleCandidates(comparison?.items || [], offset, width);
   const [first, last] = [visible.start + 1, Math.min((comparison?.items.length || 0), visible.start + width)];
-  const floor = comparison?.items.some(item => item.rentals.some(rental => rental.floor === rentFloor)) ? rentFloor : '';
-  const snapshot = route.view === 'detail' ? (detail?.area.code === route.code ? detail.meta : undefined) : comparison?.meta;
-  const hasExampleData = (snapshot?.data_version === PRESENTATION_DATA_VERSION ||
-    snapshot?.data_version === 'seoul-cafe-20261106-locations-20261120') && snapshot.quarter === PRESENTATION_QUARTER;
-  const comparisonIsCurrent = comparison && comparison.items.map(item => item.area.code).join(',') === codesKey;
-  const hasExampleCandidates = route.codes.length === PRESENTATION_CODES.length && PRESENTATION_CODES.every(code => route.codes.includes(code));
-  const showExampleCommentary = config?.llm_enabled === false && hasExampleData && !loading &&
-    section !== 'rent' && section !== 'location';
-  const demoCommentary = showExampleCommentary ? (
-    route.view === 'comparison' && comparisonIsCurrent && hasExampleCandidates ? compareCommentary(section, floor) :
-    route.view === 'detail' ? detailCommentary(route.code, section) : null
-  ) : null;
+  const floor = comparison?.items.some(item => item.rentals.some(rental => rental.floor === rentalFloor)) ? rentalFloor : '';
+  const demoCommentary = route.view === 'detail' && !loading && config?.llm_enabled === false &&
+    detail?.area.code === detailCode && detail.current && detail.meta.quarter === PRESENTATION_QUARTER &&
+    (detail.meta.data_version === PRESENTATION_DATA_VERSION || detail.meta.data_version === 'seoul-cafe-20261106-locations-20261120') &&
+    (section === 'profitability' || section === 'demand') ? detailCommentary(detailCode, section) : null;
   const context: Record<string, unknown> = { scope: route.view === 'detail' ? 'detail' : 'comparison', section,
     area_codes: route.view === 'detail' ? [detail?.area.code || detailCode] : [...route.codes].sort(), quarter: '2026Q2' };
   if (route.view === 'detail' && section === 'demand') context.demand_metric = demandMetric;
   if (route.view === 'detail' && section === 'location') Object.assign(context, { location_view: locationView, listing_id: locationView === 'stores' ? listingId || null : null, radius_m: radius });
-  if (route.view === 'comparison' && section === 'rent') Object.assign(context, { rental_area_m2: areaPyeong * PYEONG_M2, rental_floor: rentalFloor });
+  if (route.view === 'comparison' && section === 'rent') Object.assign(context, { rental_area_m2: areaPyeong * PYEONG_M2, rental_floor: floor });
 
   if (!config) return <main className="startup"><h1>상권 분석</h1>{error ? <><p role="alert">서버에 연결하지 못했습니다: {error}</p><button onClick={() => setLoadVersion(v => v + 1)}>다시 연결</button></> : <p>상권 위치 목록을 불러오고 있습니다.</p>}</main>;
 
@@ -165,7 +157,7 @@ export default function App() {
       <p className="breadcrumb">상권 분석 / {route.view === 'map' ? '관심 상권 선택' : route.view === 'detail' ? '상세 상권 분석' : '후보 상권 비교'}</p>
       {route.view === 'detail' && route.codes.length > 0 && <button className="back-link" onClick={() => navigate({ ...route, view: 'comparison', section: section === 'location' ? 'rent' : section })}>후보 상권 비교로 돌아가기</button>}
       <div className="page-heading"><div><h1>{route.view === 'map' ? '어떤 상권을 비교해 볼까요?' : route.view === 'detail' ? (detailCode ? `${areas.find(a => a.code === detailCode)?.name || ''} 상세분석` : '상세 상권 분석') : '후보 상권 비교'}</h1><p>{route.view === 'map' ? `지도에서 관심 있는 상권을 최대 ${MAX_CANDIDATES}개까지 선택하세요.` : route.view === 'comparison' ? '관심 있는 상권의 카페를 같은 기준으로 비교해 보세요.' : '선택한 상권의 흐름과 주변 정보를 확인하세요.'}</p></div><div className="context-controls"><label className="sr-only" htmlFor="industry">업종</label><select id="industry" aria-label="업종"><option>카페</option></select><select aria-label="기준 분기"><option>2026년 2분기</option></select><span className="badge demo-badge">{isDemo ? '개발용 가상 분석' : '서울시 상권 통계'}</span></div></div>
-      <div className="notice info">{isDemo ? '상권 위치를 제외한 분석과 입지 자료는 개발용 가상 예시입니다.' : '매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 예측은 Ridge 기준 모델 결과이며 매물과 메뉴는 발표용 가상 예시입니다.'}</div>
+      <div className="notice info">{isDemo ? '상권 위치를 제외한 분석과 입지 자료는 개발용 가상 예시입니다.' : '매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 예측은 Ridge 기준 모델 결과입니다. 임대 광고와 카페 메뉴는 수집 시점의 공개 자료입니다.'}</div>
       {notice && <p className="notice alert" role="alert">{notice}</p>}
       {route.view !== 'detail' && <div className="candidate-toolbar"><div className="candidate-chips" aria-label="선택한 후보 상권">{selected.map((area, i) => <span className="candidate-chip" key={area.code}><b>{i + 1}</b>{area.name}{route.view === 'map' ? <button aria-label={`${area.name} 선택 해제`} onClick={() => toggle(area.code)}>×</button> : <button aria-label={`${area.name} 상세 보기`} onClick={() => openDetail(area.code)}>↗</button>}</span>)}{!selected.length && <span className="muted">아직 선택한 후보가 없습니다.</span>}</div><span className="muted">{route.codes.length} / {MAX_CANDIDATES}개</span>{route.view !== 'map' && <button onClick={() => navigate({ ...route, view: 'map' })}>후보 변경</button>}</div>}
       {route.view === 'map' ? <>
@@ -174,6 +166,11 @@ export default function App() {
       </> : route.view === 'detail' && !detailCode ? <DetailAreaPicker areas={areas} selectedCode="" suggestedCodes={config.demo_area_codes} onSelect={code => openDetail(code, 'profitability')} />
         : route.view === 'comparison' && !route.codes.length ? <div className="panel"><p>비교할 상권을 먼저 선택하세요.</p><button onClick={() => navigate({ ...route, view: 'map' })}>상권 선택</button></div> : <>
         <nav className="section-tabs" aria-label="분석 항목">{tabs.map(tab => <button key={tab} className={section === tab ? 'active' : ''} aria-current={section === tab ? 'page' : undefined} onClick={() => navigate({ ...route, section: tab })}>{sectionLabels[tab]}</button>)}</nav>
+        {demoCommentary && <div className="explanation-jump"><button onClick={() => {
+          const title = document.getElementById('explanation-title');
+          title?.closest('section')?.scrollIntoView({ block: 'start' });
+          title?.focus({ preventScroll: true });
+        }}>AI 상권 해설 바로 보기 ↓</button></div>}
         {route.view === 'detail' && <DetailAreaPicker areas={areas} selectedCode={detailCode} suggestedCodes={route.codes} onSelect={code => openDetail(code)} compact />}
         {loading && <p role="status" className="panel">분석 자료를 불러오고 있습니다.</p>}
         {error && <div role="alert" className="notice alert">{error} <button onClick={() => setLoadVersion(v => v + 1)}>다시 시도</button></div>}
@@ -184,7 +181,7 @@ export default function App() {
             ? <OverviewCard key={item.area.code} item={item} quarter={comparison.meta.quarter} open={() => openDetail(item.area.code)} />
             : <ComparisonCard key={item.area.code} item={item} maximum={Math.max(...comparison.items.map(i => i.metrics?.average_sales_krw || 0))} open={() => openDetail(item.area.code)} />)}</div>
             : section === 'demand' ? <DemandComparison items={comparison.items} open={code => openDetail(code)} />
-            : <RentComparison items={comparison.items} open={code => openDetail(code, 'rent')} areaPyeong={areaPyeong} setAreaPyeong={setAreaPyeong} floor={rentalFloor} setFloor={setRentalFloor} />}
+            : <RentComparison items={comparison.items} open={code => openDetail(code, 'rent')} areaPyeong={areaPyeong} setAreaPyeong={setAreaPyeong} floor={floor} setFloor={setRentalFloor} demo={isDemo} />}
           {section !== 'rent' && <div className="notice info">평균 매출은 같은 상권, 업종, 분기의 총매출을 점포 수로 나눈 값입니다. 개별 점포의 매출과 다를 수 있으며 일부 점포에 매출이 집중될 수 있습니다.</div>}
         </>}
         {!loading && detail && route.view === 'detail' && (detail.current || section === 'demand' || section === 'location' ? <>
@@ -219,8 +216,10 @@ export default function App() {
           </>}
         </> : <div className="panel"><h2>이 분기의 카페 자료 없음</h2><p>{detail.missing_reason}</p><p>자료가 없다는 뜻이며 매출이나 점포 수가 0이라는 뜻은 아닙니다.</p></div>)}
         {!loading && (comparison || detail) && <>
-          {config.llm_auth_required && <label className="auth-input">해설 서비스 접근 인증<input type="password" value={accessToken} autoComplete="off" onChange={e => setAccessToken(e.target.value)} placeholder="접근 토큰, 이 화면의 메모리에만 보관" /></label>}
-          {!(route.view === 'detail' && section === 'location' && locationView === 'stores' && !listingId) && <ExplanationPanel request={context} config={config} accessToken={accessToken} />}
+          {!demoCommentary && config.llm_auth_required && <label className="auth-input">해설 서비스 접근 인증<input type="password" value={accessToken} autoComplete="off" onChange={e => setAccessToken(e.target.value)} placeholder="접근 토큰, 이 화면의 메모리에만 보관" /></label>}
+          {demoCommentary ? <DemoExplanationPanel {...demoCommentary} />
+            : !(route.view === 'detail' && section === 'location' && locationView === 'stores' && !listingId) &&
+              <ExplanationPanel request={context} config={config} accessToken={accessToken} />}
           <details className="panel methods"><summary>계산 근거와 자료 기준 보기</summary><p>금액의 원래 단위는 원입니다. 점포당 평균 매출 = 분기 총매출 ÷ 같은 분기 카페 점포 수, 점포당 거래 건수 = 총거래 건수 ÷ 점포 수, 건당 평균 결제금액 = 총매출 ÷ 총거래 건수입니다.</p><p>전년 동분기 대비 변화율 = (현재 값 ÷ 1년 전 같은 분기 값 - 1) × 100입니다. 분모가 0이거나 자료가 없으면 값을 계산하지 않습니다.</p><p>종합해설의 평균 여건은 매출과 거래 건수의 변화율을 점포 수 변화율과 각각 비교합니다. 상권의 성장만으로 점포당 평균 여건의 개선을 판단하지 않습니다. 임대료는 매물의 면적당 월세를 설정 면적으로 환산하고, 점포당 분기 평균 매출을 3으로 나눈 월 환산값과 비교합니다.</p></details>
         </>}
       </>}

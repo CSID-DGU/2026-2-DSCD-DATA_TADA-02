@@ -88,7 +88,7 @@ class AnalysisService:
         current = self.current(observations, quarter)
         meta = Metadata(data_version=snapshot["data_version"], quarter=quarter, data_mode=self.db.data_mode)
         if self.db.data_mode == "supabase":
-            meta.warning = "매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 예측은 Ridge 기준 모델 결과이며 임대 매물과 메뉴는 발표용 가상 자료입니다."
+            meta.warning = "매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 예측은 Ridge 기준 모델 결과입니다. 임대 광고와 카페 메뉴는 수집 시점의 공개 자료입니다."
         forecast = snapshot["forecast"]
         if forecast:
             # Older fixtures contain the equivalent total as a year-on-year rate.
@@ -101,7 +101,6 @@ class AnalysisService:
                         if prior and prior.total_sales_krw is not None and point.get("sales_yoy_pct") is not None else None)
                 points.append(point)
             forecast = {**forecast, "points": points}
-            meta.warning = "매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 예측은 Ridge 기준 모델 결과입니다. 임대 광고와 카페 메뉴는 수집 시점의 공개 자료입니다."
         return DetailResponse(
             meta=meta, area=area, current=current, observations=observations,
             forecast=forecast, demand=snapshot["demand"],

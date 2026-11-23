@@ -64,6 +64,9 @@ def build_evidence(analysis: AnalysisService, req: ExplanationRequest) -> dict:
         if req.section == "competition":
             facts[prefix + "rentals"] = [r.model_dump() for r in detail.rentals]
         if req.section == "rent":
+            rental_source = (
+                "개발용 가상 매물" if analysis.db.data_mode == "demo" else "수집 시점의 공개 임대 광고"
+            )
             rentals = [r for r in detail.rentals if (not req.rental_floor or r.floor == req.rental_floor)
                        and r.area_m2 is not None and r.area_m2 > 0 and r.monthly_rent_krw is not None]
             total_area = sum(r.area_m2 for r in rentals)
@@ -74,7 +77,10 @@ def build_evidence(analysis: AnalysisService, req: ExplanationRequest) -> dict:
                 "monthly_rent_krw": estimate,
                 "monthly_sales_krw": monthly_sales,
                 "sales_ratio_pct": estimate / monthly_sales * 100 if estimate is not None and monthly_sales is not None and monthly_sales > 0 else None,
-                "method": "조건에 맞는 매물의 월세 합계 / 면적 합계 * 설정 면적. 관리비와 보증금 제외. 발표용 예시 매물 기준.",
+                "method": (
+                    "조건에 맞는 매물의 월세 합계 / 면적 합계 * 설정 면적. 관리비와 보증금 제외. "
+                    f"{rental_source} 기준."
+                ),
             }
         if req.section == "rent" or (req.section == "location" and req.location_view == "rentals"):
             facts[prefix + "rentals"] = [r.model_dump() for r in detail.rentals]

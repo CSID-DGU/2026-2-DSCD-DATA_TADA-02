@@ -17,7 +17,7 @@ export default function DetailAreaPicker({ areas, selectedCode, suggestedCodes, 
       <label>상권 검색<input type="search" value={query} placeholder="상권 이름, 자치구, 행정동" onChange={event => setQuery(event.target.value)} /></label>
       <label>상세분석할 상권<select value={selectedCode} onChange={event => onSelect(event.target.value)}>
         <option value="" disabled>상권을 선택하세요</option>
-        {options.map(area => <option key={area.code} value={area.code}>{area.name} · {area.district}</option>)}
+        {options.map(area => <option key={area.code} value={area.code}>{area.name} / {area.district}</option>)}
       </select></label>
     </div>
     {!matches.length && <p className="muted" role="status">검색 결과가 없습니다. 다른 이름이나 지역으로 검색하세요.</p>}
