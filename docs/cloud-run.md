@@ -4,11 +4,11 @@
 - 리전: 서울 `asia-northeast3`.
 - 서비스: `data-tada`.
 - 공개 주소: [DATA TADA 서비스](https://data-tada-265941513825.asia-northeast3.run.app).
-- 운영 상태 확인일: 2026-11-20. 리비전 `data-tada-live-locations-1120b`, 트래픽 100%.
+- 운영 상태 확인일: 2026-11-23. 리비전 `data-tada-pr6fix-1123`, 트래픽 100%.
 - 이미지 저장소: `asia-northeast3-docker.pkg.dev/data-tada-capstone-20261109/data-tada/service`.
 - 서버 실행 계정: `data-tada-runtime@data-tada-capstone-20261109.iam.gserviceaccount.com`.
 - 데이터: Supabase의 읽기 전용 상권 통계, 기준 예측, 수집 임대 광고, 카페와 메뉴.
-- LLM: 비활성. 기존 통계 기반 사전 작성 해설은 승인된 후보와 분기 조건에서 표시한다.
+- LLM: 비활성.
 - 후보는 지도에서 선택한다. 임대 비교와 입지 상세에서 실데이터를 조회하며, 매물 원문 링크와 반경 내 카페를 제공한다.
 
 현재 저장소의 비교 화면은 후보를 최대 3개까지 받는다. LLM이 꺼져 있을 때 사전 작성 해설은 자료 버전과 분기가 일치하는 상권의 상세 매출 및 수요 화면에서 표시한다.
@@ -68,3 +68,5 @@ gcloud run deploy data-tada --image=asia-northeast3-docker.pkg.dev/data-tada-cap
 발표 모드 변경 후 검증 주소에서 시작 버튼, 고정 후보, 비교 4개와 상세 20개의 해석, 임대 층 필터, 입지 사례 조건 복귀를 확인했다. 공개 주소에서는 시작 팝업과 매출 해설을 다시 확인했고 GPT는 비활성 상태를 유지했다.
 
 2026-11-20에는 최종 이미지를 공개 트래픽 없이 검증한 뒤 공개 주소를 `data-tada-live-locations-1120b`로 전환했다. 성수역 상세와 임대 비교, 매물 원문 링크, 카페 메뉴와 가격, 매물이 없는 상권의 카페 목록을 브라우저에서 확인했다. 공개 API에서 성수역 매물 26건, 상권 내 카페 56곳, 기준 매물 반경 100m/300m/500m의 카페 7곳/52곳/115곳을 수집 파일과 대조했다. 직전 공개 리비전은 `data-tada-map-selection-1120`이다.
+
+2026-11-23에는 `jsw`의 `bd9abdf`를 Cloud Build `d2f21c34-199e-4dc8-903e-3a35d79abfb4`로 빌드했다. 검증 주소에서 비교 4개와 상세 3개 화면, Supabase 응답과 정적 파일을 확인한 뒤 `data-tada-pr6fix-1123`으로 공개 트래픽 100%를 전환했다. 공개 주소에서도 지도 상권 1,596개, 후보 3개 비교와 4개 요청의 HTTP 422, 성수역 매물 26건과 300m 반경 내 카페 52곳, 두 분기 예측, LLM `disabled`를 확인했다. 직전 공개 리비전은 `data-tada-live-locations-1120b`다.
