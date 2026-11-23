@@ -4,14 +4,14 @@
 - 리전: 서울 `asia-northeast3`.
 - 서비스: `data-tada`.
 - 공개 주소: [DATA TADA 서비스](https://data-tada-265941513825.asia-northeast3.run.app).
-- 운영 상태 확인일: 2026-11-20. 리비전 `data-tada-presentation-1110`, 트래픽 100%.
+- 운영 상태 확인일: 2026-11-20. 리비전 `data-tada-live-locations-1120b`, 트래픽 100%.
 - 이미지 저장소: `asia-northeast3-docker.pkg.dev/data-tada-capstone-20261109/data-tada/service`.
 - 서버 실행 계정: `data-tada-runtime@data-tada-capstone-20261109.iam.gserviceaccount.com`.
-- 데이터: 기존 Supabase의 읽기 전용 상권 통계와 기준 예측. 매물과 카페 메뉴는 발표용 가상 자료다.
-- LLM: 비활성. 현재 운영 리비전은 발표 예시 상권 5곳의 사전 작성 해설을 표시한다.
-- 발표 모드: 첫 진입에서 시작 버튼을 누르면 즉시 5곳의 매출 비교로 이동한다. 후보 추가, 삭제, 탐색 경로를 숨기며, 주소를 직접 바꿔도 고정 후보 외 상세 화면을 열지 않는다. 입지 해설은 상권별 첫 예시 매물의 반경 300m 기준이다.
+- 데이터: Supabase의 읽기 전용 상권 통계, 기준 예측, 수집 임대 광고, 카페와 메뉴.
+- LLM: 비활성. 기존 통계 기반 사전 작성 해설은 승인된 후보와 분기 조건에서 표시한다.
+- 후보는 지도에서 선택한다. 임대 비교와 입지 상세에서 실데이터를 조회하며, 매물 원문 링크와 반경 내 카페를 제공한다.
 
-GitHub `jsw`의 서버 코드와 현재 운영 리비전은 배포 시점이 다르다. 저장소에서 발표용 후보 선택을 제거한 변경을 운영에 적용하려면 새 이미지를 빌드하고 배포한다. [서버 코드 구조](server.md) / [DB 스키마](database.md)
+입지 데이터를 읽는 서버를 배포하기 전에 [읽기 권한 SQL](../scripts/sql/location_service_access.sql)을 적용한다. 기존 운영 서버 계정에 필요한 조회 권한만 추가한다. [서버 코드 구조](server.md) / [DB 스키마](database.md)
 
 ## 빌드
 
@@ -64,3 +64,5 @@ gcloud run deploy data-tada --image=asia-northeast3-docker.pkg.dev/data-tada-cap
 같은 날 화면 탭 이름을 `매출`로 바꾸고 공개 주소의 비교와 상세 화면에서 확인했다. 링크와 API에서 사용하는 내부 항목 키 `profitability`는 유지했다.
 
 발표 모드 변경 후 검증 주소에서 시작 버튼, 고정 후보, 비교 4개와 상세 20개의 해석, 임대 층 필터, 입지 사례 조건 복귀를 확인했다. 공개 주소에서는 시작 팝업과 매출 해설을 다시 확인했고 GPT는 비활성 상태를 유지했다.
+
+2026-11-20에는 최종 이미지를 공개 트래픽 없이 검증한 뒤 공개 주소를 `data-tada-live-locations-1120b`로 전환했다. 성수역 상세와 임대 비교, 매물 원문 링크, 카페 메뉴와 가격, 매물이 없는 상권의 카페 목록을 브라우저에서 확인했다. 공개 API에서 성수역 매물 26건, 상권 내 카페 56곳, 기준 매물 반경 100m/300m/500m의 카페 7곳/52곳/115곳을 수집 파일과 대조했다. 직전 공개 리비전은 `data-tada-map-selection-1120`이다.

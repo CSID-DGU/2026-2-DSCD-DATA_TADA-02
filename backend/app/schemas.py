@@ -103,12 +103,20 @@ class Rental(BaseModel):
     maintenance_fee_krw: int | None
     observed_at: str
     source_url: str | None = None
+    source_name: str | None = None
+    is_transfer: bool = False
     is_demo: bool = True
 
 
 class MenuItem(BaseModel):
     name: str
     price_krw: int | None
+    source_url: str | None = None
+    source_date: str | None = None
+
+
+class BrandMenuItem(MenuItem):
+    channel: Literal["official_menu", "gift_catalog"]
 
 
 class Store(BaseModel):
@@ -119,6 +127,8 @@ class Store(BaseModel):
     menu: list[MenuItem]
     observed_at: str
     source_url: str | None = None
+    address: str | None = None
+    brand: str | None = None
     distance_m: float | None = None
     is_demo: bool = True
 

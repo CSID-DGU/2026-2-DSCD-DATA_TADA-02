@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from './api';
 import { DemandCharts, TrendChart } from './Charts';
-import ExplanationPanel from './ExplanationPanel';
+import ExplanationPanel, { DemoExplanationPanel } from './ExplanationPanel';
+import { compareCommentary, detailCommentary, PRESENTATION_CODES, PRESENTATION_DATA_VERSION, PRESENTATION_QUARTER } from './demoCommentary';
+import { StoreCard } from './LocationStores';
 import RentComparison from './RentComparison';
 import { OverviewCard } from './OverviewComparison';
 import DetailAreaPicker from './DetailAreaPicker';
@@ -14,6 +16,9 @@ type Route = { view: 'map' | 'comparison' | 'detail'; section: Section; codes: s
 const sectionLabels: Record<Section, string> = { profitability: '매출', competition: '종합해설', demand: '수요성', rent: '임대료', location: '입지/주변환경' };
 const number = (value: number | null | undefined, digits = 0) => value == null ? '자료 없음' : value.toLocaleString('ko-KR', { maximumFractionDigits: digits });
 const money = (value: number | null | undefined) => value == null ? '미확보' : `${number(value / 10000)}만 원`;
+const listingMoney = (value: number | null) => value == null ? '미확보' :
+  value % 10000 === 0 ? `${number(value / 10000)}만 원` : `${number(value)}원`;
+const NO_STORES: Store[] = [];
 
 function parseRoute(): Route {
   const params = new URLSearchParams(location.hash.slice(1));
@@ -47,10 +52,10 @@ export default function App() {
   const [rentalFloor, setRentalFloor] = useState('');
   const [demandMetric, setDemandMetric] = useState<'transactions' | 'floating_population'>('transactions');
   const [locationView, setLocationView] = useState<'rentals' | 'stores'>('rentals');
+  const [rentFloor, setRentFloor] = useState('');
   const [listingId, setListingId] = useState('');
   const [radius, setRadius] = useState<100 | 300 | 500>(300);
-  const [stores, setStores] = useState<Store[]>([]);
-  const [nearbyError, setNearbyError] = useState('');
+  const [nearby, setNearby] = useState<{ key: string; items: Store[]; error?: string } | null>(null);
   const [accessToken, setAccessToken] = useState('');
   const [loadVersion, setLoadVersion] = useState(0);
 
@@ -98,16 +103,20 @@ export default function App() {
     // Section changes reuse the same data payload while changing the commentary context.
   }, [config, route.view, detailCode, codesKey, loadVersion]);
 
+  const nearbyKey = detail && listingId ? `${detail.area.code}:${detail.meta.quarter}:${listingId}:${radius}` : '';
+  const nearbyResult = nearby?.key === nearbyKey ? nearby : null;
+  const stores = listingId ? nearbyResult?.items ?? NO_STORES : detail?.stores ?? NO_STORES;
+
   useEffect(() => {
     if (route.view !== 'detail' || route.section !== 'location' || locationView !== 'stores' || !listingId || !detail) return;
     let active = true;
     const controller = new AbortController();
-    setStores([]); setNearbyError('');
-    api<Store[]>(`/areas/${detail.area.code}/nearby-stores?listing_id=${encodeURIComponent(listingId)}&radius_m=${radius}`, { signal: controller.signal })
-      .then(values => { if (active) setStores(values); })
-      .catch(err => { if (active && err.name !== 'AbortError') setNearbyError(err.message); });
+    const params = new URLSearchParams({ listing_id: listingId, radius_m: String(radius), quarter: detail.meta.quarter });
+    api<Store[]>(`/areas/${detail.area.code}/nearby-stores?${params}`, { signal: controller.signal })
+      .then(values => { if (active) setNearby({ key: nearbyKey, items: values }); })
+      .catch(err => { if (active && err.name !== 'AbortError') setNearby({ key: nearbyKey, items: [], error: err.message }); });
     return () => { active = false; controller.abort(); };
-  }, [detail, listingId, radius, locationView, route.view, route.section]);
+  }, [detail, listingId, radius, nearbyKey, locationView, route.view, route.section]);
 
   const toggle = useCallback((code: string) => {
     setRoute(previous => {
@@ -122,6 +131,18 @@ export default function App() {
   const selected = areas.filter(a => route.codes.includes(a.code)).sort((a, b) => route.codes.indexOf(a.code) - route.codes.indexOf(b.code));
   const visible = visibleCandidates(comparison?.items || [], offset, width);
   const [first, last] = [visible.start + 1, Math.min((comparison?.items.length || 0), visible.start + width)];
+  const floor = comparison?.items.some(item => item.rentals.some(rental => rental.floor === rentFloor)) ? rentFloor : '';
+  const snapshot = route.view === 'detail' ? (detail?.area.code === route.code ? detail.meta : undefined) : comparison?.meta;
+  const hasExampleData = (snapshot?.data_version === PRESENTATION_DATA_VERSION ||
+    snapshot?.data_version === 'seoul-cafe-20261106-locations-20261120') && snapshot.quarter === PRESENTATION_QUARTER;
+  const comparisonIsCurrent = comparison && comparison.items.map(item => item.area.code).join(',') === codesKey;
+  const hasExampleCandidates = route.codes.length === PRESENTATION_CODES.length && PRESENTATION_CODES.every(code => route.codes.includes(code));
+  const showExampleCommentary = config?.llm_enabled === false && hasExampleData && !loading &&
+    section !== 'rent' && section !== 'location';
+  const demoCommentary = showExampleCommentary ? (
+    route.view === 'comparison' && comparisonIsCurrent && hasExampleCandidates ? compareCommentary(section, floor) :
+    route.view === 'detail' ? detailCommentary(route.code, section) : null
+  ) : null;
   const context: Record<string, unknown> = { scope: route.view === 'detail' ? 'detail' : 'comparison', section,
     area_codes: route.view === 'detail' ? [detail?.area.code || detailCode] : [...route.codes].sort(), quarter: '2026Q2' };
   if (route.view === 'detail' && section === 'demand') context.demand_metric = demandMetric;
@@ -175,9 +196,26 @@ export default function App() {
           {section === 'demand' && <><div className="segmented sub-tabs"><button className={demandMetric === 'transactions' ? 'active' : ''} onClick={() => setDemandMetric('transactions')}>거래 건수</button><button className={demandMetric === 'floating_population' ? 'active' : ''} onClick={() => setDemandMetric('floating_population')}>유동인구</button></div>{detail.demand[demandMetric] ? <><section className="panel metric-summary"><div><h2>누가, 언제 {demandMetric === 'transactions' ? '결제하고' : '지나고'} 있을까요?</h2><p className="muted">2026년 2분기 / 카페 기준 거래와 상권 전체 유동인구는 서로 다른 자료입니다.</p></div>{demandMetric === 'transactions' && <div><span>분기 총거래 건수</span><strong>{detail.current?.transaction_count == null ? '자료 없음' : number(detail.current.transaction_count) + '건'}</strong></div>}</section><DemandCharts distribution={detail.demand[demandMetric]} /></> : <p className="panel">해당 분포 자료가 없습니다.</p>}<p className="notice info">거래 건수는 고유 고객 수와 다르며, 유동인구는 카페 구매자 수와 다릅니다. 요일은 일평균, 연령과 시간대는 분기 합계입니다.</p></>}
           {section === 'location' && <>
             <div className="segmented sub-tabs"><button className={locationView === 'rentals' ? 'active' : ''} onClick={() => setLocationView('rentals')}>임대매물</button><button className={locationView === 'stores' ? 'active' : ''} onClick={() => setLocationView('stores')}>주변 점포</button></div>
-            {locationView === 'stores' && <div className="panel location-filter"><label>기준 매물<select value={listingId} onChange={e => setListingId(e.target.value)}>{detail.rentals.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}</select></label><label>탐색 반경<select value={radius} onChange={e => setRadius(Number(e.target.value) as 100 | 300 | 500)}>{[100, 300, 500].map(r => <option key={r} value={r}>{r}m</option>)}</select></label></div>}
-            {nearbyError && locationView === 'stores' && <p className="notice alert" role="alert">{nearbyError}</p>}
-            <div className="location-layout"><aside className="panel location-list">{locationView === 'rentals' ? <><h2>예시 매물 {detail.rentals.length}개</h2><RentalList rentals={detail.rentals} selectedId={listingId} select={selectListing} nearby={() => setLocationView('stores')} /></> : <><h2>반경 {radius}m 내 예시 카페 {stores.length}곳</h2>{stores.map(store => <article key={store.id} className="store-row"><h3>{store.name}</h3><small>{number(store.distance_m)}m / 확인일 {store.observed_at}</small>{store.menu.length ? store.menu.map(menu => <p key={menu.name}>{menu.name}<strong>{menu.price_krw == null ? '가격 미확보' : `${number(menu.price_krw)}원`}</strong></p>) : <p className="muted">메뉴와 가격 미확보</p>}</article>)}{!listingId && <p>먼저 기준 매물을 선택하세요.</p>}</>}</aside><LocationMap area={detail.area} rentals={locationView === 'stores' ? detail.rentals.filter(r => r.id === listingId) : detail.rentals} stores={locationView === 'stores' ? stores : []} selectedId={listingId} radius={locationView === 'stores' ? radius : undefined} onSelect={selectListing} /></div>
+            {locationView === 'stores' && detail.rentals.length > 0 && <div className="panel location-filter">
+              <label>카페 조회 기준<select value={listingId} onChange={e => setListingId(e.target.value)}>
+                <option value="">상권 안의 카페</option>
+                {detail.rentals.map(r => <option key={r.id} value={r.id}>{[r.title, r.floor].filter(Boolean).join(' / ')}</option>)}
+              </select></label>
+              {listingId && <label>탐색 반경<select value={radius} onChange={e => setRadius(Number(e.target.value) as 100 | 300 | 500)}>{[100, 300, 500].map(r => <option key={r} value={r}>{r}m</option>)}</select></label>}
+            </div>}
+            <div className="location-layout">
+              <aside className="panel location-list">{locationView === 'rentals' ? <>
+                <h2>{isDemo ? '예시 매물' : '임대 매물'} {detail.rentals.length}건</h2>
+                <RentalList rentals={detail.rentals} selectedId={listingId} select={selectListing} nearby={() => setLocationView('stores')} />
+              </> : <>
+                <h2>{listingId ? `반경 ${radius}m 내 카페` : '상권 안의 카페'}{(!listingId || (nearbyResult && !nearbyResult.error)) && ` ${stores.length}곳`}</h2>
+                {nearbyResult?.error && listingId ? <p role="alert">{nearbyResult.error}</p> :
+                  listingId && !nearbyResult ? <p role="status">주변 카페를 불러오는 중입니다.</p> :
+                  stores.length === 0 ? <p className="muted">이 범위에서 수집된 카페가 없습니다.</p> :
+                  stores.map(store => <StoreCard key={store.id} store={store} />)}
+              </>}</aside>
+              <LocationMap area={detail.area} rentals={locationView === 'stores' ? detail.rentals.filter(r => r.id === listingId) : detail.rentals} stores={locationView === 'stores' ? stores : NO_STORES} selectedId={listingId} radius={locationView === 'stores' && listingId ? radius : undefined} onSelect={selectListing} demo={isDemo} />
+            </div>
           </>}
         </> : <div className="panel"><h2>이 분기의 카페 자료 없음</h2><p>{detail.missing_reason}</p><p>자료가 없다는 뜻이며 매출이나 점포 수가 0이라는 뜻은 아닙니다.</p></div>)}
         {!loading && (comparison || detail) && <>
@@ -211,6 +249,14 @@ function DemandComparison({ items, open }: { items: ComparisonItem[]; open: (cod
 }
 function RentalList({ rentals, selectedId, select, nearby }: { rentals: Detail['rentals']; selectedId?: string; select?: (id: string) => void; nearby?: () => void }) {
   return <div className="rental-list">{rentals.map(r => <article key={r.id} className={`rental-item ${selectedId === r.id ? 'selected' : ''}`}>
-    {select ? <button className="rental-name" onClick={() => select(r.id)} aria-pressed={selectedId === r.id}>{r.title}</button> : <h3>{r.title}</h3>}<strong className="rent-price">월세 {money(r.monthly_rent_krw)}</strong><p>보증금 {money(r.deposit_krw)}</p><p>{r.area_m2 == null ? '면적 미확보' : `${number(r.area_m2, 1)}㎡`} / {r.floor || '층 미확보'}</p><small>관리비 {money(r.maintenance_fee_krw)} / 확인일 {r.observed_at}</small>{r.source_url && <a href={r.source_url} target="_blank" rel="noreferrer">광고 원문 보기</a>}{nearby && selectedId === r.id && <button className="primary" onClick={nearby}>이 매물 주변 점포 보기 →</button>}
-  </article>)}{!rentals.length && <p className="muted">이 상권에는 발표용 매물 예시가 없습니다.</p>}</div>;
+    {select ? <button className="rental-name" onClick={() => select(r.id)} aria-pressed={selectedId === r.id}>{r.title}</button> : <h3>{r.title}</h3>}
+    <strong className="rent-price">월세 {listingMoney(r.monthly_rent_krw)}</strong>
+    <p>보증금 {listingMoney(r.deposit_krw)}</p>
+    <p>{r.area_m2 == null ? '면적 미확보' : `${number(r.area_m2, 1)}㎡`} / {r.floor || '층 미확보'}</p>
+    <small>{[r.source_name, `확인일 ${r.observed_at.slice(0, 10)}`].filter(Boolean).join(' / ')}</small>
+    {r.maintenance_fee_krw != null && <p>관리비 {listingMoney(r.maintenance_fee_krw)}</p>}
+    {r.is_transfer && <small>권리금 매물의 월세 및 보증금입니다.</small>}
+    {r.source_url && <a href={r.source_url} target="_blank" rel="noopener noreferrer">광고 원문 보기</a>}
+    {nearby && selectedId === r.id && <button className="primary" onClick={nearby}>이 매물 주변 점포 보기 →</button>}
+  </article>)}{!rentals.length && <p className="muted">이 상권에서 수집된 임대 매물이 없습니다.</p>}</div>;
 }

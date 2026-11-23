@@ -19,6 +19,7 @@ from .explanations import ExplanationService
 from .schemas import (
     MAX_CANDIDATES,
     CatalogResponse, ComparisonResponse, ConfigResponse, DetailResponse, ErrorResponse, HealthResponse, ReadyResponse,
+    BrandMenuItem, CatalogResponse, ComparisonResponse, ConfigResponse, DetailResponse, ErrorResponse, HealthResponse, ReadyResponse,
     ExplanationRequest, ExplanationResponse, QueryContext, Store,
 )
 from .telemetry import Metrics, event, request_id_var, span
@@ -150,6 +151,10 @@ def create_app(settings: Settings | None = None, provider=None) -> FastAPI:
     def nearby(area_code: str, listing_id: str = Query(min_length=1, max_length=80),
                radius_m: Radius = Radius.medium, quarter: Quarter = "2026Q2", service=Depends(analysis)):
         return service.nearby(area_code, quarter, listing_id, radius_m)
+
+    @app.get("/api/v1/cafes/{store_id}/brand-menu", response_model=list[BrandMenuItem], tags=["analysis"])
+    def cafe_brand_menu(store_id: str, service=Depends(analysis)):
+        return service.brand_menu(store_id)
 
     @app.post("/api/v1/explanations", response_model=ExplanationResponse,
               responses={202: {"model": ExplanationResponse}, 502: {"model": ExplanationResponse}, 401: {"model": ErrorResponse}},

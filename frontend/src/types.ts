@@ -14,10 +14,13 @@ export type Rental = {
   id: string; area_code: string; title: string; latitude: number; longitude: number;
   monthly_rent_krw: number | null; deposit_krw: number | null; area_m2: number | null;
   floor: string | null; maintenance_fee_krw: number | null; observed_at: string; source_url: string | null;
+  source_name: string | null; is_transfer: boolean; is_demo: boolean;
 };
+export type MenuItem = { name: string; price_krw: number | null; source_url: string | null; source_date: string | null };
+export type BrandMenuItem = MenuItem & { channel: 'official_menu' | 'gift_catalog' };
 export type Store = {
-  id: string; name: string; latitude: number; longitude: number; distance_m?: number;
-  menu: { name: string; price_krw: number | null }[]; observed_at: string; source_url: string | null;
+  id: string; name: string; latitude: number; longitude: number; distance_m: number | null;
+  menu: MenuItem[]; observed_at: string; source_url: string | null; address: string | null; brand: string | null;
 };
 export type Observation = { quarter: string; total_sales_krw: number | null; store_count: number; transaction_count: number | null;
   average_sales_krw: number | null; sales_yoy_pct: number | null; stores_yoy_pct: number | null };

@@ -7,7 +7,7 @@
 - 공통 응답 헤더: `X-Request-ID`, `Server-Timing: app;dur=...`.
 - 금액: 원, 면적: ㎡, 거리: m, 변화율: %.
 - 지원 업종: V1 카페 `CS100010`. 현재 연결된 기준 분기는 `2026Q2`.
-- 자료 상태: `supabase` 모드는 지도 위치, 서울시 상권 통계, Ridge 기준 모델 예측을 PostgreSQL에서 읽는다. 매물과 메뉴는 5개 상권의 발표용 가상 자료다. `demo` 모드는 지도 위치를 제외한 분석에도 가상 자료를 쓴다.
+- 자료 상태: `supabase` 모드는 지도 위치, 서울시 상권 통계, Ridge 기준 모델 예측과 수집된 임대 광고, 카페, 메뉴를 PostgreSQL에서 읽는다. `demo` 모드는 지도 위치를 제외한 분석과 입지에 가상 자료를 쓴다.
 
 ## 인풋: 공통 분석 조건
 
@@ -46,6 +46,7 @@
 | POST | `/api/v1/comparisons` | 공통 분석 조건 | 후보별 현재 지표와 광고 조건 |
 | GET | `/api/v1/areas/{area_code}/analysis` | 코드, quarter | 한 상권의 전체 상세 자료 |
 | GET | `/api/v1/areas/{area_code}/nearby-stores` | 기준 매물과 반경 | 거리 순 주변 점포 |
+| GET | `/api/v1/cafes/{store_id}/brand-menu` | 공단 점포 ID | 해당 브랜드가 공개한 메뉴 및 상품 |
 | POST | `/api/v1/explanations` | 화면 맥락, 필요 시 Bearer | 완료/진행/비활성/자료 부족/실패 |
 
 ## 1. 서비스 설정
@@ -119,7 +120,7 @@
 | forecast.points[] | 미래 분기, `total_sales_krw` 총매출, 평균 매출, 두 원지표 YoY, 평균 매출 80/90% 하한/상한 |
 | demand | `transactions`, `floating_population`별 분포 |
 | rentals[] | 광고 원조건 |
-| stores[] | 메뉴와 가격을 포함한 개발용 주변 점포 원자료 |
+| stores[] | 상권 안에 있는 카페, 확보한 매장별 메뉴와 가격 |
 | boundary | 실제 경계 미연결로 null |
 | missing_reason | 자료가 없을 때 이유 |
 
@@ -131,7 +132,7 @@
 
 ### 임대광고 계약
 
-`id`, `area_code`, `title`, 좌표, `monthly_rent_krw`, `deposit_krw`, `area_m2`, `floor`, `maintenance_fee_krw`, `observed_at`, `source_url`, `is_demo`.
+`id`, `area_code`, `title`, 좌표, `monthly_rent_krw`, `deposit_krw`, `area_m2`, `floor`, `maintenance_fee_krw`, `observed_at`, `source_url`, `source_name`, `is_transfer`, `is_demo`.
 
 - 없는 관리비는 null이다. 0원이라고 표시하지 않는다.
 - 매물 상세에는 원래 계약 조건을 표시한다. 비교 화면은 조건에 맞는 매물의 월세 합계를 면적 합계로 나눠 설정 면적으로 환산한다. 예상 월세를 점포당 분기 평균 매출 ÷ 3으로 나눠 월 환산 매출 대비 비율을 계산하며, 보증금/관리비는 포함하지 않는다. 가상 매물의 참고값으로 실제 시세나 특정 면적 점포의 예상 매출을 뜻하지 않는다.
@@ -139,14 +140,15 @@
 
 ## 5. 기준 매물 주변 점포
 
-`GET /api/v1/areas/3120052/nearby-stores?listing_id=demo-3120052-rent-0&radius_m=300`
+`GET /api/v1/areas/{area_code}/nearby-stores?listing_id={listing_id}&radius_m=300`
 
 - 인풋: 경로 상권 코드, 필수 `listing_id`, `radius_m`은 100/300/500 중 하나, `quarter` 기본 `2026Q2`.
 - 처리: 해당 상권에 속한 기준 매물인지 확인하고 Haversine 직선거리로 필터링한다.
-- 아웃풋: `Store[]`, 거리 오름차순. 한 점포는 `id`, `name`, 좌표, `menu[]`, `observed_at`, `source_url`, `distance_m`, `is_demo`.
-- 메뉴: `name`, `price_krw`. 메뉴가 없으면 빈 배열이며 가격이 없으면 null이다.
+- 아웃풋: `Store[]`, 거리 오름차순. 한 점포는 `id`, `name`, `address`, 좌표, `menu[]`, `observed_at`, `source_url`, `distance_m`, `brand`, `is_demo`.
+- 메뉴: `name`, `price_krw`, 해당하면 `source_date`, `source_url`. 메뉴가 없으면 빈 배열이며 가격이 없으면 null이다.
 - 오류: 다른 상권 매물/알 수 없는 매물은 404, 허용되지 않은 반경은 422.
-- 범위 한계: 현재는 연결된 fixture 점포만 검색한다. 외부 웹의 현재 가게를 실시간 전수 검색하지 않는다. 실제 서비스는 후보 상권 밖의 반경 내 점포도 읽도록 자료 범위를 별도 연결해야 한다.
+- 운영 모드는 기준 매물 주위의 수집 카페를 검색하며 선택한 상권 경계 밖의 점포도 반경에 들어오면 반환한다. 매물이 없는 상권에서는 상세의 `stores`를 사용할 수 있다.
+- 브랜드 자료의 `channel`은 `official_menu` 또는 `gift_catalog`다. 기프트 상품 금액은 매장별 메뉴 가격과 구분한다.
 
 ## 6. 페이지별 해설 생성과 캐시
 
