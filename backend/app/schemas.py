@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+MAX_CANDIDATES = 3
+
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -17,7 +19,7 @@ class Section(StrEnum):
 
 
 class QueryContext(StrictModel):
-    area_codes: list[str] = Field(min_length=1, max_length=5)
+    area_codes: list[str] = Field(min_length=1, max_length=MAX_CANDIDATES)
     industry_code: Literal["CS100010"] = "CS100010"
     quarter: str = Field(default="2026Q2", pattern=r"^20\d{2}Q[1-4]$")
 
@@ -35,6 +37,8 @@ class ExplanationRequest(QueryContext):
     location_view: Literal["rentals", "stores"] = "rentals"
     listing_id: str | None = Field(default=None, max_length=80)
     radius_m: Literal[100, 300, 500] = 300
+    rental_area_m2: float = Field(default=66.1157, gt=0, le=3305.785)
+    rental_floor: str = Field(default="", max_length=40)
 
     @model_validator(mode="after")
     def valid_scope(self):
@@ -82,6 +86,7 @@ class CurrentMetrics(BaseModel):
     sales_yoy_pct: float | None
     stores_yoy_pct: float | None
     average_sales_yoy_pct: float | None
+    transactions_yoy_pct: float | None = None
     competition_type: str
 
 
@@ -133,6 +138,7 @@ class ComparisonItem(BaseModel):
     metrics: CurrentMetrics | None
     rentals: list[Rental]
     missing_reason: str | None = None
+    observations: list["Observation"] = Field(default_factory=list)
 
 
 class ComparisonResponse(BaseModel):
@@ -152,6 +158,7 @@ class Observation(BaseModel):
 
 class ForecastPoint(BaseModel):
     quarter: str
+    total_sales_krw: float | None = None
     average_sales_krw: float | None
     sales_yoy_pct: float | None
     stores_yoy_pct: float | None

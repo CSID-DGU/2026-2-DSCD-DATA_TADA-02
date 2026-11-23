@@ -4,7 +4,7 @@ import pytest
 
 from backend.app.analysis import competition_type, divide, yoy
 
-CODES = ["3120052", "3120104", "3120100", "3120050", "3120053"]
+CODES = ["3120052", "3120104", "3120100"]
 
 
 def test_health_catalog_and_timing(client):
@@ -19,16 +19,23 @@ def test_health_catalog_and_timing(client):
     assert "경계가 아닙니다" in response.json()["marker_meaning"]
     values = client.get("/api/v1/areas", params={"q": "성수역", "district": "성동구"}).json()["items"]
     assert values and all("성수역" in a["name"] and a["district"] == "성동구" for a in values)
+    config = client.get('/api/v1/config').json()
+    assert config['max_candidates'] == 3
+    assert len(config['demo_area_codes']) == 5
 
 
-@pytest.mark.parametrize("codes", [[], CODES + ["3130310"], [CODES[0], CODES[0]]])
-def test_candidate_limit_and_duplicate_validation(client, codes):
-    response = client.post("/api/v1/comparisons", json={"area_codes": codes})
+@pytest.mark.parametrize("endpoint", ['comparisons', 'explanations'])
+@pytest.mark.parametrize("codes", [[], CODES + ["3120050"], CODES + ["3120050", "3120053"], [CODES[0], CODES[0]]])
+def test_candidate_limit_and_duplicate_validation(client, codes, endpoint):
+    payload = {"area_codes": codes}
+    if endpoint == 'explanations':
+        payload.update(scope='comparison', section='competition')
+    response = client.post(f"/api/v1/{endpoint}", json=payload)
     assert response.status_code == 422
     assert response.json()["error"]["request_id"] == response.headers["x-request-id"]
 
 
-def test_five_candidates_order_and_independent_arithmetic(client):
+def test_three_candidates_order_and_independent_arithmetic(client):
     response = client.post("/api/v1/comparisons", json={"area_codes": CODES[::-1]})
     assert response.status_code == 200
     body = response.json()
@@ -66,6 +73,40 @@ def test_observations_yoy_and_unvalidated_forecast(client):
     for p in body["forecast"]["points"]:
         assert p["lower90_krw"] < p["lower80_krw"] < p["average_sales_krw"] < p["upper80_krw"] < p["upper90_krw"]
     assert body["boundary"] is None
+
+
+def test_report_comparison_history_transaction_change_and_total_forecast(client):
+    item = client.post('/api/v1/comparisons', json={"area_codes": CODES[:1]}).json()['items'][0]
+    rows = {r['quarter']: r for r in item['observations']}
+    assert math.isclose(item['metrics']['transactions_yoy_pct'],
+                        (rows['2026Q2']['transaction_count'] / rows['2025Q2']['transaction_count'] - 1) * 100)
+    body = client.get(f'/api/v1/areas/{CODES[0]}/analysis').json()
+    for point in body['forecast']['points']:
+        prior = rows['2025' + point['quarter'][4:]]
+        assert math.isclose(point['total_sales_krw'], prior['total_sales_krw'] * (1 + point['sales_yoy_pct'] / 100))
+    overview = client.post('/api/v1/explanations', json={"scope": "comparison", "section": "competition", "area_codes": CODES[:1]}).json()
+    assert f'{CODES[0]}.transactions_yoy_pct' in overview['evidence']['facts']
+    assert f'{CODES[0]}.observations' in overview['evidence']['facts']
+
+
+def test_report_rent_evidence_uses_selected_area_and_floor(client):
+    request = {"scope": "comparison", "section": "rent", "area_codes": CODES[:1],
+               "rental_area_m2": 50, "rental_floor": "1층"}
+    response = client.post('/api/v1/explanations', json=request)
+    assert response.status_code == 200
+    first = response.json()
+    estimate = first['evidence']['facts'][f'{CODES[0]}.rental_estimate']
+    assert estimate['sample_count'] == 2
+    assert math.isclose(estimate['monthly_rent_krw'], (3900000 + 2200000) / (66.1 + 29.8) * 50)
+    assert math.isclose(estimate['sales_ratio_pct'], estimate['monthly_rent_krw'] / (78000000 / 3) * 100)
+    request['rental_area_m2'] = 100
+    second = client.post('/api/v1/explanations', json=request).json()
+    assert first['cache_key'] != second['cache_key']
+    request['rental_floor'] = '3층'
+    missing = client.post('/api/v1/explanations', json=request).json()['evidence']['facts'][f'{CODES[0]}.rental_estimate']
+    assert missing['monthly_rent_krw'] is None and missing['sales_ratio_pct'] is None
+    request['rental_area_m2'] = 0
+    assert client.post('/api/v1/explanations', json=request).status_code == 422
 
 
 def test_nearby_radius_filters_and_listing_ownership(client):

@@ -1,5 +1,7 @@
 # 검증 결과
 
+> 2026-11-20 변경: 후보 비교 한도는 현재 3개다. 아래의 5개 선택/비교 및 여섯 번째 선택 검사는 이전 버전의 검증 기록이다. 최근 변경 검증은 `docs/work-logs/codex_log.md`를 참고한다.
+
 - 최신 검증일: 2026-11-09, 정규 CPython 3.13과 Node.js. 아래 로컬 화면/부하 측정은 2026-11-06 기록이다.
 - 배포: 서울 Cloud Run `data-tada`, Supabase 모드. [배포 주소](https://data-tada-265941513825.asia-northeast3.run.app), [배포 설정](cloud-run.md).
 - LLM: 모의 provider 시험만 실행. 실제 유료 LLM은 호출하지 않음.

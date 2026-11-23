@@ -69,6 +69,7 @@ class AnalysisService:
             transactions_per_store=divide(row.transaction_count, row.store_count),
             average_payment_krw=divide(row.total_sales_krw, row.transaction_count),
             average_sales_yoy_pct=yoy(row.average_sales_krw, previous.average_sales_krw if previous else None),
+            transactions_yoy_pct=yoy(row.transaction_count, previous.transaction_count if previous else None),
             competition_type=competition_type(row.sales_yoy_pct, row.stores_yoy_pct),
         )
 
@@ -87,10 +88,23 @@ class AnalysisService:
         current = self.current(observations, quarter)
         meta = Metadata(data_version=snapshot["data_version"], quarter=quarter, data_mode=self.db.data_mode)
         if self.db.data_mode == "supabase":
+            meta.warning = "매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 예측은 Ridge 기준 모델 결과이며 임대 매물과 메뉴는 발표용 가상 자료입니다."
+        forecast = snapshot["forecast"]
+        if forecast:
+            # Older fixtures contain the equivalent total as a year-on-year rate.
+            points = []
+            for point in forecast["points"]:
+                point = dict(point)
+                prior = next((r for r in observations if r.quarter == f"{int(point['quarter'][:4]) - 1}{point['quarter'][4:]}"), None)
+                if "total_sales_krw" not in point:
+                    point["total_sales_krw"] = (prior.total_sales_krw * (1 + point["sales_yoy_pct"] / 100)
+                        if prior and prior.total_sales_krw is not None and point.get("sales_yoy_pct") is not None else None)
+                points.append(point)
+            forecast = {**forecast, "points": points}
             meta.warning = "매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 예측은 Ridge 기준 모델 결과입니다. 임대 광고와 카페 메뉴는 수집 시점의 공개 자료입니다."
         return DetailResponse(
             meta=meta, area=area, current=current, observations=observations,
-            forecast=snapshot["forecast"], demand=snapshot["demand"],
+            forecast=forecast, demand=snapshot["demand"],
             rentals=snapshot["rentals"], stores=snapshot["stores"], boundary=None,
             missing_reason=None if current is not None else "선택한 분기의 카페 통계가 없습니다.",
         )
@@ -100,7 +114,7 @@ class AnalysisService:
         snapshots = self.db.snapshots(query.area_codes, query.quarter)
         details = [self._detail(area, query.quarter, snapshots.get(area.code)) for area in areas]
         return ComparisonResponse(meta=details[0].meta, items=[
-            ComparisonItem(area=d.area, metrics=d.current, rentals=d.rentals, missing_reason=d.missing_reason)
+            ComparisonItem(area=d.area, metrics=d.current, rentals=d.rentals, missing_reason=d.missing_reason, observations=d.observations)
             for d in details
         ])
 

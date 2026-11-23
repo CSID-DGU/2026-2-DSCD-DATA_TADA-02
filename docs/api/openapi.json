@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "DATA TADA 상권 분석 API",
-    "description": "카페 상권 최대 5개를 비교합니다. Supabase 모드는 서울시 통계와 발표용 입지 예시를 구분합니다.",
+    "description": "카페 상권 최대 3개를 비교합니다. Supabase 모드는 서울시 통계와 발표용 입지 예시를 구분합니다.",
     "version": "0.1.0"
   },
   "paths": {
@@ -25,7 +25,7 @@
             }
           },
           "422": {
-            "description": "Unprocessable Content",
+            "description": "Unprocessable Entity",
             "content": {
               "application/json": {
                 "schema": {
@@ -76,7 +76,7 @@
             }
           },
           "422": {
-            "description": "Unprocessable Content",
+            "description": "Unprocessable Entity",
             "content": {
               "application/json": {
                 "schema": {
@@ -162,7 +162,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "404": {
             "content": {
@@ -206,7 +206,7 @@
             }
           },
           "422": {
-            "description": "Unprocessable Content",
+            "description": "Unprocessable Entity",
             "content": {
               "application/json": {
                 "schema": {
@@ -322,7 +322,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "404": {
             "content": {
@@ -376,7 +376,7 @@
             }
           },
           "422": {
-            "description": "Unprocessable Content",
+            "description": "Unprocessable Entity",
             "content": {
               "application/json": {
                 "schema": {
@@ -456,7 +456,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "404": {
             "content": {
@@ -553,7 +553,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "404": {
             "content": {
@@ -632,7 +632,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "404": {
             "content": {
@@ -806,6 +806,13 @@
               }
             ],
             "title": "Missing Reason"
+          },
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/Observation"
+            },
+            "type": "array",
+            "title": "Observations"
           }
         },
         "type": "object",
@@ -981,6 +988,17 @@
               }
             ],
             "title": "Average Sales Yoy Pct"
+          },
+          "transactions_yoy_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transactions Yoy Pct"
           },
           "competition_type": {
             "type": "string",
@@ -1283,7 +1301,7 @@
               "type": "string"
             },
             "type": "array",
-            "maxItems": 5,
+            "maxItems": 3,
             "minItems": 1,
             "title": "Area Codes"
           },
@@ -1349,6 +1367,19 @@
             ],
             "title": "Radius M",
             "default": 300
+          },
+          "rental_area_m2": {
+            "type": "number",
+            "maximum": 3305.785,
+            "exclusiveMinimum": 0.0,
+            "title": "Rental Area M2",
+            "default": 66.1157
+          },
+          "rental_floor": {
+            "type": "string",
+            "maxLength": 40,
+            "title": "Rental Floor",
+            "default": ""
           }
         },
         "additionalProperties": false,
@@ -1479,6 +1510,17 @@
           "quarter": {
             "type": "string",
             "title": "Quarter"
+          },
+          "total_sales_krw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Sales Krw"
           },
           "average_sales_krw": {
             "anyOf": [
@@ -1750,7 +1792,7 @@
               "type": "string"
             },
             "type": "array",
-            "maxItems": 5,
+            "maxItems": 3,
             "minItems": 1,
             "title": "Area Codes"
           },

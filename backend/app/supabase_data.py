@@ -137,7 +137,7 @@ class SupabaseData:
                 prior = by_quarter.get(f"{int(target[:4]) - 1}{target[4:]}", {})
                 sales, stores = point["sales"], point["stores"]
                 points.append({
-                    "quarter": target, "average_sales_krw": sales / stores if stores > 0 else None,
+                    "quarter": target, "total_sales_krw": sales, "average_sales_krw": sales / stores if stores > 0 else None,
                     "sales_yoy_pct": percent_change(sales, prior.get("total_sales_krw")),
                     "stores_yoy_pct": percent_change(stores, prior.get("store_count")),
                 })

@@ -53,7 +53,7 @@ gcloud run deploy data-tada --image=asia-northeast3-docker.pkg.dev/data-tada-cap
 - `/health/live`: 프로세스 응답 확인.
 - `/health/ready`: Supabase 연결 확인.
 - `/api/v1/areas`: 지도 상권 목록 조회.
-- `/api/v1/comparisons`: 후보 5개 비교.
+- `/api/v1/comparisons`: 후보 최대 3개 비교. 아래 배포 검증 기록의 5개는 당시의 한도다.
 - `/api/v1/areas/3120052/analysis`: 단일 상권 상세.
 - `/`: 화면과 `/assets/` 정적 파일 응답 확인.
 
