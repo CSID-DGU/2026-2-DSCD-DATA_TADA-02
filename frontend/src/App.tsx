@@ -106,11 +106,12 @@ export default function App() {
   const codesKey = route.codes.join(',');
   const detailCode = route.code || route.codes[0] || '';
   useEffect(() => {
+    if (route.view !== 'detail' || !detailCode) setDetail(null);
     if (!config || route.view === 'map' || (route.view === 'detail' ? !detailCode : !route.codes.length)) return;
     let active = true;
     const controller = new AbortController();
     const started = performance.now();
-    setLoading(true); setError(''); setDetail(null); setComparison(null);
+    setLoading(true); setError(''); setComparison(null);
     const promise = route.view === 'detail'
       ? api<Detail>(`/areas/${encodeURIComponent(detailCode)}/analysis`, { signal: controller.signal })
       : api<Comparison>('/comparisons', { method: 'POST', body: JSON.stringify({ area_codes: route.codes }), signal: controller.signal });
@@ -159,10 +160,12 @@ export default function App() {
   };
   const selected = areas.filter(a => route.codes.includes(a.code)).sort((a, b) => route.codes.indexOf(a.code) - route.codes.indexOf(b.code));
   const floor = comparison?.items.some(item => item.rentals.some(rental => rental.floor === rentalFloor)) ? rentalFloor : '';
-  const demoCommentary = route.view === 'detail' && !loading && config?.llm_enabled === false &&
-    detail?.area.code === detailCode && detail.current && detail.meta.quarter === PRESENTATION_QUARTER &&
+  const updatingDetail = route.view === 'detail' && detail && detail.area.code !== detailCode && !error;
+  const detailAreaName = detail?.area.name ?? areas.find(area => area.code === detailCode)?.name;
+  const demoCommentary = route.view === 'detail' && config?.llm_enabled === false &&
+    detail?.current && detail.meta.quarter === PRESENTATION_QUARTER &&
     (detail.meta.data_version === PRESENTATION_DATA_VERSION || detail.meta.data_version === 'seoul-cafe-20261106-locations-20261120') &&
-    (section === 'profitability' || section === 'demand') ? detailCommentary(detailCode, section) : null;
+    (section === 'profitability' || section === 'demand') ? detailCommentary(detail.area.code, section) : null;
   const context: Record<string, unknown> = { scope: route.view === 'detail' ? 'detail' : 'comparison', section,
     area_codes: route.view === 'detail' ? [detail?.area.code || detailCode] : [...route.codes].sort(), quarter: '2026Q2' };
   if (route.view === 'detail' && section === 'demand') context.demand_metric = demandMetric;
@@ -191,7 +194,7 @@ export default function App() {
     <main id="main" className="workspace" tabIndex={-1}>
       <p className="breadcrumb">상권 분석 / {route.view === 'map' ? '관심 상권 선택' : route.view === 'detail' ? '상세 상권 분석' : '후보 상권 비교'}</p>
       {route.view === 'detail' && route.codes.length > 0 && <button className="back-link" onClick={() => navigate({ ...route, view: 'comparison', section: section === 'location' ? 'rent' : section })}>후보 상권 비교로 돌아가기</button>}
-      <div className="page-heading"><div><h1>{route.view === 'map' ? '어떤 상권을 비교해 볼까요?' : route.view === 'detail' ? (detailCode ? `${areas.find(a => a.code === detailCode)?.name || ''} 상세분석` : '상세 상권 분석') : '후보 상권 비교'}</h1><p>{route.view === 'map' ? `지도에서 관심 있는 상권을 최대 ${MAX_CANDIDATES}개까지 선택하세요.` : route.view === 'comparison' ? '관심 있는 상권의 카페를 같은 기준으로 비교해 보세요.' : '선택한 상권의 흐름과 주변 정보를 확인하세요.'}</p></div><div className="context-controls"><label className="sr-only" htmlFor="industry">업종</label><select id="industry" aria-label="업종"><option>카페</option></select><span className="analysis-period">분석 시점 : {analysisYear}년 {analysisQuarter}분기</span><span className="badge demo-badge">{isDemo ? '개발용 가상 분석' : '서울시 상권 통계'}</span></div></div>
+      <div className="page-heading"><div><h1>{route.view === 'map' ? '어떤 상권을 비교해 볼까요?' : route.view === 'detail' ? (detailAreaName ? `${detailAreaName} 상세분석` : '상세 상권 분석') : '후보 상권 비교'}</h1><p>{route.view === 'map' ? `지도에서 관심 있는 상권을 최대 ${MAX_CANDIDATES}개까지 선택하세요.` : route.view === 'comparison' ? '관심 있는 상권의 카페를 같은 기준으로 비교해 보세요.' : '선택한 상권의 흐름과 주변 정보를 확인하세요.'}</p></div><div className="context-controls"><label className="sr-only" htmlFor="industry">업종</label><select id="industry" aria-label="업종"><option>카페</option></select><span className="analysis-period">분석 시점 : {analysisYear}년 {analysisQuarter}분기</span><span className="badge demo-badge">{isDemo ? '개발용 가상 분석' : '서울시 상권 통계'}</span></div></div>
       {route.view !== 'map' && <div className="notice info">{isDemo ? '상권 위치를 제외한 분석과 입지 자료는 개발용 가상 예시입니다.' : '매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 임대 광고와 카페 메뉴는 수집 시점의 공개 자료입니다.'}</div>}
       {notice && <p className="notice alert" role="alert">{notice}</p>}
       {route.view !== 'detail' && <div className="candidate-toolbar"><div className="candidate-chips" aria-label="선택한 후보 상권">{selected.map((area, i) => <span className="candidate-chip" key={area.code}><b>{i + 1}</b>{area.name}{route.view === 'map' ? <button aria-label={`${area.name} 선택 해제`} onClick={() => toggle(area.code)}>×</button> : <button aria-label={`${area.name} 상세 보기`} onClick={() => openDetail(area.code)}>↗</button>}</span>)}{!selected.length && <span className="muted">아직 선택한 후보가 없습니다.</span>}</div><span className="muted">{route.codes.length} / {MAX_CANDIDATES}개</span>{route.view !== 'map' && <button onClick={() => navigate({ ...route, view: 'map' })}>후보 변경</button>}</div>}
@@ -203,11 +206,6 @@ export default function App() {
         <button onClick={() => navigate({ ...route, view: 'map' })}>상권 선택</button>
       </div> : <>
         <nav className="section-tabs" aria-label="분석 항목">{tabs.map(tab => <button key={tab} className={section === tab ? 'active' : ''} aria-current={section === tab ? 'page' : undefined} onClick={() => navigate({ ...route, section: tab })}>{sectionLabels[tab]}</button>)}</nav>
-        {demoCommentary && <div className="explanation-jump"><button onClick={() => {
-          const title = document.getElementById('explanation-title');
-          title?.closest('section')?.scrollIntoView({ block: 'start' });
-          title?.focus({ preventScroll: true });
-        }}>AI 상권 해설 바로 보기 ↓</button></div>}
         {route.view === 'detail' && selected.some(area => area.code !== detailCode) && <label className="detail-area-switch">
           후보 상권 전환
           <select value={detailCode} onChange={event => openDetail(event.target.value, section)}>
@@ -215,7 +213,8 @@ export default function App() {
             {selected.map(area => <option key={area.code} value={area.code}>{area.name}</option>)}
           </select>
         </label>}
-        {loading && <p role="status" className="panel">분석 자료를 불러오고 있습니다.</p>}
+        {route.view === 'detail' && <span role="status" className="sr-only">{updatingDetail && '선택한 상권의 자료를 불러오는 중입니다.'}</span>}
+        {loading && (route.view === 'comparison' || !detail) && <p role="status" className="panel">분석 자료를 불러오고 있습니다.</p>}
         {error && <div role="alert" className="notice alert">{error} <button onClick={() => setLoadVersion(v => v + 1)}>다시 시도</button></div>}
         {!loading && comparison && route.view === 'comparison' && <>
           <div className="section-title"><div><h2>{section === 'profitability' ? '점포당 평균 매출 비교' : section === 'competition' ? '선택한 상권의 주요 지표 비교' : section === 'demand' ? '총 거래 건수와 평균 결제금액 비교' : '같은 면적 기준 임대료와 매출 대비 비율'}</h2><p className="muted">{section === 'rent' ? '기준 면적과 층 조건을 설정해 후보 상권을 비교하세요.' : section === 'competition' ? quarterLabel(comparison.meta.quarter) + ' 기준 (전년 동분기 대비)' : '분기 기준 / 변화율은 전년 동분기 대비'}</p></div></div>
@@ -227,7 +226,7 @@ export default function App() {
             : <RentComparison items={comparison.items} open={code => openDetail(code, 'rent')} areaPyeong={areaPyeong} setAreaPyeong={setAreaPyeong} floor={floor} setFloor={setRentalFloor} demo={isDemo} />}
           {section !== 'rent' && section !== 'competition' && <div className="notice info">평균 매출은 같은 상권, 업종, 분기의 총매출을 점포 수로 나눈 값입니다. 개별 점포의 매출과 다를 수 있으며 일부 점포에 매출이 집중될 수 있습니다.</div>}
         </>}
-        {!loading && detail && route.view === 'detail' && (detail.current || section === 'demand' || section === 'location' ? <>
+        {detail && route.view === 'detail' && (detail.current || section === 'demand' || section === 'location' ? <>
           {detail.current && section === 'profitability' && <SalesDetail detail={detail} current={detail.current} recent={recent} setRecent={setRecent} />}
           {section === 'demand' && <><div className="segmented sub-tabs"><button className={demandMetric === 'transactions' ? 'active' : ''} onClick={() => setDemandMetric('transactions')}>거래 건수</button><button className={demandMetric === 'floating_population' ? 'active' : ''} onClick={() => setDemandMetric('floating_population')}>유동인구</button></div>{detail.demand[demandMetric] ? <><section className="panel metric-summary"><div><h2>누가, 언제 {demandMetric === 'transactions' ? '결제하고' : '지나고'} 있을까요?</h2><p className="muted">2026년 2분기 / 카페 기준 거래와 상권 전체 유동인구는 서로 다른 자료입니다.</p></div>{demandMetric === 'transactions' && <div><span>분기 총거래 건수</span><strong>{detail.current?.transaction_count == null ? '자료 없음' : number(detail.current.transaction_count) + '건'}</strong></div>}</section><DemandCharts distribution={detail.demand[demandMetric]} /></> : <p className="panel">해당 분포 자료가 없습니다.</p>}<p className="notice info">거래 건수는 고유 고객 수와 다르며, 유동인구는 카페 구매자 수와 다릅니다. 요일은 일평균, 연령과 시간대는 분기 합계입니다.</p></>}
           {section === 'location' && <>
@@ -254,7 +253,7 @@ export default function App() {
             </div>
           </>}
         </> : <div className="panel"><h2>이 분기의 카페 자료 없음</h2><p>{detail.missing_reason}</p><p>자료가 없다는 뜻이며 매출이나 점포 수가 0이라는 뜻은 아닙니다.</p></div>)}
-        {!loading && (comparison || detail) && <>
+        {(route.view === 'detail' ? detail : !loading && comparison) && <>
           {!demoCommentary && config.llm_auth_required && <label className="auth-input">해설 서비스 접근 인증<input type="password" value={accessToken} autoComplete="off" onChange={e => setAccessToken(e.target.value)} placeholder="접근 토큰, 이 화면의 메모리에만 보관" /></label>}
           {demoCommentary ? <DemoExplanationPanel {...demoCommentary} reportLayout={section === 'profitability'} />
             : !(route.view === 'detail' && section === 'location' && locationView === 'stores' && !listingId) &&

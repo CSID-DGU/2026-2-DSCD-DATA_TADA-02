@@ -13,8 +13,7 @@
 .demo-explanation .explanation-question{padding:9px 12px;margin:0 0 13px;border-left:3px solid var(--teal);background:#edf7f7;font-size:14px;color:#22536b}
 .demo-explanation .explanation-summary{font-size:17px;line-height:1.65;margin-bottom:10px}
 .demo-explanation .explanation-paragraph{font-size:15px;line-height:1.75;margin-bottom:10px}
-.explanation-jump{display:flex;justify-content:flex-end;margin:-9px 0 13px}
-.explanation-jump button,.presentation-return button{font-size:13px;font-weight:700;color:#086d75}
+.presentation-return button{font-size:13px;font-weight:700;color:#086d75}
 .presentation-return button{margin:4px}
 
 .site-header nav .presentation-preset {
