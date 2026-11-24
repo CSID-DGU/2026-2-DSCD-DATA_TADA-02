@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from './api';
 import { DemandCharts } from './Charts';
 import ExplanationPanel, { DemoExplanationPanel } from './ExplanationPanel';
@@ -20,6 +20,7 @@ const money = (value: number | null | undefined) => value == null ? '미확보' 
 const listingMoney = (value: number | null) => value == null ? '미확보' :
   value % 10000 === 0 ? `${number(value / 10000)}만 원` : `${number(value)}원`;
 const NO_STORES: Store[] = [];
+const COMPARISON_PREVIEW_DELAY_MS = 1000;
 const presentationCandidates = {
   supabase: ['3120052', '3120003', '3110565'], // 성수역, 광화문역, 홍익대
   demo: ['3120052', '3120053', '3120104'],
@@ -45,6 +46,8 @@ export default function App() {
   const [config, setConfig] = useState<Config | null>(null);
   const [areas, setAreas] = useState<Area[]>([]);
   const [route, setRoute] = useState<Route>(parseRoute);
+  const [pendingComparison, setPendingComparison] = useState<Route | null>(null);
+  const comparisonDialog = useRef<HTMLDialogElement>(null);
   const [comparison, setComparison] = useState<Comparison | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState('');
@@ -77,7 +80,7 @@ export default function App() {
     history.pushState(null, '', `#${params}`);
   }, []);
   useEffect(() => {
-    const back = () => { setRoute(parseRoute()); setOffset(0); };
+    const back = () => { setPendingComparison(null); setRoute(parseRoute()); setOffset(0); };
     window.addEventListener('popstate', back); window.addEventListener('hashchange', back);
     return () => { window.removeEventListener('popstate', back); window.removeEventListener('hashchange', back); };
   }, []);
@@ -85,6 +88,22 @@ export default function App() {
     const resize = () => setWidth(window.innerWidth < 760 ? 1 : window.innerWidth < 1100 ? 2 : 3);
     window.addEventListener('resize', resize); return () => window.removeEventListener('resize', resize);
   }, []);
+
+  useEffect(() => {
+    if (!pendingComparison || !comparisonDialog.current) return;
+    const dialog = comparisonDialog.current;
+    dialog.showModal();
+
+    // This delay previews the wait before comparison commentary generation is connected.
+    const timer = window.setTimeout(() => {
+      setPendingComparison(null);
+      navigate(pendingComparison);
+    }, COMPARISON_PREVIEW_DELAY_MS);
+    return () => {
+      window.clearTimeout(timer);
+      dialog.close();
+    };
+  }, [pendingComparison, navigate]);
 
   const codesKey = route.codes.join(',');
   const detailCode = route.code || route.codes[0] || '';
@@ -132,6 +151,14 @@ export default function App() {
   const openDetail = (code: string, section = route.section) => navigate({ ...route, view: 'detail', code, section: section === 'rent' ? 'location' : section === 'competition' ? 'profitability' : section });
   const tabs: Section[] = route.view === 'detail' ? ['profitability', 'demand', 'location'] : ['competition', 'profitability', 'demand', 'rent'];
   const section = tabs.includes(route.section) ? route.section : 'profitability';
+  const openComparison = (section: Section) => {
+    const next: Route = { ...route, view: 'comparison', section };
+    if (route.view === 'map') {
+      setPendingComparison(previous => previous ?? next);
+    } else {
+      navigate(next);
+    }
+  };
   const selected = areas.filter(a => route.codes.includes(a.code)).sort((a, b) => route.codes.indexOf(a.code) - route.codes.indexOf(b.code));
   const visible = visibleCandidates(comparison?.items || [], offset, width);
   const [first, last] = [visible.start + 1, Math.min((comparison?.items.length || 0), visible.start + width)];
@@ -160,7 +187,7 @@ export default function App() {
     <header className="site-header"><button className="brand" onClick={() => navigate({ ...route, view: 'map' })}><span className="brand-pin" aria-hidden="true">⌖</span> 상권 분석</button>
       <nav aria-label="주 메뉴">
         <button className={route.view === 'map' ? 'active' : ''} onClick={() => navigate({ ...route, view: 'map' })}>상권 탐색</button>
-        <button className={route.view === 'comparison' ? 'active' : ''} disabled={!route.codes.length} onClick={() => navigate({ ...route, view: 'comparison', section: section === 'location' ? 'rent' : section })}>후보 상권 비교</button>
+        <button className={route.view === 'comparison' ? 'active' : ''} disabled={!route.codes.length} onClick={() => openComparison(section === 'location' ? 'rent' : section)}>후보 상권 비교</button>
         <button className={route.view === 'detail' ? 'active' : ''} aria-current={route.view === 'detail' ? 'page' : undefined} onClick={() => openDetail(detailCode, 'profitability')}>상세 상권 분석</button>
         <button className="presentation-preset" onClick={selectPresentationCandidates}>발표용</button>
       </nav><span className="header-meta">DATA TADA</span>
@@ -174,7 +201,7 @@ export default function App() {
       {route.view !== 'detail' && <div className="candidate-toolbar"><div className="candidate-chips" aria-label="선택한 후보 상권">{selected.map((area, i) => <span className="candidate-chip" key={area.code}><b>{i + 1}</b>{area.name}{route.view === 'map' ? <button aria-label={`${area.name} 선택 해제`} onClick={() => toggle(area.code)}>×</button> : <button aria-label={`${area.name} 상세 보기`} onClick={() => openDetail(area.code)}>↗</button>}</span>)}{!selected.length && <span className="muted">아직 선택한 후보가 없습니다.</span>}</div><span className="muted">{route.codes.length} / {MAX_CANDIDATES}개</span>{route.view !== 'map' && <button onClick={() => navigate({ ...route, view: 'map' })}>후보 변경</button>}</div>}
       {route.view === 'map' ? <>
         <MapPicker areas={areas} selected={route.codes} onToggle={toggle} />
-        <div className="map-actions"><button className="primary" disabled={!route.codes.length} onClick={() => navigate({ ...route, view: 'comparison', section: 'competition' })}>선택한 {route.codes.length}개 상권 비교하기</button></div>
+        <div className="map-actions"><button className="primary" disabled={!route.codes.length} onClick={() => openComparison('competition')}>선택한 {route.codes.length}개 상권 비교하기</button></div>
       </> : route.view === 'detail' && !detailCode ? <DetailAreaPicker areas={areas} selectedCode="" suggestedCodes={config.demo_area_codes} onSelect={code => openDetail(code, 'profitability')} />
         : route.view === 'comparison' && !route.codes.length ? <div className="panel"><p>비교할 상권을 먼저 선택하세요.</p><button onClick={() => navigate({ ...route, view: 'map' })}>상권 선택</button></div> : <>
         <nav className="section-tabs" aria-label="분석 항목">{tabs.map(tab => <button key={tab} className={section === tab ? 'active' : ''} aria-current={section === tab ? 'page' : undefined} onClick={() => navigate({ ...route, section: tab })}>{sectionLabels[tab]}</button>)}</nav>
@@ -233,6 +260,11 @@ export default function App() {
       </>}
       <footer>상권 평균과 예측은 개별 신규점의 매출이나 창업 성공을 보장하지 않습니다. 실제 판단에는 현장 확인과 추가 자료 검토가 필요합니다.</footer>
     </main>
+    <dialog ref={comparisonDialog} className="comparison-loading" aria-labelledby="comparison-loading-title"
+      onCancel={event => event.preventDefault()}>
+      <span className="comparison-loading-spinner" aria-hidden="true" />
+      <p id="comparison-loading-title" role="status">상권 비교를 준비하고 있어요</p>
+    </dialog>
   </>;
 }
 
