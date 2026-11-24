@@ -4,7 +4,7 @@ import type { Area, Detail } from './types';
 import './presentation-picker.css';
 
 const LIVE_CODES = ['3120052', '3120003', '3110565'] as const;
-const DEMO_CODES = ['3120052', '3120053', '3110565'] as const;
+const DEMO_CODES = ['3120052', '3120053', '3120104'] as const;
 const format = new Intl.NumberFormat('ko-KR');
 
 export function presentationCodes(dataMode: string): readonly string[] {
@@ -20,22 +20,32 @@ type Props = {
   onCompare: (codes: string[]) => void;
 };
 
+const salesText = (value: number | null | undefined) =>
+  value == null ? '자료 없음' : format.format(Math.round(value / 10000)) + '만 원';
+const transactionText = (value: number | null | undefined) =>
+  value == null ? '자료 없음' : format.format(value) + '건';
+
 function PreviewValues({ detail }: { detail: Detail }) {
-  const sales = detail.current?.average_sales_krw;
-  const transactions = detail.current?.transaction_count;
+  const quarter = detail.meta.quarter;
+  const previousYear = Number(quarter.slice(0, 4)) - 1;
+  const previous = detail.observations.find(row => row.quarter === previousYear + quarter.slice(4));
+  const previousLabel = previousYear + '년 ' + quarter.slice(-1) + '분기';
   const menuCount = detail.stores.filter(store => store.menu.length > 0).length;
   const figures = [
-    ['점포당 분기 평균 매출', sales == null ? '자료 없음' : format.format(Math.round(sales / 10000)) + '만 원'],
-    ['분기 거래 건수', transactions == null ? '자료 없음' : format.format(transactions) + '건'],
+    ['점포당 분기 평균 매출', salesText(detail.current?.average_sales_krw), salesText(previous?.average_sales_krw)],
+    ['분기 거래 건수', transactionText(detail.current?.transaction_count), transactionText(previous?.transaction_count)],
     ['임대 매물', detail.rentals.length ? format.format(detail.rentals.length) + '건' : '자료 없음'],
     ['상권 내 카페', detail.stores.length ? format.format(detail.stores.length) + '곳' : '자료 없음'],
     ['메뉴가 있는 카페', menuCount ? format.format(menuCount) + '곳' : '자료 없음'],
   ];
 
   return <dl className="presentation-figures">
-    {figures.map(([label, value]) => <div key={label}>
+    {figures.map(([label, value, priorValue]) => <div key={label}>
       <dt>{label}</dt>
       <dd className={value === '자료 없음' ? 'presentation-missing' : undefined}>{value}</dd>
+      {priorValue !== undefined && <dd className="presentation-previous">
+        <span>{previousLabel}</span> <span>{priorValue}</span>
+      </dd>}
     </div>)}
   </dl>;
 }
