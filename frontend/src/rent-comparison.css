@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: minmax(200px, 1fr) minmax(0, 2fr);
   align-items: center;
-  gap: 8px 20px;
+  gap: 8px 12px;
   margin-bottom: 10px;
 }
 .rent-toolbar p, .rent-note {
@@ -21,7 +21,7 @@
 .rent-area-control input { grid-column: 1 / -1; width: 100%; height: 22px; margin: 0; padding: 0; border: 0; accent-color: #00848c; cursor: pointer; }
 .rent-area-control > span { color: var(--muted); font-size: 12px; }
 .rent-area-control > span:last-child { text-align: end; }
-.rent-floor-filter { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 10px; min-inline-size: 0; }
+.rent-floor-filter { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; align-self: stretch; gap: 4px 10px; min-inline-size: 0; padding-inline-start: 12px; border-inline-start: 1px solid var(--line); }
 .rent-floor-controls { display: grid; justify-items: start; gap: 2px; font-size: 13px; }
 .rent-floor-controls p { font-size: 11px; }
 .rent-all-floors { padding: 3px 8px; font-size: 12px; white-space: nowrap; }
@@ -47,6 +47,7 @@
 
 @media (max-width: 640px) {
   .rent-toolbar { grid-template-columns: minmax(0, 1fr); }
+  .rent-floor-filter { padding: 8px 0 0; border-inline-start: 0; border-block-start: 1px solid var(--line); }
 }
 .rent-table { min-width: 680px; }
 .rent-table thead { background: #f1f7fa; }

@@ -37,7 +37,6 @@ export default function RentComparison({ items, open, areaPyeong, setAreaPyeong,
         <div className="rent-floor-controls">
           <span id="rent-floor-title">층 조건</span>
           <button type="button" className="rent-all-floors" aria-pressed={!floor} onClick={() => setFloor('')}>전체 층 {num(total, 0)}건</button>
-          {floors.length > 0 && <p>막대 높이는 로그 척도</p>}
           {floorCounts.has('') && <p>층 미확인 {num(floorCounts.get('') ?? 0, 0)}건</p>}
         </div>
         {floors.length > 0 &&
