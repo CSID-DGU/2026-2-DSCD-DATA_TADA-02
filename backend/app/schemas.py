@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-MAX_CANDIDATES = 3
+MAX_CANDIDATES = 5
 
 
 class StrictModel(BaseModel):

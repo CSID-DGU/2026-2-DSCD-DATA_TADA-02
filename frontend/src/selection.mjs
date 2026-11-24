@@ -1,4 +1,4 @@
-export const MAX_CANDIDATES = 3;
+export const MAX_CANDIDATES = 5;
 
 export function toggleCandidate(selected, code) {
   if (selected.includes(code)) return selected.filter(value => value !== code);

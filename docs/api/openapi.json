@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "DATA TADA 상권 분석 API",
-    "description": "카페 상권 최대 3개를 비교합니다. Supabase 모드는 서울시 통계와 수집한 임대 광고 및 카페 메뉴를 제공합니다.",
+    "description": "카페 상권 최대 5개를 비교합니다. Supabase 모드는 서울시 통계와 수집한 임대 광고 및 카페 메뉴를 제공합니다.",
     "version": "0.1.0"
   },
   "paths": {
@@ -1423,7 +1423,7 @@
               "type": "string"
             },
             "type": "array",
-            "maxItems": 3,
+            "maxItems": 5,
             "minItems": 1,
             "title": "Area Codes"
           },
@@ -1936,7 +1936,7 @@
               "type": "string"
             },
             "type": "array",
-            "maxItems": 3,
+            "maxItems": 5,
             "minItems": 1,
             "title": "Area Codes"
           },

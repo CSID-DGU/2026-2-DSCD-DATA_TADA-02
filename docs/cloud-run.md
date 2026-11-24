@@ -11,7 +11,7 @@
 - LLM: 비활성.
 - 후보는 지도에서 선택한다. 임대 비교와 입지 상세에서 실데이터를 조회하며, 매물 원문 링크와 반경 내 카페를 제공한다.
 
-현재 저장소의 비교 화면은 후보를 최대 3개까지 받는다. LLM이 꺼져 있을 때 사전 작성 해설은 자료 버전과 분기가 일치하는 상권의 상세 매출 및 수요 화면에서 표시한다.
+저장소에서는 후보를 최대 5개까지 비교한다. 위 운영 리비전의 한도는 최대 3개다. LLM이 꺼져 있을 때 사전 작성 해설은 자료 버전과 분기가 일치하는 상권의 상세 매출 및 수요 화면에서 표시한다.
 
 입지 데이터를 읽는 서버를 배포하기 전에 [읽기 권한 SQL](../scripts/sql/location_service_access.sql)을 적용한다. 기존 운영 서버 계정에 필요한 조회 권한만 추가한다. [서버 코드 구조](server.md) / [DB 스키마](database.md)
 
@@ -55,7 +55,7 @@ gcloud run deploy data-tada --image=asia-northeast3-docker.pkg.dev/data-tada-cap
 - `/health/live`: 프로세스 응답 확인.
 - `/health/ready`: Supabase 연결 확인.
 - `/api/v1/areas`: 지도 상권 목록 조회.
-- `/api/v1/comparisons`: 후보 최대 3개 비교. 아래 배포 검증 기록의 5개는 당시의 한도다.
+- `/api/v1/comparisons`: 배포 대상 빌드의 `/api/v1/config`에 표시된 한도로 비교한다. 현재 저장소에서는 후보 5개를 받고 6개는 422를 반환한다.
 - `/api/v1/areas/3120052/analysis`: 단일 상권 상세.
 - `/`: 화면과 `/assets/` 정적 파일 응답 확인.
 

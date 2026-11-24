@@ -4,7 +4,7 @@ import pytest
 
 from backend.app.analysis import competition_type, divide, yoy
 
-CODES = ["3120052", "3120104", "3120100"]
+CODES = ["3120052", "3120104", "3120100", "3120050", "3120053"]
 
 
 def test_health_catalog_and_timing(client):
@@ -20,12 +20,12 @@ def test_health_catalog_and_timing(client):
     values = client.get("/api/v1/areas", params={"q": "성수역", "district": "성동구"}).json()["items"]
     assert values and all("성수역" in a["name"] and a["district"] == "성동구" for a in values)
     config = client.get('/api/v1/config').json()
-    assert config['max_candidates'] == 3
+    assert config['max_candidates'] == 5
     assert len(config['demo_area_codes']) == 5
 
 
 @pytest.mark.parametrize("endpoint", ['comparisons', 'explanations'])
-@pytest.mark.parametrize("codes", [[], CODES + ["3120050"], CODES + ["3120050", "3120053"], [CODES[0], CODES[0]]])
+@pytest.mark.parametrize("codes", [[], CODES + ["3130310"], [CODES[0], CODES[0]]])
 def test_candidate_limit_and_duplicate_validation(client, codes, endpoint):
     payload = {"area_codes": codes}
     if endpoint == 'explanations':
@@ -35,7 +35,7 @@ def test_candidate_limit_and_duplicate_validation(client, codes, endpoint):
     assert response.json()["error"]["request_id"] == response.headers["x-request-id"]
 
 
-def test_three_candidates_order_and_independent_arithmetic(client):
+def test_five_candidates_order_and_independent_arithmetic(client):
     response = client.post("/api/v1/comparisons", json={"area_codes": CODES[::-1]})
     assert response.status_code == 200
     body = response.json()
@@ -166,6 +166,7 @@ def test_llm_disabled_all_page_contexts_and_missing(client):
             assert result.status_code == 200
             assert result.json()["status"] == "disabled"
             assert result.json()["content"] is None
+            assert all(f"{code}.name" in result.json()["evidence"]["facts"] for code in codes)
     assert client.post("/api/v1/explanations", json={"scope": "detail", "section": "competition", "area_codes": CODES}).status_code == 422
     result = client.post("/api/v1/explanations", json={"scope": "comparison", "section": "competition", "area_codes": ["3130310"]})
     assert result.json()["status"] == "unavailable"

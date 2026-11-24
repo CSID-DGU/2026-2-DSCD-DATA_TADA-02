@@ -29,3 +29,9 @@
 .site-header nav .presentation-preset:hover {
   background: #ffd45b;
 }
+
+.analysis-period {
+  color: var(--muted);
+  font-size: 14px;
+  white-space: nowrap;
+}

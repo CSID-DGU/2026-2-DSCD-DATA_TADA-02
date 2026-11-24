@@ -5,7 +5,7 @@
 <rect x="50" y="160" width="400" height="135" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
 <text x="72" y="201" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">1. 현재 페이지 표시</text>
 <text x="72" y="241" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">지표/차트를 먼저 조회</text>
-<text x="72" y="272" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">비교는 선택 후보 전체 1~3개</text>
+<text x="72" y="272" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">비교는 선택 후보 전체 1~5개</text>
 <rect x="600" y="160" width="400" height="135" rx="15" fill="white" stroke="#cbdce7" stroke-width="2"/>
 <text x="622" y="201" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#0a1f43">2. 근거 구성</text>
 <text x="622" y="241" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#536a89">페이지, 분기, 조건과 수치</text>
