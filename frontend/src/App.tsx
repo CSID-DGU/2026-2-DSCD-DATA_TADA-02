@@ -209,16 +209,17 @@ export default function App() {
     accessToken,
     authRequired: config?.llm_auth_required ?? false,
   });
-  const detailRequest = isDetailView && requestedDetail &&
-    (section === 'profitability' || section === 'demand' || (section === 'location' && locationView === 'rentals'))
-    ? {
-        scope: 'detail' as const, section, area_codes: [requestedDetail.area.code] as [string],
-        quarter: requestedDetail.meta.quarter,
-        ...(section === 'demand' ? { demand_metric: demandMetric } : {}),
-        ...(section === 'location' ? { location_view: 'rentals' as const } : {}),
-      } : null;
-  const detailAI = useDetailCommentary(config?.llm_enabled ? detailRequest : null,
-    accessToken, config?.llm_auth_required ?? false);
+  const detailTab = section === 'profitability' ? 'sales' : section === 'demand' ? demandMetric
+    : section === 'location' && locationView === 'rentals' ? 'rentals' : null;
+  const detailAI = useDetailCommentary({
+    active: isDetailView && Boolean(config?.llm_enabled),
+    areaCode: isDetailView ? requestedDetail?.area.code ?? '' : '',
+    quarter: requestedDetail?.meta.quarter ?? config?.quarters[0] ?? PRESENTATION_QUARTER,
+    tab: detailTab,
+    accessToken,
+    authRequired: config?.llm_auth_required ?? false,
+  });
+  const detailRequest = detailAI.request;
   const overviewCommentary = commentary.entryFor('competition');
   const overviewFinished = Boolean(overviewCommentary?.result || overviewCommentary?.error);
   const showOverviewLoading = route.view === 'comparison' && comparisonSection === 'competition' &&

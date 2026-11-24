@@ -20,6 +20,8 @@ type DetailRequest = {
   demand_metric?: 'transactions' | 'floating_population';
   location_view?: 'rentals';
 };
+const DETAIL_TABS = ['sales', 'transactions', 'floating_population', 'rentals'] as const;
+type DetailTab = typeof DETAIL_TABS[number];
 type Request = ComparisonRequest | DetailRequest;
 type Entry = { result?: Explanation; error?: string };
 type Session = {
@@ -126,25 +128,44 @@ export function useComparisonCommentary({ active, areaKey, quarter, rentalArea, 
   };
 }
 
-export function useDetailCommentary(request: DetailRequest | null, accessToken: string, authRequired: boolean) {
+function detailRequestFor(areaCode: string, quarter: string, tab: DetailTab): DetailRequest {
+  const area_codes: [string] = [areaCode];
+  const base = { scope: 'detail' as const, area_codes, quarter };
+  if (tab === 'sales') return { ...base, section: 'profitability' };
+  if (tab === 'rentals') return { ...base, section: 'location', location_view: 'rentals' };
+  return { ...base, section: 'demand', demand_metric: tab };
+}
+
+export function useDetailCommentary({ active, areaCode, quarter, tab, accessToken, authRequired }: {
+  active: boolean;
+  areaCode: string;
+  quarter: string;
+  tab: DetailTab | null;
+  accessToken: string;
+  authRequired: boolean;
+}) {
   const session = useRef<Session | null>(null);
   const [, redraw] = useReducer((revision: number) => revision + 1, 0);
   const requestNeedsAuth = authRequired && !accessToken;
-  const group = request ? request.quarter + ':' + request.area_codes[0] : '';
+  const group = areaCode ? quarter + ':' + areaCode : '';
+  const request = areaCode && tab ? detailRequestFor(areaCode, quarter, tab) : null;
   const key = request ? requestKey(request) : '';
   const current = session.current?.group === group && session.current.token === accessToken
     ? session.current : null;
 
   useEffect(() => {
-    if (!key || requestNeedsAuth) return;
+    if (!active || !areaCode || requestNeedsAuth) return;
     let work = session.current;
     if (!work || work.group !== group || work.token !== accessToken) {
       work?.controller.abort();
       work = { group, token: accessToken, controller: new AbortController(), results: new Map() };
       session.current = work;
     }
-    if (!work.results.has(key)) void loadExplanation(key, work, redraw);
-  }, [group, key, accessToken, requestNeedsAuth]);
+    for (const tab of DETAIL_TABS) {
+      const key = requestKey(detailRequestFor(areaCode, quarter, tab));
+      if (!work.results.has(key)) void loadExplanation(key, work, redraw);
+    }
+  }, [active, areaCode, quarter, group, accessToken, requestNeedsAuth]);
 
   useEffect(() => () => {
     session.current?.controller.abort();
@@ -152,10 +173,11 @@ export function useDetailCommentary(request: DetailRequest | null, accessToken: 
   }, []);
 
   return {
+    request,
     requestNeedsAuth,
     entry: current?.results.get(key),
     retry: () => {
-      if (key && current && !requestNeedsAuth) void loadExplanation(key, current, redraw);
+      if (active && key && current && !requestNeedsAuth) void loadExplanation(key, current, redraw);
     },
   };
 }
