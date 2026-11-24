@@ -15,3 +15,21 @@ export function averageOutlook(salesRate, storeRate, transactionRate) {
   const transactions = transactionRate > storeRate ? '증가' : transactionRate < storeRate ? '감소' : '유지';
   return `점포당 평균 매출 ${sales}, 평균 거래 ${transactions}`;
 }
+
+export function overviewSituation(salesRate, storeRate, transactionRate) {
+  if (salesRate == null || storeRate == null || transactionRate == null) {
+    return { label: '비교 자료 부족', tone: 'neutral' };
+  }
+  if (salesRate < 0 && storeRate < 0 && transactionRate < 0) {
+    return { label: '상권 위축 흐름', tone: 'negative' };
+  }
+  if (salesRate > 0 && transactionRate > 0) {
+    if (salesRate > storeRate && transactionRate > storeRate) {
+      return { label: '평균 여건 개선', tone: 'positive' };
+    }
+    if (salesRate < storeRate && transactionRate < storeRate) {
+      return { label: '점포당 평균 감소', tone: 'pressure' };
+    }
+  }
+  return { label: '지표별 변화', tone: 'neutral' };
+}

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from './api';
-import { DemandCharts, TrendChart } from './Charts';
+import { DemandCharts } from './Charts';
 import ExplanationPanel, { DemoExplanationPanel } from './ExplanationPanel';
 import { detailCommentary, PRESENTATION_DATA_VERSION, PRESENTATION_QUARTER } from './demoCommentary';
 import { StoreCard } from './LocationStores';
 import RentComparison from './RentComparison';
-import { OverviewCard } from './OverviewComparison';
+import { OverviewCard, OverviewLegend, quarterLabel } from './OverviewComparison';
+import SalesDetail from './SalesDetail';
 import DetailAreaPicker from './DetailAreaPicker';
 import { PYEONG_M2 } from './report-metrics.mjs';
 import MapPicker, { LocationMap } from './MapPicker';
@@ -186,21 +187,17 @@ export default function App() {
         {loading && <p role="status" className="panel">분석 자료를 불러오고 있습니다.</p>}
         {error && <div role="alert" className="notice alert">{error} <button onClick={() => setLoadVersion(v => v + 1)}>다시 시도</button></div>}
         {!loading && comparison && route.view === 'comparison' && <>
-          <div className="section-title"><div><h2>{section === 'profitability' ? '점포당 평균 매출 비교' : section === 'competition' ? '선택한 상권의 주요 지표 비교' : section === 'demand' ? '총 거래 건수와 평균 결제금액 비교' : '같은 면적 기준 임대료와 매출 대비 비율'}</h2><p className="muted">{section === 'rent' ? '기준 면적과 층 조건을 설정해 후보 상권을 비교하세요.' : '분기 기준 / 변화율은 전년 동분기 대비'}</p></div>{(section === 'profitability' || section === 'competition') && <div className="carousel-controls"><button aria-label="이전 후보 카드" disabled={visible.start === 0} onClick={() => setOffset(visible.start - 1)}>이전</button><span aria-live="polite">{first}~{last} / 전체 {comparison.items.length}개</span><button aria-label="다음 후보 카드" disabled={last >= comparison.items.length} onClick={() => setOffset(visible.start + 1)}>다음</button></div>}</div>
-          {section === 'competition' && <div className="comparison-legend"><span><i className="previous-bar" />{Number(comparison.meta.quarter.slice(0, 4)) - 1}년 {comparison.meta.quarter.slice(-1)}분기</span><span><i className="current-bar" />{comparison.meta.quarter.slice(0, 4)}년 {comparison.meta.quarter.slice(-1)}분기</span></div>}
+          <div className="section-title"><div><h2>{section === 'profitability' ? '점포당 평균 매출 비교' : section === 'competition' ? '선택한 상권의 주요 지표 비교' : section === 'demand' ? '총 거래 건수와 평균 결제금액 비교' : '같은 면적 기준 임대료와 매출 대비 비율'}</h2><p className="muted">{section === 'rent' ? '기준 면적과 층 조건을 설정해 후보 상권을 비교하세요.' : section === 'competition' ? quarterLabel(comparison.meta.quarter) + ' 기준 (전년 동분기 대비)' : '분기 기준 / 변화율은 전년 동분기 대비'}</p></div>{(section === 'profitability' || (section === 'competition' && comparison.items.length > width)) && <div className="carousel-controls"><button aria-label="이전 후보 카드" disabled={visible.start === 0} onClick={() => setOffset(visible.start - 1)}>이전</button><span aria-live="polite">{first}~{last} / 전체 {comparison.items.length}개</span><button aria-label="다음 후보 카드" disabled={last >= comparison.items.length} onClick={() => setOffset(visible.start + 1)}>다음</button></div>}</div>
+          {section === 'competition' && <OverviewLegend quarter={comparison.meta.quarter} />}
           {section === 'profitability' || section === 'competition' ? <div className="comparison-cards">{visible.values.map(item => section === 'competition'
             ? <OverviewCard key={item.area.code} item={item} quarter={comparison.meta.quarter} open={() => openDetail(item.area.code)} />
             : <ComparisonCard key={item.area.code} item={item} maximum={Math.max(...comparison.items.map(i => i.metrics?.average_sales_krw || 0))} open={() => openDetail(item.area.code)} />)}</div>
             : section === 'demand' ? <DemandComparison items={comparison.items} open={code => openDetail(code)} />
             : <RentComparison items={comparison.items} open={code => openDetail(code, 'rent')} areaPyeong={areaPyeong} setAreaPyeong={setAreaPyeong} floor={floor} setFloor={setRentalFloor} demo={isDemo} />}
-          {section !== 'rent' && <div className="notice info">평균 매출은 같은 상권, 업종, 분기의 총매출을 점포 수로 나눈 값입니다. 개별 점포의 매출과 다를 수 있으며 일부 점포에 매출이 집중될 수 있습니다.</div>}
+          {section !== 'rent' && section !== 'competition' && <div className="notice info">평균 매출은 같은 상권, 업종, 분기의 총매출을 점포 수로 나눈 값입니다. 개별 점포의 매출과 다를 수 있으며 일부 점포에 매출이 집중될 수 있습니다.</div>}
         </>}
         {!loading && detail && route.view === 'detail' && (detail.current || section === 'demand' || section === 'location' ? <>
-          {detail.current && section === 'profitability' && <>
-            <section className="panel metric-summary"><div><span>최근 분기 총매출액</span><strong>{detail.current.total_sales_krw == null ? '자료 없음' : `${number(detail.current.total_sales_krw / 1e8, 1)}억 원`}</strong><Change value={detail.current.sales_yoy_pct} /></div><div><span>최근 분기 점포당 평균 매출</span><strong>{money(detail.current.average_sales_krw)}</strong><Change value={detail.current.average_sales_yoy_pct} /></div></section>
-            <section className="panel"><div className="section-title"><div><h2>매출 추세와 향후 2분기 예측</h2><p className="muted">총매출액과 점포당 평균 매출을 함께 확인하세요.</p></div><div className="segmented"><button className={recent ? 'active' : ''} onClick={() => setRecent(true)}>최근 3년</button><button className={!recent ? 'active' : ''} onClick={() => setRecent(false)}>전체</button></div></div><TrendChart detail={detail} recent={recent} /></section>
-            {detail.forecast && <div className="notice info">{isDemo ? '점선과 80%/90% 음영은 화면 검증용 가상 예측입니다.' : detail.forecast.interval_method}</div>}
-          </>}
+          {detail.current && section === 'profitability' && <SalesDetail detail={detail} current={detail.current} recent={recent} setRecent={setRecent} />}
           {section === 'demand' && <><div className="segmented sub-tabs"><button className={demandMetric === 'transactions' ? 'active' : ''} onClick={() => setDemandMetric('transactions')}>거래 건수</button><button className={demandMetric === 'floating_population' ? 'active' : ''} onClick={() => setDemandMetric('floating_population')}>유동인구</button></div>{detail.demand[demandMetric] ? <><section className="panel metric-summary"><div><h2>누가, 언제 {demandMetric === 'transactions' ? '결제하고' : '지나고'} 있을까요?</h2><p className="muted">2026년 2분기 / 카페 기준 거래와 상권 전체 유동인구는 서로 다른 자료입니다.</p></div>{demandMetric === 'transactions' && <div><span>분기 총거래 건수</span><strong>{detail.current?.transaction_count == null ? '자료 없음' : number(detail.current.transaction_count) + '건'}</strong></div>}</section><DemandCharts distribution={detail.demand[demandMetric]} /></> : <p className="panel">해당 분포 자료가 없습니다.</p>}<p className="notice info">거래 건수는 고유 고객 수와 다르며, 유동인구는 카페 구매자 수와 다릅니다. 요일은 일평균, 연령과 시간대는 분기 합계입니다.</p></>}
           {section === 'location' && <>
             <div className="segmented sub-tabs"><button className={locationView === 'rentals' ? 'active' : ''} onClick={() => setLocationView('rentals')}>임대매물</button><button className={locationView === 'stores' ? 'active' : ''} onClick={() => setLocationView('stores')}>주변 점포</button></div>
@@ -228,7 +225,7 @@ export default function App() {
         </> : <div className="panel"><h2>이 분기의 카페 자료 없음</h2><p>{detail.missing_reason}</p><p>자료가 없다는 뜻이며 매출이나 점포 수가 0이라는 뜻은 아닙니다.</p></div>)}
         {!loading && (comparison || detail) && <>
           {!demoCommentary && config.llm_auth_required && <label className="auth-input">해설 서비스 접근 인증<input type="password" value={accessToken} autoComplete="off" onChange={e => setAccessToken(e.target.value)} placeholder="접근 토큰, 이 화면의 메모리에만 보관" /></label>}
-          {demoCommentary ? <DemoExplanationPanel {...demoCommentary} />
+          {demoCommentary ? <DemoExplanationPanel {...demoCommentary} reportLayout={section === 'profitability'} />
             : !(route.view === 'detail' && section === 'location' && locationView === 'stores' && !listingId) &&
               <ExplanationPanel request={context} config={config} accessToken={accessToken} />}
           <details className="panel methods"><summary>계산 근거와 자료 기준 보기</summary><p>금액의 원래 단위는 원입니다. 점포당 평균 매출 = 분기 총매출 ÷ 같은 분기 카페 점포 수, 점포당 거래 건수 = 총거래 건수 ÷ 점포 수, 건당 평균 결제금액 = 총매출 ÷ 총거래 건수입니다.</p><p>전년 동분기 대비 변화율 = (현재 값 ÷ 1년 전 같은 분기 값 - 1) × 100입니다. 분모가 0이거나 자료가 없으면 값을 계산하지 않습니다.</p><p>종합해설의 평균 여건은 매출과 거래 건수의 변화율을 점포 수 변화율과 각각 비교합니다. 상권의 성장만으로 점포당 평균 여건의 개선을 판단하지 않습니다. 임대료는 매물의 면적당 월세를 설정 면적으로 환산하고, 점포당 분기 평균 매출을 3으로 나눈 월 환산값과 비교합니다.</p></details>
