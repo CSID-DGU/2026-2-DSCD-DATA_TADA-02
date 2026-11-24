@@ -23,7 +23,7 @@ type DetailRequest = {
 const DETAIL_TABS = ['sales', 'transactions', 'floating_population', 'rentals'] as const;
 type DetailTab = typeof DETAIL_TABS[number];
 type Request = ComparisonRequest | DetailRequest;
-type Entry = { result?: Explanation; error?: string };
+type Entry = { startedAt?: number; result?: Explanation; error?: string };
 type Session = {
   group: string;
   token: string;
@@ -49,8 +49,8 @@ function nextPoll(signal: AbortSignal, seconds: number) {
 
 async function loadExplanation(key: string, session: Session, update: () => void) {
   const signal = session.controller.signal;
-  const started = performance.now();
-  session.results.set(key, {});
+  const startedAt = performance.now();
+  session.results.set(key, { startedAt });
   update();
   try {
     for (let attempt = 0; attempt <= 35 && !signal.aborted; attempt++) {
@@ -61,7 +61,7 @@ async function loadExplanation(key: string, session: Session, update: () => void
       if (signal.aborted) return;
       if (result.status !== 'running') {
         session.results.set(key, { result });
-        performance.measure('ui:commentary-ready', { start: started, end: performance.now() });
+        performance.measure('ui:commentary-ready', { start: startedAt, end: performance.now() });
         update();
         return;
       }

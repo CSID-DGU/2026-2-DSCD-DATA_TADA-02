@@ -327,7 +327,7 @@ export default function App() {
           {config.llm_auth_required && <label className="auth-input">해설 서비스 접근 인증<input type="password" value={accessToken} autoComplete="off" onChange={e => setAccessToken(e.target.value)} placeholder="접근 토큰, 이 화면의 메모리에만 보관" /></label>}
           {demoCommentary ? <DemoExplanationPanel {...demoCommentary} reportLayout={section === 'profitability'} />
             : <ExplanationPanel request={context} config={config}
-                result={activeCommentary?.result} error={activeCommentary?.error}
+                result={activeCommentary?.result} error={activeCommentary?.error} startedAt={activeCommentary?.startedAt}
                 requestNeedsAuth={isDetailView ? detailAI.requestNeedsAuth : commentary.requestNeedsAuth}
                 onRetry={isDetailView ? detailAI.retry : () => commentary.retry(comparisonSection)} />}
         </>}
@@ -338,7 +338,7 @@ export default function App() {
       <footer>상권 평균과 예측은 개별 신규점의 매출이나 창업 성공을 보장하지 않습니다. 실제 판단에는 현장 확인과 추가 자료 검토가 필요합니다.</footer>
     </main>
     {showOverviewLoading && <aside className="comparison-loading" aria-label="종합해설 상태">
-      <LoadingIndicator>AI 종합해설 생성 중</LoadingIndicator>
+      <LoadingIndicator startedAt={overviewCommentary?.startedAt}>AI 종합해설 생성 중</LoadingIndicator>
     </aside>}
   </>;
 }

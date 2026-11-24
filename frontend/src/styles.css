@@ -45,6 +45,12 @@
   font-weight: 650;
 }
 
+.explanation-elapsed {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .explanation-spinner {
   flex: none;
   width: 20px;

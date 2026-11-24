@@ -1,11 +1,27 @@
+import { useEffect, useState } from 'react';
 import AnalysisIcon from './AnalysisIcon';
 import type { Commentary } from './demoCommentary';
 import type { Config, Explanation } from './types';
 
-export function LoadingIndicator({ children }: { children: string }) {
+function ElapsedTime({ startedAt }: { startedAt: number }) {
+  const readSeconds = () => Math.floor((performance.now() - startedAt) / 1000);
+  const [seconds, setSeconds] = useState(readSeconds);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setSeconds(Math.floor((performance.now() - startedAt) / 1000));
+    }, 250);
+    return () => window.clearInterval(interval);
+  }, [startedAt]);
+
+  return <span className="explanation-elapsed" aria-live="off">{seconds}초 경과</span>;
+}
+
+export function LoadingIndicator({ children, startedAt }: { children: string; startedAt?: number }) {
   return <div className="explanation-loading" role="status">
     <span className="explanation-spinner" aria-hidden="true" />
     <span>{children}</span>
+    {startedAt !== undefined && <ElapsedTime key={startedAt} startedAt={startedAt} />}
   </div>;
 }
 
@@ -21,11 +37,12 @@ export function DemoExplanationPanel({ question, lead, paragraphs, note, reportL
   </section>;
 }
 
-export default function ExplanationPanel({ request, config, result, error, requestNeedsAuth, waitingMessage, onRetry }: {
+export default function ExplanationPanel({ request, config, result, error, startedAt, requestNeedsAuth, waitingMessage, onRetry }: {
   request: Record<string, unknown>;
   config: Config;
   result?: Explanation;
   error?: string;
+  startedAt?: number;
   requestNeedsAuth: boolean;
   waitingMessage?: string;
   onRetry?: () => void;
@@ -39,7 +56,7 @@ export default function ExplanationPanel({ request, config, result, error, reque
     <div className="section-title"><h2 id="explanation-title">{reportLayout ? <AnalysisIcon name="sparkle" /> : <span aria-hidden="true">✧</span>} {overview ? 'AI 종합 해설' : salesDetail ? 'AI 해설' : 'AI 상권 해설'}</h2></div>
     <div className="explanation-body">
       {requestNeedsAuth ? <p>서비스 접근 인증을 입력하면 해설을 볼 수 있습니다.</p> : error ? <p role="alert">{error}</p> : !result ? (waitingMessage ? <p>{waitingMessage}</p> : config.llm_enabled ?
-        <LoadingIndicator>AI 해설 생성 중</LoadingIndicator> : <p>AI 해설을 준비하고 있습니다.</p>) : result.content ? <>
+        <LoadingIndicator startedAt={startedAt}>AI 해설 생성 중</LoadingIndicator> : <p>AI 해설을 준비하고 있습니다.</p>) : result.content ? <>
         <p className="explanation-summary">{result.content.summary}</p>
         {result.content.blocks.map((block, i) => <div className="explanation-row" key={i}><span className="number">{i + 1}</span><strong>{block.title}</strong><p>{block.text}</p></div>)}
         {result.content.caveats.map(text => <p className="muted" key={text}>{text}</p>)}
