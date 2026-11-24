@@ -57,8 +57,9 @@ def verified_entries(directory: Path) -> tuple[dict[str, dict], int]:
 
 def import_verified(db, entries: dict[str, dict]) -> dict[str, int]:
     report = {"inserted": 0, "existing": 0}
-    ExplanationRow.__table__.create(db.engine, checkfirst=True)
-    with db.session.begin() as session:
+    if db.remote is None:
+        ExplanationRow.__table__.create(db.engine, checkfirst=True)
+    with db.detail_session.begin() as session:
         for key, payload in entries.items():
             if session.get(ExplanationRow, key) is not None:
                 report["existing"] += 1

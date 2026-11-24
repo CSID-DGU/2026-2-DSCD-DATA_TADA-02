@@ -44,9 +44,9 @@ Supabase 접속 정보는 서버 계정만 읽도록 Secret Manager에 보관한
 
 ### 상세 분석 해설 저장소
 
-운영에서 LLM을 켜기 전에 [해설 저장 테이블](../scripts/sql/explanation_cache_schema.sql)을 준비한다. 해설 전용 계정에 스키마 `USAGE`와 `explanations` 테이블의 `SELECT`, `INSERT`, `UPDATE`만 부여한다. `DATABASE_URL`은 이 계정으로 접속하고 `analysis_cache`를 기본 스키마로 사용하게 설정한다. 기존 통계 조회 연결인 `SUPABASE_DATABASE_URL`과 분리한다.
+검수본은 기존 Supabase의 `analysis_cache.explanations`에 저장되어 있다. `DATA_MODE=supabase`에서 상세 해설도 기존 `SUPABASE_DATABASE_URL`로 연결한다. 기존 서버 계정 `data_tada_app`에는 이 스키마의 `USAGE`와 해설 테이블의 `SELECT`, `INSERT`, `UPDATE` 권한이 필요하다.
 
-운영 DB를 연결한 상태에서 검수 폴더에 대해 [적재 스크립트](../scripts/import_detail_commentary.py)를 한 번 실행한다. 서비스와 적재 도구는 같은 분기, 데이터와 프롬프트 버전, 모델을 기준으로 해설을 찾는다. 새 리비전의 요청이 저장된 해설을 읽는지 확인한 뒤, 접근 토큰으로 보호한 상태에서 생성과 저장을 점검한다.
+프로덕션에서 LLM을 켤 때 `DATABASE_URL`에는 비교 해설 캐시용 영속 DB를 설정한다. [상세 해설 테이블 정의](../scripts/sql/explanation_cache_schema.sql) / [검수본 적재 도구](../scripts/import_detail_commentary.py)
 
 ## 배포
 

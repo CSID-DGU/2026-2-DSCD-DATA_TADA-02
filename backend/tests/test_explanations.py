@@ -1,8 +1,11 @@
 import asyncio
 
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import sessionmaker
 
 from backend.app.config import Settings
+from backend.app.db import ExplanationRow
 from backend.app.explanations import ExplanationService
 from backend.app.main import create_app
 from backend.app.schemas import ExplanationBlock, ExplanationContent, ExplanationRequest
@@ -163,3 +166,32 @@ def test_detail_generation_reused_by_another_server(tmp_path):
             result = client.post("/api/v1/explanations", json=query).json()
             assert result["cache_hit"] and result["content"] == original["content"]
     assert len(calls) == 4
+
+def test_detail_connection_keeps_comparison_cache_separate(tmp_path):
+    async def provider(evidence):
+        if evidence.get("scope") == "comparison":
+            return content(evidence), {}
+        return ExplanationContent(
+            summary="자료를 설명합니다.",
+            blocks=[ExplanationBlock(title="지표", text="매출 자료를 설명합니다.", evidence_ids=["observations"])],
+            caveats=[],
+        ), {}
+
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'comparison.db'}",
+                        llm_enabled=True, openai_api_key="test", openai_model="test", _env_file=None)
+    with TestClient(create_app(settings, provider)) as client:
+        db = client.app.state.db
+        detail_store = create_engine(f"sqlite:///{tmp_path / 'detail.db'}")
+        try:
+            ExplanationRow.__table__.create(detail_store)
+            db.detail_session = sessionmaker(detail_store)
+            base = {"area_codes": ["3120052"], "section": "profitability"}
+            comparison = client.post("/api/v1/explanations", json={**base, "scope": "comparison"}).json()
+            detail = client.post("/api/v1/explanations", json={**base, "scope": "detail"}).json()
+            assert comparison["status"] == detail["status"] == "completed"
+            with db.session() as session:
+                assert session.scalars(select(ExplanationRow.key)).all() == [comparison["cache_key"]]
+            with db.detail_session() as session:
+                assert session.scalars(select(ExplanationRow.key)).all() == [detail["cache_key"]]
+        finally:
+            detail_store.dispose()

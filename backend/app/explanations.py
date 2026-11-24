@@ -128,9 +128,10 @@ class ExplanationService:
             "provider_request_id": response._request_id,
         }
 
-    def claim(self, key: str, owner: str) -> tuple[str, dict]:
+    def claim(self, key: str, owner: str, *, detail: bool = False) -> tuple[str, dict]:
         now = time.time()
-        with self.db.session.begin() as session:
+        sessions = self.db.detail_session if detail else self.db.session
+        with sessions.begin() as session:
             row = session.get(ExplanationRow, key)
             if row and row.status == "completed" and row.expires_at > now:
                 return "cached", row.payload
@@ -153,9 +154,10 @@ class ExplanationService:
                                       expires_at=0, payload={}))
         return "claimed", {}
 
-    def finish(self, key: str, owner: str, content: ExplanationContent | None, *, persistent: bool = False):
-        expires_at = PERMANENT_EXPIRY if persistent else time.time() + self.settings.llm_cache_ttl_seconds
-        with self.db.session.begin() as session:
+    def finish(self, key: str, owner: str, content: ExplanationContent | None, *, detail: bool = False):
+        expires_at = PERMANENT_EXPIRY if detail else time.time() + self.settings.llm_cache_ttl_seconds
+        sessions = self.db.detail_session if detail else self.db.session
+        with sessions.begin() as session:
             changed = session.execute(update(ExplanationRow).where(
                 ExplanationRow.key == key, ExplanationRow.owner == owner,
             ).values(status="completed" if content else "failed", payload=content.model_dump() if content else {},
@@ -199,7 +201,7 @@ class ExplanationService:
             return ExplanationResponse(status="unavailable", message="이 화면의 해설에 사용할 자료가 없습니다.", **common)
         owner = str(uuid.uuid4())
         try:
-            claimed, payload = await asyncio.to_thread(self.claim, key, owner)
+            claimed, payload = await asyncio.to_thread(self.claim, key, owner, detail=detail_enabled)
         except IntegrityError:
             claimed, payload = "running", {}
         if claimed == "cached":
@@ -215,11 +217,11 @@ class ExplanationService:
                         content, usage = await self.generate(evidence, prompt)
                     with span("llm.validate"):
                         validate_content(content, evidence)
-            await asyncio.to_thread(self.finish, key, owner, content, persistent=bool(tab))
+            await asyncio.to_thread(self.finish, key, owner, content, detail=detail_enabled)
             event("llm.usage", model=self.settings.openai_model, cache_hit=False, **usage)
             return ExplanationResponse(status="completed", content=content, **common)
         except BaseException as exc:
-            await asyncio.to_thread(self.finish, key, owner, None)
+            await asyncio.to_thread(self.finish, key, owner, None, detail=detail_enabled)
             if isinstance(exc, (asyncio.CancelledError, KeyboardInterrupt, SystemExit)):
                 raise
             event("llm.failed", error_type=type(exc).__name__, model=self.settings.openai_model)

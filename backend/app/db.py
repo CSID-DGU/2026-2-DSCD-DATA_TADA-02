@@ -45,6 +45,10 @@ class Database:
             **({"connect_args": {"check_same_thread": False, "timeout": 10}} if url.startswith("sqlite") else {}),
         )
         self.session = sessionmaker(self.engine, expire_on_commit=False)
+        self.detail_session = self.session
+        if self.remote:
+            detail_engine = self.remote.engine.execution_options(schema_translate_map={None: "analysis_cache"})
+            self.detail_session = sessionmaker(detail_engine, expire_on_commit=False)
 
     def initialize(self, seed: bool):
         # Production schema creation/import is an explicit operator command.
