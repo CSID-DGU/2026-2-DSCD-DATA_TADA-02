@@ -52,7 +52,7 @@ export default function App() {
   const [route, setRoute] = useState<Route>(parseRoute);
   const [pendingComparison, setPendingComparison] = useState<Route | null>(null);
   const comparisonDialog = useRef<HTMLDialogElement>(null);
-  const [comparison, setComparison] = useState<Comparison | null>(null);
+  const [comparisonResponse, setComparison] = useState<Comparison | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -159,18 +159,30 @@ export default function App() {
     }
   };
   const selected = areas.filter(a => route.codes.includes(a.code)).sort((a, b) => route.codes.indexOf(a.code) - route.codes.indexOf(b.code));
+  const comparison = comparisonResponse?.items.length === route.codes.length &&
+    comparisonResponse.items.every(item => route.codes.includes(item.area.code)) ? comparisonResponse : null;
   const floor = comparison?.items.some(item => item.rentals.some(rental => rental.floor === rentalFloor)) ? rentalFloor : '';
-  const updatingDetail = route.view === 'detail' && detail && detail.area.code !== detailCode && !error;
+  const isDetailView = route.view === 'detail';
+  const requestedDetail = detail?.area.code === detailCode ? detail : null;
+  const updatingDetail = isDetailView && detail && !requestedDetail && !error;
   const detailAreaName = detail?.area.name ?? areas.find(area => area.code === detailCode)?.name;
-  const demoCommentary = route.view === 'detail' && config?.llm_enabled === false &&
-    detail?.current && detail.meta.quarter === PRESENTATION_QUARTER &&
-    (detail.meta.data_version === PRESENTATION_DATA_VERSION || detail.meta.data_version === 'seoul-cafe-20261106-locations-20261120') &&
-    (section === 'profitability' || section === 'demand') ? detailCommentary(detail.area.code, section) : null;
-  const context: Record<string, unknown> = { scope: route.view === 'detail' ? 'detail' : 'comparison', section,
-    area_codes: route.view === 'detail' ? [detail?.area.code || detailCode] : [...route.codes].sort(), quarter: '2026Q2' };
-  if (route.view === 'detail' && section === 'demand') context.demand_metric = demandMetric;
-  if (route.view === 'detail' && section === 'location') Object.assign(context, { location_view: locationView, listing_id: locationView === 'stores' ? listingId || null : null, radius_m: radius });
-  if (route.view === 'comparison' && section === 'rent') Object.assign(context, { rental_area_m2: areaPyeong * PYEONG_M2, rental_floor: floor });
+  const presentationCommentary = isDetailView && config?.llm_enabled === false &&
+    (section === 'profitability' || section === 'demand') ? detailCommentary(detailCode, section) : null;
+  const demoCommentary = requestedDetail?.current && requestedDetail.meta.quarter === PRESENTATION_QUARTER &&
+    (requestedDetail.meta.data_version === PRESENTATION_DATA_VERSION || requestedDetail.meta.data_version === 'seoul-cafe-20261106-locations-20261120')
+    ? presentationCommentary : null;
+
+  const storesExplanation = isDetailView && section === 'location' && locationView === 'stores';
+  const rentComparison = route.view === 'comparison' && section === 'rent';
+  const needsListing = storesExplanation && (!requestedDetail || !listingId);
+  const canRequestExplanation = !needsListing && !(presentationCommentary && !requestedDetail) &&
+    !(rentComparison && rentalFloor && !comparison);
+  const showExplanationResult = !isDetailView || !detail || !!requestedDetail;
+  const context: Record<string, unknown> = { scope: isDetailView ? 'detail' : 'comparison', section,
+    area_codes: isDetailView ? [detailCode] : [...route.codes].sort(), quarter: '2026Q2' };
+  if (isDetailView && section === 'demand') context.demand_metric = demandMetric;
+  if (isDetailView && section === 'location') Object.assign(context, { location_view: locationView, listing_id: storesExplanation && requestedDetail ? listingId || null : null, radius_m: radius });
+  if (rentComparison) Object.assign(context, { rental_area_m2: areaPyeong * PYEONG_M2, rental_floor: floor });
 
   if (!config) return <main className="startup"><h1>상권 분석</h1>{error ? <><p role="alert">서버에 연결하지 못했습니다: {error}</p><button onClick={() => setLoadVersion(v => v + 1)}>다시 연결</button></> : <p>상권 위치 목록을 불러오고 있습니다.</p>}</main>;
 
@@ -253,11 +265,14 @@ export default function App() {
             </div>
           </>}
         </> : <div className="panel"><h2>이 분기의 카페 자료 없음</h2><p>{detail.missing_reason}</p><p>자료가 없다는 뜻이며 매출이나 점포 수가 0이라는 뜻은 아닙니다.</p></div>)}
-        {(route.view === 'detail' ? detail : !loading && comparison) && <>
+        {!(storesExplanation && requestedDetail && !listingId) && <>
           {!demoCommentary && config.llm_auth_required && <label className="auth-input">해설 서비스 접근 인증<input type="password" value={accessToken} autoComplete="off" onChange={e => setAccessToken(e.target.value)} placeholder="접근 토큰, 이 화면의 메모리에만 보관" /></label>}
           {demoCommentary ? <DemoExplanationPanel {...demoCommentary} reportLayout={section === 'profitability'} />
-            : !(route.view === 'detail' && section === 'location' && locationView === 'stores' && !listingId) &&
-              <ExplanationPanel request={context} config={config} accessToken={accessToken} />}
+            : <ExplanationPanel request={context} config={config} accessToken={accessToken}
+                canRequest={canRequestExplanation} showResult={showExplanationResult}
+                waitingMessage={error && (!canRequestExplanation || !showExplanationResult) ? '지표를 다시 불러오면 해설을 확인할 수 있습니다.' : undefined} />}
+        </>}
+        {(isDetailView ? detail : !loading && comparison) && <>
           <details className="panel methods"><summary>계산 근거와 자료 기준 보기</summary><p>금액의 원래 단위는 원입니다. 점포당 평균 매출 = 분기 총매출 ÷ 같은 분기 카페 점포 수, 점포당 거래 건수 = 총거래 건수 ÷ 점포 수, 건당 평균 결제금액 = 총매출 ÷ 총거래 건수입니다.</p><p>전년 동분기 대비 변화율 = (현재 값 ÷ 1년 전 같은 분기 값 - 1) × 100입니다. 분모가 0이거나 자료가 없으면 값을 계산하지 않습니다.</p><p>종합해설의 평균 여건은 매출과 거래 건수의 변화율을 점포 수 변화율과 각각 비교합니다. 상권의 성장만으로 점포당 평균 여건의 개선을 판단하지 않습니다. 임대료는 매물의 면적당 월세를 설정 면적으로 환산하고, 점포당 분기 평균 매출을 3으로 나눈 월 환산값과 비교합니다.</p></details>
         </>}
       </>}
