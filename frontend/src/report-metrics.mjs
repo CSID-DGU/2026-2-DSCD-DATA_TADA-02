@@ -33,3 +33,20 @@ export function overviewSituation(salesRate, storeRate, transactionRate) {
   }
   return { label: '지표별 변화', tone: 'neutral' };
 }
+
+export function overviewBarMaxima(items, quarter, previousQuarter) {
+  const maxima = { total_sales_krw: 0, store_count: 0, transaction_count: 0 };
+  for (const { observations } of items) {
+    for (const row of observations) {
+      if (row.quarter !== quarter && row.quarter !== previousQuarter) continue;
+      for (const key of Object.keys(maxima)) {
+        maxima[key] = Math.max(maxima[key], row[key] ?? 0);
+      }
+    }
+  }
+  return maxima;
+}
+
+export function overviewBarRatio(value, maximum) {
+  return value > 0 && maximum > 0 ? Math.sqrt(value / maximum) : 0;
+}

@@ -1,7 +1,8 @@
 import AnalysisIcon from './AnalysisIcon';
 import AreaDetailButton from './AreaDetailButton';
-import { averageOutlook, overviewSituation, PYEONG_M2 } from './report-metrics.mjs';
-import type { ComparisonItem } from './types';
+import ComparisonCarousel from './ComparisonCarousel';
+import { averageOutlook, overviewBarMaxima, overviewBarRatio, overviewSituation, PYEONG_M2 } from './report-metrics.mjs';
+import type { Comparison, ComparisonItem } from './types';
 
 const num = (n: number, digits = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: digits });
 const indicators = [
@@ -13,8 +14,9 @@ const indicators = [
 export const quarterLabel = (quarter: string) => `${quarter.slice(0, 4)}년 ${quarter.slice(-1)}분기`;
 const previousQuarterOf = (quarter: string) => `${Number(quarter.slice(0, 4)) - 1}${quarter.slice(4)}`;
 
-export function OverviewLegend({ quarter }: { quarter: string }) {
-  return <div className="comparison-legend" aria-label="비교 기간">
+function OverviewLegend({ quarter }: { quarter: string }) {
+  return <div className="comparison-legend" role="group" aria-label="비교 기간과 막대 척도">
+    <span className="overview-scale-note">지표별 공통 척도 (제곱근)</span>
     {([['previous', previousQuarterOf(quarter)], ['current', quarter]] as const).map(([period, value]) =>
       <span key={period}><span className="overview-swatches" aria-hidden="true">
         {indicators.map(metric => <i key={metric.key} className={`overview-${metric.color} ${period}-bar`} />)}
@@ -23,9 +25,24 @@ export function OverviewLegend({ quarter }: { quarter: string }) {
   </div>;
 }
 
-export function OverviewCard({ item, quarter, open }: { item: ComparisonItem; quarter: string; open: () => void }) {
-  const current = item.observations.find(row => row.quarter === quarter);
+export default function OverviewComparison({ comparison, open }: { comparison: Comparison; open: (code: string) => void }) {
+  const { items, meta: { quarter } } = comparison;
   const previousQuarter = previousQuarterOf(quarter);
+  const maxima = overviewBarMaxima(items, quarter, previousQuarter);
+  return <>
+    <OverviewLegend quarter={quarter} />
+    <ComparisonCarousel>
+      {items.map(item => <OverviewCard key={item.area.code} item={item} quarter={quarter}
+        previousQuarter={previousQuarter} maxima={maxima} open={() => open(item.area.code)} />)}
+    </ComparisonCarousel>
+  </>;
+}
+
+function OverviewCard({ item, quarter, previousQuarter, maxima, open }: {
+  item: ComparisonItem; quarter: string; previousQuarter: string;
+  maxima: ReturnType<typeof overviewBarMaxima>; open: () => void;
+}) {
+  const current = item.observations.find(row => row.quarter === quarter);
   const previous = item.observations.find(row => row.quarter === previousQuarter);
   const m = item.metrics;
   const situation = overviewSituation(m?.sales_yoy_pct, m?.stores_yoy_pct, m?.transactions_yoy_pct);
@@ -39,7 +56,6 @@ export function OverviewCard({ item, quarter, open }: { item: ComparisonItem; qu
     <div className="overview-indicators">{indicators.map(({ label, key, rate, color, scale, unit }) => {
       const before = previous?.[key] ?? null;
       const now = current?.[key] ?? null;
-      const maximum = Math.max(1, before ?? 0, now ?? 0);
       const change = m?.[rate];
       const direction = change == null || change === 0 ? 'neutral' : change > 0 ? 'positive' : 'negative';
       const valueText = (value: number | null) => value == null ? '자료 없음' : `${num(value / scale)}${unit}`;
@@ -50,7 +66,7 @@ export function OverviewCard({ item, quarter, open }: { item: ComparisonItem; qu
           {([[before, 'previous'], [now, 'current']] as const).map(([value, period]) =>
             <div key={period} className={value == null ? 'missing-bar' : undefined}>
               <small>{valueText(value)}</small>
-              <span className={`${period}-bar`} style={{ height: value == null ? 0 : `${value / maximum * 66}px` }} />
+              <span className={`${period}-bar`} style={{ height: overviewBarRatio(value, maxima[key]) * 66 }} />
             </div>
           )}
         </div>

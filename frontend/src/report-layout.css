@@ -22,6 +22,7 @@
   font-size: 14px;
 }
 .comparison-legend > span { display: inline-flex; align-items: center; gap: 7px; }
+.overview-scale-note { margin-inline-end: auto; font-size: 12px; }
 .overview-swatches { display: inline-flex; gap: 2px; }
 .overview-swatches i { width: 10px; height: 12px; border-radius: 3px; }
 .overview-card { padding: 20px 16px; }

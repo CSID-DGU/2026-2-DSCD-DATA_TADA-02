@@ -7,7 +7,7 @@ import ExplanationPanel, { DemoExplanationPanel } from './ExplanationPanel';
 import { detailCommentary, PRESENTATION_DATA_VERSION, PRESENTATION_QUARTER } from './demoCommentary';
 import { StoreCard } from './LocationStores';
 import RentComparison from './RentComparison';
-import { OverviewCard, OverviewLegend, quarterLabel } from './OverviewComparison';
+import OverviewComparison, { quarterLabel } from './OverviewComparison';
 import SalesDetail from './SalesDetail';
 import DetailAreaPicker from './DetailAreaPicker';
 import { PYEONG_M2 } from './report-metrics.mjs';
@@ -209,10 +209,10 @@ export default function App() {
         {error && <div role="alert" className="notice alert">{error} <button onClick={() => setLoadVersion(v => v + 1)}>다시 시도</button></div>}
         {!loading && comparison && route.view === 'comparison' && <>
           <div className="section-title"><div><h2>{section === 'profitability' ? '점포당 평균 매출 비교' : section === 'competition' ? '선택한 상권의 주요 지표 비교' : section === 'demand' ? '총 거래 건수와 평균 결제금액 비교' : '같은 면적 기준 임대료와 매출 대비 비율'}</h2><p className="muted">{section === 'rent' ? '기준 면적과 층 조건을 설정해 후보 상권을 비교하세요.' : section === 'competition' ? quarterLabel(comparison.meta.quarter) + ' 기준 (전년 동분기 대비)' : '분기 기준 / 변화율은 전년 동분기 대비'}</p></div></div>
-          {section === 'competition' && <OverviewLegend quarter={comparison.meta.quarter} />}
-          {section === 'profitability' || section === 'competition' ? <ComparisonCarousel key={section}>{comparison.items.map(item => section === 'competition'
-            ? <OverviewCard key={item.area.code} item={item} quarter={comparison.meta.quarter} open={() => openDetail(item.area.code)} />
-            : <ComparisonCard key={item.area.code} item={item} maximum={Math.max(...comparison.items.map(i => i.metrics?.average_sales_krw || 0))} open={() => openDetail(item.area.code)} />)}</ComparisonCarousel>
+          {section === 'competition' ? <OverviewComparison comparison={comparison} open={openDetail} />
+            : section === 'profitability' ? <ComparisonCarousel>{comparison.items.map(item =>
+              <ComparisonCard key={item.area.code} item={item} maximum={Math.max(...comparison.items.map(i => i.metrics?.average_sales_krw || 0))} open={() => openDetail(item.area.code)} />
+            )}</ComparisonCarousel>
             : section === 'demand' ? <DemandComparison items={comparison.items} open={code => openDetail(code)} />
             : <RentComparison items={comparison.items} open={code => openDetail(code, 'rent')} areaPyeong={areaPyeong} setAreaPyeong={setAreaPyeong} floor={floor} setFloor={setRentalFloor} demo={isDemo} />}
           {section !== 'rent' && section !== 'competition' && <div className="notice info">평균 매출은 같은 상권, 업종, 분기의 총매출을 점포 수로 나눈 값입니다. 개별 점포의 매출과 다를 수 있으며 일부 점포에 매출이 집중될 수 있습니다.</div>}
