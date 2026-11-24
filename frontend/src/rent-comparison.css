@@ -21,6 +21,10 @@
 .rent-table thead { background: #f1f7fa; }
 .rent-table th, .rent-table td { white-space: nowrap; }
 .rent-table th small { font-weight: 400; color: var(--muted); }
+.rent-table tbody th { white-space: normal; }
+.rent-area-meta { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; margin-top: 4px; }
+.rent-area-meta small, .rent-area-meta .text-link { white-space: nowrap; }
+.rent-area-meta .text-link { margin: 0; padding: 4px 0; }
 .rent-scale-col { width: 34%; min-width: 185px; }
 .rent-axis {
   display: flex;
