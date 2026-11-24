@@ -26,7 +26,18 @@
 .overview-swatches { display: inline-flex; gap: 2px; }
 .overview-swatches i { width: 10px; height: 12px; border-radius: 3px; }
 .overview-card { padding: 20px 16px; }
-.overview-card-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.comparison-cards:has(> .overview-card) {
+  /* Every candidate contributes to the same row heights, including off-screen cards. */
+  grid-template-rows: repeat(6, auto);
+  row-gap: 0;
+}
+.comparison-cards > .overview-card {
+  display: grid;
+  grid-row: 1 / span 6;
+  grid-template-rows: subgrid;
+}
+.overview-card > .text-link { justify-self: start; }
+.overview-card-heading { display: flex; flex-wrap: wrap; align-items: center; align-self: start; justify-content: space-between; gap: 6px 12px; }
 .overview-card-heading h3 { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 21px; overflow-wrap: anywhere; }
 .overview-card-heading .analysis-icon { color: #23399b; }
 .overview-situation { font-size: 12px; font-weight: 750; padding: 6px 9px; border-radius: 999px; }
