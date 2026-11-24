@@ -157,7 +157,7 @@ export function LocationMap({ area, rentals, stores, selectedRentalId, selectedS
     const ring = radius && referenceRental ? L.circle([referenceRental.latitude, referenceRental.longitude], { radius, color: '#009da5', dashArray: '7 6', fillOpacity: .07 }).addTo(layer) : null;
     const addMarker = (point: Pick<Rental, 'id' | 'latitude' | 'longitude'>, kind: LocationPoint['kind'], name: string, select: (id: string) => void) => {
       const marker = L.marker([point.latitude, point.longitude], { icon: locationIcons[kind], riseOnHover: true })
-        .bindTooltip(escape(name), { direction: 'top', offset: [0, -14] }).on('click', () => select(point.id)).addTo(layer);
+        .bindTooltip(escape(name), { direction: 'top', offset: [0, -26] }).on('click', () => select(point.id)).addTo(layer);
       marker.getElement()?.setAttribute('aria-label', `${kind === 'rental' ? '임대 매물' : '카페'} ${name}`);
       byKind[kind].set(point.id, marker);
     };

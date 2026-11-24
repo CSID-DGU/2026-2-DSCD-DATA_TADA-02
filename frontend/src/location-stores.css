@@ -13,7 +13,34 @@
 .location-marker-rental { border-radius: 6px; background: #263f68; }
 .location-marker-store { border-radius: 50%; background: #007680; }
 .location-marker svg { width: 88%; height: 88%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.location-marker-selected { box-shadow: 0 0 0 2px #071d43; }
+.location-marker-selected {
+  scale: 1.75;
+  background: #ffce45;
+  color: #152441;
+  box-shadow: 0 0 0 2px #152441, 0 2px 6px #0a1f4359;
+}
+.location-marker-selected svg { stroke-width: 2.5; }
+.location-marker-selected::after {
+  content: '';
+  position: absolute;
+  inset: -4px -4px auto auto;
+  width: 12px;
+  height: 12px;
+  border: 1px solid white;
+  border-radius: 50%;
+  background: #152441;
+}
+.location-marker-selected::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: -1px 0 auto auto;
+  width: 5px;
+  height: 3px;
+  border: solid white;
+  border-width: 0 0 1.5px 1.5px;
+  rotate: -45deg;
+}
 .location-marker:is(:hover, :focus-visible, .location-marker-hovered) { outline: 2px solid #a76d06; outline-offset: 3px; }
 
 .store-row > small {
