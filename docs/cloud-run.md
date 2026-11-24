@@ -4,14 +4,14 @@
 - 리전: 서울 `asia-northeast3`.
 - 서비스: `data-tada`.
 - 공개 주소: [DATA TADA 서비스](https://data-tada-265941513825.asia-northeast3.run.app).
-- 운영 상태 확인일: 2026-11-24. 리비전 `data-tada-ai-timer-1124`, 트래픽 100%.
+- 운영 상태 확인일: 2026-11-24. 리비전 `data-tada-public-ai-1124`, 트래픽 100%.
 - 이미지 저장소: `asia-northeast3-docker.pkg.dev/data-tada-capstone-20261109/data-tada/service`.
 - 서버 실행 계정: `data-tada-runtime@data-tada-capstone-20261109.iam.gserviceaccount.com`.
 - 데이터: Supabase의 읽기 전용 상권 통계, 기준 예측, 수집 임대 광고, 카페와 메뉴.
-- LLM: 활성. 해설 요청에는 서비스 접근 토큰이 필요하다.
+- LLM: 활성. 방문자 토큰 없이 공개 해설을 제공한다.
 - 후보는 지도에서 선택한다. 임대 비교와 입지 상세에서 실데이터를 조회하며, 매물 원문 링크와 반경 내 카페를 제공한다.
 
-후보는 최대 5개까지 비교한다. 비교와 상세 AI 해설에는 요청 후 경과 시간을 표시한다. 서비스의 해설 영역에 접근 토큰을 입력하면 저장된 해설을 볼 수 있고, 저장본이 없는 경우 모델이 해설을 생성한다.
+후보는 최대 5개까지 비교한다. 비교와 상세 AI 해설에는 요청 후 경과 시간을 표시한다. 브라우저에서 해설을 자동으로 요청한다. 서버는 저장본을 불러오고, 저장본이 없는 경우 OpenAI로 해설을 생성한다.
 
 입지 데이터를 읽는 서버를 배포하기 전에 [읽기 권한 SQL](../scripts/sql/location_service_access.sql)을 적용한다. 기존 운영 서버 계정에 필요한 조회 권한만 추가한다. [서버 코드 구조](server.md) / [DB 스키마](database.md)
 
@@ -33,10 +33,11 @@ gcloud builds submit . --tag=asia-northeast3-docker.pkg.dev/data-tada-capstone-2
 | `DATA_MODE` | `supabase` |
 | `SEED_ON_START` | `false` |
 | `LLM_ENABLED` | `true` |
+| `LLM_PUBLIC_ACCESS` | `true` |
 | `OPENAI_MODEL` | `gpt-6.1-terra` |
 | `LLM_TIMEOUT_SECONDS` | `75` |
 | `OPENAI_API_KEY` | Secret Manager의 `data-tada-openai-api-key` 버전 1 |
-| `SERVICE_ACCESS_TOKEN` | Secret Manager의 `data-tada-service-access-token` 버전 1 |
+| `SERVICE_ACCESS_TOKEN` | `/metrics` 전용. Secret Manager의 `data-tada-service-access-token` 버전 1 |
 | `DATABASE_URL` | `sqlite:////app/tmp/service.db`. 운영 Supabase 모드의 해설은 아래 영속 테이블에 저장한다. |
 | `SUPABASE_DATABASE_URL` | Secret Manager의 `data-tada-supabase-url` 버전 1 |
 | `SUPABASE_SSLROOTCERT` | `/app/data/certificates/supabase-ca.crt` |
@@ -50,17 +51,17 @@ Supabase 접속 정보는 서버 계정만 읽도록 Secret Manager에 보관한
 
 상세 해설과 검수본은 기존 Supabase의 `analysis_cache.explanations`에 저장한다. 운영의 Supabase 모드에서 `DATABASE_URL`이 기본 SQLite 값이면 비교 해설도 이 테이블을 사용한다. 두 해설은 기존 `SUPABASE_DATABASE_URL`과 연결 풀을 함께 사용한다. 기존 서버 계정 `data_tada_app`에는 이 스키마의 `USAGE`와 테이블의 `SELECT`, `INSERT`, `UPDATE` 권한이 필요하다. [해설 테이블 정의](../scripts/sql/explanation_cache_schema.sql) / [검수본 적재 도구](../scripts/import_detail_commentary.py)
 
-해설을 활성화할 리비전에는 `LLM_ENABLED=true`와 `OPENAI_MODEL=gpt-6.1-terra`를 지정한다. Secret Manager에서 운영용 OpenAI 키와 발표용 서비스 접근 토큰의 버전을 각각 `OPENAI_API_KEY`, `SERVICE_ACCESS_TOKEN`에 연결한다. 기존 Cloud Run 실행 계정은 두 비밀 버전을 읽을 수 있어야 한다. 화면에서 접근 토큰을 입력한 뒤 해설을 사용할 수 있다. [Cloud Run 비밀 설정](https://docs.cloud.google.com/run/docs/configuring/services/secrets)
+공개 해설 리비전에는 `LLM_ENABLED=true`, `LLM_PUBLIC_ACCESS=true`, `OPENAI_MODEL=gpt-6.1-terra`를 지정한다. Secret Manager의 OpenAI 키를 `OPENAI_API_KEY`에 연결한다. 방문자는 별도 입력 없이 해설을 보고, 모델 요청은 서버의 OpenAI 키를 사용한다. `SERVICE_ACCESS_TOKEN`은 `/metrics` 인증에 사용한다. Cloud Run 실행 계정에는 연결한 비밀 버전의 읽기 권한이 필요하다. [Cloud Run 비밀 설정](https://docs.cloud.google.com/run/docs/configuring/services/secrets)
 
 ## 배포
 
 ```powershell
-gcloud run deploy data-tada --image=asia-northeast3-docker.pkg.dev/data-tada-capstone-20261109/data-tada/service:20261124-0a028d8 --project=data-tada-capstone-20261109 --region=asia-northeast3 --no-traffic --tag=review
+gcloud run deploy data-tada --image=asia-northeast3-docker.pkg.dev/data-tada-capstone-20261109/data-tada/service:20261124-41d1cba --project=data-tada-capstone-20261109 --region=asia-northeast3 --no-traffic --tag=review
 ```
 
 화면과 API는 같은 HTTPS 주소에서 제공한다. 최소 인스턴스는 0개로 설정해 요청이 없을 때 상시 실행을 피하고, 최대 인스턴스는 2개로 제한한다. 사용량에 따라 Cloud Run, Cloud Build, Artifact Registry와 Secret Manager 비용이 발생할 수 있다.
 
-기존 서비스에 후속 배포할 때는 이미지 태그를 새 빌드로 바꾼다. 이 명령은 연결된 환경 변수와 비밀을 유지한다. 검증 주소의 `/health/ready`는 해설 테이블 조회도 확인한다. `/api/v1/config`에서 LLM 및 접근 인증 활성화를 확인하고, 해설 API의 무인증 요청이 401을 반환하는지, 인증 후 상세 검수본 재사용과 후보 비교가 동작하는지 확인한 뒤 공개 트래픽을 전환한다.
+기존 서비스에 후속 배포할 때는 이미지 태그를 새 빌드로 바꾼다. 이 명령은 연결된 환경 변수와 비밀을 유지한다. 검증 주소의 `/health/ready`는 해설 테이블 조회도 확인한다. `/api/v1/config`의 해설 활성화와 방문자 인증 여부를 점검하고, 토큰 없이 비교 및 상세 해설을 조회할 수 있는지 확인한다. `/metrics`는 인증 없이 접근하면 401이어야 한다. 검증이 끝나면 공개 트래픽을 전환한다.
 
 ## 배포 확인
 
@@ -85,3 +86,5 @@ gcloud run deploy data-tada --image=asia-northeast3-docker.pkg.dev/data-tada-cap
 2026-11-23에는 `jsw`의 `bd9abdf`를 Cloud Build `d2f21c34-199e-4dc8-903e-3a35d79abfb4`로 빌드했다. 검증 주소에서 비교 4개와 상세 3개 화면, Supabase 응답과 정적 파일을 확인한 뒤 `data-tada-pr6fix-1123`으로 공개 트래픽 100%를 전환했다. 공개 주소에서도 지도 상권 1,596개, 후보 3개 비교와 4개 요청의 HTTP 422, 성수역 매물 26건과 300m 반경 내 카페 52곳, 두 분기 예측, LLM `disabled`를 확인했다. 직전 공개 리비전은 `data-tada-live-locations-1120b`다.
 
 2026-11-24에는 `jsw`의 `0a028d8`을 Cloud Build `fcfe3418-38dc-4495-9ed6-4856b4f2433a`로 빌드했다. 검증 리비전에서 Supabase 준비 상태, 후보 5개 비교, 해설 경과 시간 화면의 빌드, 무인증 HTTP 401, 저장된 상세 해설 4개를 확인했다. 새 종합해설의 첫 응답은 서버 검증에서 실패했고, 재시도는 후보 5곳 문구를 생성한 뒤 Supabase에 저장했다. `data-tada-ai-timer-1124`로 공개 트래픽 100%를 전환하고 공개 주소에서 지도 1,596개, 후보 5곳 비교, 성수역 매물 26건과 300m 카페 52곳, 종합해설 저장본 적중을 확인했다. 직전 공개 리비전은 `data-tada-pr6fix-1123`이다.
+
+같은 날 방문자 인증을 제거한 `jsw`의 `41d1cba`를 Cloud Build `724520e9-71cc-4d25-b465-6348df8d296d`로 빌드했다. `data-tada-public-ai-1124`에서 공개 해설을 활성화하고 공개 트래픽 100%를 전환했다. 검증 주소에서는 토큰 없이 성수역 수요 해설을 9.5초에 새로 생성하고 두 번째 요청에서 저장본을 불러왔다. 공개 주소의 Chrome에서 입력칸 없이 비교와 상세 해설 본문을 확인했다. 공개 API에서는 저장된 종합해설과 상세 해설 4종을 반환했고, 인증 없는 `/metrics` 요청은 401이었다. 직전 공개 리비전은 `data-tada-ai-timer-1124`다.
