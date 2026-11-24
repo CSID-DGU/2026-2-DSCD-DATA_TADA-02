@@ -11,3 +11,9 @@ export function cardScrollTarget(position, step, maximum, offset = 0) {
   const index = Math.round(position / step) + offset;
   return Math.min(maximum, Math.max(0, index * step));
 }
+
+export function cardWindow(position, step, maximum, total) {
+  const lastStart = step > 0 ? Math.min(total - 1, Math.max(0, Math.round(maximum / step))) : 0;
+  const start = step > 0 ? Math.min(lastStart, Math.max(0, Math.round(position / step))) : 0;
+  return { start, lastStart, total };
+}

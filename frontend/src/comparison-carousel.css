@@ -1,4 +1,4 @@
-.comparison-carousel {
+.comparison-carousel-body {
   position: relative;
 }
 
@@ -36,8 +36,8 @@
   top: 50%;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 58px;
+  height: 58px;
   padding: 0;
   transform: translateY(-50%);
   border: 1px solid #7b9bab80;
@@ -49,10 +49,79 @@
   transition: opacity .18s ease, background-color .18s ease;
 }
 
-.comparison-arrow span {
-  font-size: 31px;
-  line-height: 1;
+.comparison-arrow svg {
+  display: block;
+  width: 30px;
+  height: 30px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
+
+.comparison-carousel-position {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.comparison-carousel-position span { white-space: nowrap; }
+
+.comparison-range {
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+}
+
+.comparison-range::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 8px;
+  background: #d9e6ee;
+}
+
+.comparison-range::-moz-range-track {
+  height: 8px;
+  border-radius: 8px;
+  background: #d9e6ee;
+}
+
+.comparison-range::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--comparison-thumb-width);
+  height: 12px;
+  margin-top: -2px;
+  border: 0;
+  border-radius: 8px;
+  background: #388a99;
+  cursor: grab;
+}
+
+.comparison-range::-moz-range-thumb {
+  width: var(--comparison-thumb-width);
+  height: 12px;
+  border: 0;
+  border-radius: 8px;
+  background: #388a99;
+  cursor: grab;
+}
+
+.comparison-range:active::-webkit-slider-thumb { cursor: grabbing; }
+.comparison-range:active::-moz-range-thumb { cursor: grabbing; }
+.comparison-range:disabled { cursor: default; opacity: .65; }
+.comparison-range:disabled::-webkit-slider-thumb { cursor: default; }
+.comparison-range:disabled::-moz-range-thumb { cursor: default; }
 
 .comparison-arrow::before {
   content: '';

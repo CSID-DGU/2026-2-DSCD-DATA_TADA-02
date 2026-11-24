@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { toggleCandidate, cardScrollTarget } from '../src/selection.mjs';
+import { toggleCandidate, cardScrollTarget, cardWindow } from '../src/selection.mjs';
 
 const five = ['a', 'b', 'c', 'd', 'e'];
 
@@ -29,4 +29,13 @@ test('card offsets reach the fifth candidate at every display width and stop at 
   assert.equal(cardScrollTarget(420, 270, 810), 540);
   assert.equal(cardScrollTarget(539.75, 270, 539.75, 1), 539.75);
   assert.equal(cardScrollTarget(0, 0, 0, 1), 0);
+});
+
+test('the slide bar follows the visible range and adjusts to the viewport', () => {
+  assert.deepEqual(cardWindow(0, 370, 740, 5), { start: 0, lastStart: 2, total: 5 });
+  assert.deepEqual(cardWindow(369.75, 370, 740, 5), { start: 1, lastStart: 2, total: 5 });
+  assert.deepEqual(cardWindow(740, 370.125, 740, 5), { start: 2, lastStart: 2, total: 5 });
+  assert.deepEqual(cardWindow(1110, 370, 1110, 5), { start: 3, lastStart: 3, total: 5 });
+  assert.deepEqual(cardWindow(1110, 370, 0, 2), { start: 0, lastStart: 0, total: 2 });
+  assert.deepEqual(cardWindow(0, 0, 0, 1), { start: 0, lastStart: 0, total: 1 });
 });
