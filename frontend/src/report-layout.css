@@ -108,5 +108,9 @@
 }
 
 .detail-area-switch select{min-width:0;max-width:100%}
+.demand-table .demand-payment { color: #985a14; }
+.demand-table .demand-payment .metric-bar > span { background: currentColor; }
+.demand-table .demand-payment strong { color: inherit; }
+.demand-table td strong.demand-value-missing { color: #637286; }
 .rent-estimate{display:block;font-size:23px;margin:10px 0}.rent-table td small{display:block;white-space:normal;color:var(--muted)}
 @media(max-width:760px){.site-header{height:auto;min-height:60px;flex-wrap:wrap;gap:0;padding-top:10px}.site-header nav{min-width:0;flex-basis:100%;height:44px;justify-content:space-between;gap:4px}.site-header nav button{padding:0 8px;font-size:12px}.overview-card{padding:20px 16px}.comparison-legend{justify-content:flex-start;font-size:13px}.overview-indicator h4{font-size:13px}.metric-summary .change{font-size:24px}.rent-toolbar label{flex-wrap:wrap}}

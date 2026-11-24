@@ -302,7 +302,24 @@ function ComparisonCard({ item, maximum, open }: { item: ComparisonItem; maximum
 function DemandComparison({ items, open }: { items: ComparisonItem[]; open: (code: string) => void }) {
   const maxTransactions = Math.max(1, ...items.map(i => i.metrics?.transaction_count || 0));
   const maxPayment = Math.max(1, ...items.map(i => i.metrics?.average_payment_krw || 0));
-  return <div className="panel table-scroll"><table className="demand-table"><thead><tr><th>상권</th><th>총 거래 건수 (건/분기)</th><th>건당 평균 결제금액 (원)</th></tr></thead><tbody>{items.map(item => <tr key={item.area.code}><th scope="row"><span className="demand-area-name">{item.area.name}</span><small>점포당 거래 {number(item.metrics?.transactions_per_store, 1)}건 / 점포 {number(item.metrics?.store_count)}개</small><AreaDetailButton areaName={item.area.name} onClick={() => open(item.area.code)} /></th><td><MetricBar value={item.metrics?.transaction_count ?? null} maximum={maxTransactions} /><strong>{number(item.metrics?.transaction_count)}{item.metrics?.transaction_count != null ? '건' : ''}</strong></td><td><MetricBar value={item.metrics?.average_payment_krw ?? null} maximum={maxPayment} /><strong>{number(item.metrics?.average_payment_krw)}{item.metrics?.average_payment_krw != null ? '원' : ''}</strong></td></tr>)}</tbody></table></div>;
+  return <div className="panel table-scroll"><table className="demand-table">
+    <thead><tr><th>상권</th><th>총 거래 건수 (건/분기)</th><th>건당 평균 결제금액 (원)</th></tr></thead>
+    <tbody>{items.map(({ area, metrics }) => {
+      const transactions = metrics?.transaction_count ?? null;
+      const payment = metrics?.average_payment_krw ?? null;
+      return <tr key={area.code}>
+        <th scope="row"><span className="demand-area-name">{area.name}</span><small>점포당 거래 {number(metrics?.transactions_per_store, 1)}건 / 점포 {number(metrics?.store_count)}개</small><AreaDetailButton areaName={area.name} onClick={() => open(area.code)} /></th>
+        <td>
+          <MetricBar value={transactions} maximum={maxTransactions} />
+          <strong className={transactions == null ? 'demand-value-missing' : undefined}>{number(transactions)}{transactions != null ? '건' : ''}</strong>
+        </td>
+        <td className="demand-payment">
+          <MetricBar value={payment} maximum={maxPayment} />
+          <strong className={payment == null ? 'demand-value-missing' : undefined}>{number(payment)}{payment != null ? '원' : ''}</strong>
+        </td>
+      </tr>;
+    })}</tbody>
+  </table></div>;
 }
 function RentalList({ rentals, selectedId, select, nearby }: { rentals: Detail['rentals']; selectedId?: string; select?: (id: string) => void; nearby?: () => void }) {
   return <div className="rental-list">{rentals.map(r => <article key={r.id} className={`rental-item ${selectedId === r.id ? 'selected' : ''}`}>
