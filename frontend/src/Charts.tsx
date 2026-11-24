@@ -37,6 +37,7 @@ export function TrendChart({ detail, recent, setRecent }: { detail: Detail; rece
   const hasRange80 = future.some(point => point.range80 != null);
   const hasRange90 = future.some(point => point.range90 != null);
   const data = [...actual, ...future];
+  const forecastStartQuarter = data.find(row => row.forecastTotal != null || row.forecastAverage != null)?.quarter;
   return <section className="panel sales-trend">
     <div className="sales-trend-heading">
       <h2>매출 추세 <small>총매출액 / 점포당 평균 매출액</small></h2>
@@ -55,7 +56,7 @@ export function TrendChart({ detail, recent, setRecent }: { detail: Detail; rece
     <div className="chart-container" role="img" aria-label={hasForecast ? '총매출액과 점포당 평균 매출의 과거 실선과 예측 점선' : '총매출액과 점포당 평균 매출의 과거 추세'}>
       <ResponsiveContainer width="100%" height={330}>
         <ComposedChart data={data} margin={{ top: 34, right: 10, bottom: 10, left: 6 }} accessibilityLayer>
-          {hasForecast && <ForecastPeriodBackground lastObservedQuarter={lastObservedQuarter} firstForecastQuarter={forecastPoints[0].quarter} />}
+          {forecastStartQuarter && <ForecastPeriodBackground startQuarter={forecastStartQuarter} />}
           <CartesianGrid stroke="#dce7ef" strokeDasharray="4 4" vertical={false} />
           <XAxis dataKey="quarter" tick={{ fill: '#405777', fontSize: 12 }} tickFormatter={shortQuarter} tickMargin={8} minTickGap={15} padding={{ left: 22, right: 22 }} />
           <YAxis yAxisId="total" tick={{ fill: totalColor, fontSize: 12 }} domain={['auto', 'auto']} width={43} tickFormatter={v => String(v)} />
@@ -81,29 +82,21 @@ export function TrendChart({ detail, recent, setRecent }: { detail: Detail; rece
         </ComposedChart>
       </ResponsiveContainer>
     </div>
-    {hasForecast && <p className="sales-forecast-note"><AnalysisIcon name="info" /><span>보라색 배경은 예측 기간입니다. 점선은 예측값이며 실제 매출은 달라질 수 있습니다. {hasRange80 || hasRange90 ? '청록색 음영은 점포당 평균 매출의 예측 범위입니다.' : '점포당 평균 매출의 예측 범위는 제공하지 않습니다.'}</span></p>}
+    {hasForecast && <p className="sales-forecast-note"><AnalysisIcon name="info" /><span>보라색 배경은 예측선이 이어지는 구간입니다. 실제 매출은 예측값과 다를 수 있습니다. {hasRange80 || hasRange90 ? '청록색 음영은 점포당 평균 매출의 예측 범위입니다.' : '점포당 평균 매출의 예측 범위는 제공하지 않습니다.'}</span></p>}
     <details className="chart-data"><summary>그래프 수치 표로 보기</summary><div className="table-scroll"><table><thead><tr><th>분기</th><th>총매출액 (억 원)</th><th>점포당 평균 매출액 (만 원)</th><th>자료 구분</th></tr></thead>
       <tbody>{data.map((row, i) => <tr key={row.quarter}><td>{row.quarter}</td><td>{formatNumber(row.total ?? row.forecastTotal)}</td><td>{formatNumber(row.average ?? row.forecastAverage)}</td><td>{i < actual.length ? (isDemo ? '과거 예시' : '관측 통계') : forecastLabel}</td></tr>)}</tbody>
     </table></div></details>
   </section>;
 }
 
-function ForecastPeriodBackground({ lastObservedQuarter, firstForecastQuarter }: {
-  lastObservedQuarter: string | undefined;
-  firstForecastQuarter: string;
-}) {
-  const scale = useXAxisScale();
+function ForecastPeriodBackground({ startQuarter }: { startQuarter: string }) {
+  const startX = useXAxisScale()?.(startQuarter);
   const plot = usePlotArea();
-  if (!scale || !plot) return null;
-
-  const firstForecastX = scale(firstForecastQuarter);
-  if (firstForecastX == null) return null;
-  const lastObservedX = lastObservedQuarter == null ? undefined : scale(lastObservedQuarter);
-  const startX = lastObservedX == null ? plot.x : (lastObservedX + firstForecastX) / 2;
+  if (startX == null || !plot) return null;
 
   return <ZIndexLayer zIndex={DefaultZIndexes.grid - 1}>
     <rect x={startX} y={plot.y} width={plot.x + plot.width - startX} height={plot.height}
-      fill="#e6d9fb" aria-hidden="true" pointerEvents="none" />
+      fill="#e6d9fb" fillOpacity={.35} aria-hidden="true" pointerEvents="none" />
   </ZIndexLayer>;
 }
 
