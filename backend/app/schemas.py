@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-MAX_CANDIDATES = 3
+MAX_CANDIDATES = 5
 
 
 class StrictModel(BaseModel):
@@ -240,10 +240,16 @@ class ExplanationBlock(StrictModel):
     evidence_ids: list[str]
 
 
+class ExplanationAreaSummary(StrictModel):
+    area_code: str
+    text: str
+
+
 class ExplanationContent(StrictModel):
     summary: str
     blocks: list[ExplanationBlock]
     caveats: list[str]
+    area_summaries: list[ExplanationAreaSummary] = Field(default_factory=list)
 
 
 class ExplanationResponse(BaseModel):

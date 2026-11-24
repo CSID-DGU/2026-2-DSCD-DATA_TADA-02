@@ -1,9 +1,8 @@
 .rent-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(0, 2fr);
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
   margin-bottom: 10px;
 }
 .rent-toolbar p, .rent-note {
@@ -11,16 +10,53 @@
   font-size: 13px;
   margin: 0;
 }
-.rent-toolbar label {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+.rent-area-control {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 2px 12px;
   font-size: 13px;
+}
+.rent-area-control output { color: #006b73; font-weight: 700; }
+.rent-area-control input { grid-column: 1 / -1; width: 100%; height: 22px; margin: 0; padding: 0; border: 0; accent-color: #00848c; cursor: pointer; }
+.rent-area-control > span { color: var(--muted); font-size: 12px; }
+.rent-area-control > span:last-child { text-align: end; }
+.rent-floor-filter { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; align-self: stretch; gap: 4px 10px; min-inline-size: 0; padding-inline-start: 12px; border-inline-start: 1px solid var(--line); }
+.rent-floor-controls { display: grid; justify-items: start; gap: 2px; font-size: 13px; }
+.rent-floor-controls p { font-size: 11px; }
+.rent-all-floors { padding: 3px 8px; font-size: 12px; white-space: nowrap; }
+.rent-floor-chart { display: flex; gap: 5px; overflow-x: auto; padding: 5px; }
+.rent-floor-chart > button {
+  display: grid;
+  grid-template-rows: auto 30px 1fr;
+  justify-items: center;
+  gap: 2px;
+  flex: 1 0 47px;
+  max-width: 70px;
+  min-width: 0;
+  padding: 3px 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.rent-floor-filter button[aria-pressed="true"] { border-color: #00848c; background: #e8f8f8; color: #006b73; font-weight: 700; }
+.rent-floor-count { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rent-floor-label { overflow-wrap: anywhere; text-align: center; }
+.rent-floor-track { display: flex; align-items: end; justify-content: center; width: 100%; border-bottom: 1px solid var(--line); }
+.rent-floor-track > span { width: min(30px, 85%); min-height: 4px; border-radius: 4px 4px 0 0; background: #72bac0; }
+.rent-floor-chart button[aria-pressed="true"] .rent-floor-track > span { background: #00848c; }
+
+@media (max-width: 640px) {
+  .rent-toolbar { grid-template-columns: minmax(0, 1fr); }
+  .rent-floor-filter { padding: 8px 0 0; border-inline-start: 0; border-block-start: 1px solid var(--line); }
 }
 .rent-table { min-width: 680px; }
 .rent-table thead { background: #f1f7fa; }
 .rent-table th, .rent-table td { white-space: nowrap; }
 .rent-table th small { font-weight: 400; color: var(--muted); }
+.rent-table tbody th { white-space: normal; }
+.rent-area-meta { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; margin-top: 4px; }
+.rent-area-meta small, .rent-area-meta .text-link { white-space: nowrap; }
+.rent-area-meta .text-link { margin: 0; padding: 4px 0; }
 .rent-scale-col { width: 34%; min-width: 185px; }
 .rent-axis {
   display: flex;

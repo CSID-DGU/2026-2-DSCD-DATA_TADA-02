@@ -125,31 +125,75 @@ export default function MapPicker({ areas, selected, onToggle }: { areas: Area[]
   </div>;
 }
 
-export function LocationMap({ area, rentals, stores, selectedId, radius, onSelect, demo }: { area: Area; rentals: Rental[]; stores: Store[]; selectedId: string; radius?: number; onSelect: (id: string) => void; demo: boolean }) {
+export type LocationPoint = { kind: 'rental' | 'store'; id: string };
+
+const locationIcons = {
+  rental: L.divIcon({ className: 'location-marker location-marker-rental', iconSize: [24, 24], iconAnchor: [12, 12],
+    html: '<span class="location-marker-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20h14M7 20V5h10v15M10 9h.1m3.9 0h.1M10 13h.1m3.9 0h.1M11 20v-3h2v3"/></svg></span>' }),
+  store: L.divIcon({ className: 'location-marker location-marker-store', iconSize: [22, 22], iconAnchor: [11, 11],
+    html: '<span class="location-marker-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8h12v4a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Zm12 1h2a2 2 0 0 1 0 4h-2M3 20h15M8 5V3m4 2V3"/></svg></span>' }),
+};
+
+export function LocationMap({ area, rentals, stores, selectedRentalId, selectedStoreId, hovered, radius, onSelectRental, onSelectStore, demo }: {
+  area: Area; rentals: Rental[]; stores: Store[]; selectedRentalId: string; selectedStoreId: string;
+  hovered: LocationPoint | null; radius?: number;
+  onSelectRental: (id: string) => void; onSelectStore: (id: string) => void; demo: boolean;
+}) {
   const element = useRef<HTMLDivElement>(null);
+  const markers = useRef<Record<LocationPoint['kind'], Map<string, L.Marker>> | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
   const [tileError, setTileError] = useState(false);
+  const selectedRental = rentals.find(rental => rental.id === selectedRentalId);
+  const selectedStore = stores.find(store => store.id === selectedStoreId);
+  const referenceRental = radius ? selectedRental : undefined;
   useEffect(() => {
     if (!element.current) return;
     const map = baseMap(element.current, [area.latitude, area.longitude], 16);
+    mapRef.current = map;
     const layer = L.layerGroup().addTo(map);
+    const byKind = { rental: new Map<string, L.Marker>(), store: new Map<string, L.Marker>() };
+    markers.current = byKind;
     map.eachLayer(item => { if (item instanceof L.TileLayer) item.on('tileerror', () => setTileError(true)); });
-    const listing = rentals.find(r => r.id === selectedId);
-    const ring = radius && listing ? L.circle([listing.latitude, listing.longitude], { radius, color: '#009da5', dashArray: '7 6', fillOpacity: .07 }).addTo(layer) : null;
+    const ring = radius && referenceRental ? L.circle([referenceRental.latitude, referenceRental.longitude], { radius, color: '#009da5', dashArray: '7 6', fillOpacity: .07 }).addTo(layer) : null;
+    const addMarker = (point: Pick<Rental, 'id' | 'latitude' | 'longitude'>, kind: LocationPoint['kind'], name: string, select: (id: string) => void) => {
+      const marker = L.marker([point.latitude, point.longitude], { icon: locationIcons[kind], riseOnHover: true })
+        .bindTooltip(escape(name), { direction: 'top', offset: [0, -26] }).on('click', () => select(point.id)).addTo(layer);
+      marker.getElement()?.setAttribute('aria-label', `${kind === 'rental' ? '임대 매물' : '카페'} ${name}`);
+      byKind[kind].set(point.id, marker);
+    };
     for (const rental of rentals) {
-      const selected = rental.id === selectedId;
-      L.circleMarker([rental.latitude, rental.longitude], { radius: selected ? 13 : 9, color: '#fff', weight: 3, fillColor: selected ? '#071d43' : '#009da5', fillOpacity: 1 })
-        .bindTooltip(escape(rental.title)).on('click', () => onSelect(rental.id)).addTo(layer);
+      addMarker(rental, 'rental', rental.title, onSelectRental);
     }
     for (const store of stores) {
-      L.circleMarker([store.latitude, store.longitude], { radius: stores.length > 15 ? 6 : 9, color: '#fff', weight: 2, fillColor: '#009da5', fillOpacity: 1 }).bindTooltip(escape(store.name)).addTo(layer);
-      if (stores.length <= 12) label(layer, store.latitude, store.longitude, store.name);
+      addMarker(store, 'store', store.name, onSelectStore);
     }
     if (ring) map.fitBounds(ring.getBounds(), { padding: [22, 22], maxZoom: 17 });
     else if (rentals.length + stores.length > 0) {
       map.fitBounds(L.latLngBounds([...rentals, ...stores].map(item => [item.latitude, item.longitude])), { padding: [24, 24], maxZoom: 17 });
     }
     const observer = new ResizeObserver(() => map.invalidateSize()); observer.observe(element.current);
-    return () => { observer.disconnect(); map.remove(); };
-  }, [area, rentals, stores, selectedId, radius, onSelect]);
+    return () => { observer.disconnect(); markers.current = null; mapRef.current = null; map.remove(); };
+  }, [area, rentals, stores, referenceRental, radius, onSelectRental, onSelectStore]);
+
+  useEffect(() => {
+    const byKind = markers.current;
+    if (!byKind) return;
+    for (const [kind, selectedId] of [['rental', selectedRentalId], ['store', selectedStoreId]] as const) {
+      for (const [id, marker] of byKind[kind]) {
+        const node = marker.getElement();
+        const selected = id === selectedId;
+        const pointed = hovered?.kind === kind && hovered.id === id;
+        node?.classList.toggle('location-marker-selected', selected);
+        node?.classList.toggle('location-marker-hovered', pointed);
+        node?.setAttribute('aria-pressed', String(selected));
+        marker.setZIndexOffset(pointed ? 1000 : selected ? 500 : 0);
+      }
+    }
+  }, [area, rentals, stores, referenceRental, radius, onSelectRental, onSelectStore, selectedRentalId, selectedStoreId, hovered]);
+
+  useEffect(() => {
+    const selected = selectedStore ?? selectedRental;
+    if (selected) mapRef.current?.panInside([selected.latitude, selected.longitude], { padding: [24, 24] });
+  }, [selectedStore, selectedRental]);
   return <div className="map-shell"><div ref={element} className="map-canvas detail-map" role="region" aria-label="임대 매물과 카페 지도" /><p className="map-caption">{demo ? '개발용 예시 위치입니다.' : '공개 자료에서 확보한 위치입니다.'}</p>{tileError && <p role="status">배경지도를 불러오지 못했습니다. 왼쪽 목록에서 위치와 조건을 볼 수 있습니다.</p>}</div>;
 }

@@ -1,18 +1,26 @@
 import asyncio
 
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import sessionmaker
 
 from backend.app.config import Settings
+from backend.app.db import ExplanationRow
 from backend.app.explanations import ExplanationService
 from backend.app.main import create_app
 from backend.app.schemas import ExplanationBlock, ExplanationContent, ExplanationRequest
 
 
 def content(evidence):
-    ids = list(evidence["facts"])
-    return ExplanationContent(summary="개발용 가상 자료 해설", blocks=[
-        ExplanationBlock(title="수치 관계", text="제공된 가상 수치를 설명합니다.", evidence_ids=ids[:1]),
-    ], caveats=["실제 분석 결과가 아닙니다."])
+    overview = evidence["section"] == "competition"
+    ids = evidence["area_data"][0]["evidence_ids"]
+    return ExplanationContent(
+        summary="개발용 가상 자료 해설",
+        blocks=[ExplanationBlock(title="수치 관계", text="제공된 가상 수치를 설명합니다.", evidence_ids=ids[:1])] if overview else [],
+        caveats=[],
+        area_summaries=[{"area_code": area["area_code"], "text": "가상 상권의 상황을 설명합니다."}
+                        for area in evidence["area_data"]] if overview else [],
+    )
 
 
 def test_cache_model_context_and_failure_isolation(tmp_path):
@@ -54,7 +62,7 @@ def test_provider_failure_invalid_evidence_and_timeout_leave_analysis_available(
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'failure.db'}", llm_enabled=True,
                         openai_api_key="test", openai_model="test", llm_timeout_seconds=1, _env_file=None)
     with TestClient(create_app(settings, failing)) as client:
-        query = {"scope": "detail", "section": "profitability", "area_codes": ["3120052"]}
+        query = {"scope": "comparison", "section": "competition", "area_codes": ["3120052"]}
         for provider in (failing, invalid, slow):
             client.app.state.explanations.provider = provider
             response = client.post("/api/v1/explanations", json=query)
@@ -90,7 +98,120 @@ def test_access_token_is_enforced(tmp_path):
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'auth.db'}", service_access_token="test-access", _env_file=None)
     with TestClient(create_app(settings)) as client:
         query = {"scope": "comparison", "section": "rent", "area_codes": ["3120052"]}
+        assert client.get("/api/v1/config").json()["llm_auth_required"]
         assert client.post("/api/v1/explanations", json=query).status_code == 401
         assert client.get("/metrics").status_code == 401
         assert client.post("/api/v1/explanations", json=query, headers={"Authorization": "Bearer test-access"}).status_code == 200
         assert client.get("/health/live").status_code == 200
+
+
+def test_public_explanations_use_the_server_provider_without_a_visitor_token(tmp_path):
+    async def provider(evidence):
+        return content(evidence), {}
+
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'public.db'}", llm_enabled=True,
+                        llm_public_access=True, service_access_token="operations-only",
+                        openai_api_key="server-only-key", openai_model="test", _env_file=None)
+    with TestClient(create_app(settings, provider)) as client:
+        config = client.get("/api/v1/config")
+        assert config.json()["llm_enabled"] and not config.json()["llm_auth_required"]
+        query = {"scope": "comparison", "section": "competition", "area_codes": ["3120052"]}
+        result = client.post("/api/v1/explanations", json=query)
+        assert result.status_code == 200 and result.json()["status"] == "completed"
+        for response in (config, result):
+            assert "server-only-key" not in response.text and "operations-only" not in response.text
+        assert client.get("/metrics").status_code == 401
+        assert client.get("/metrics", headers={"Authorization": "Bearer operations-only"}).status_code == 200
+
+
+def test_comparison_prompt_inputs_partial_data_and_detail_scope(tmp_path):
+    calls = []
+
+    async def provider(evidence):
+        calls.append(evidence)
+        return content(evidence), {}
+
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'compare.db'}", llm_enabled=True,
+                        openai_api_key="test", openai_model="test", _env_file=None)
+    query = {"scope": "comparison", "section": "competition", "area_codes": ["3120052", "3130310"]}
+    with TestClient(create_app(settings, provider)) as client:
+        result = client.post("/api/v1/explanations", json=query).json()
+        assert result["status"] == "completed"
+        assert {item["area_code"] for item in result["content"]["area_summaries"]} == set(query["area_codes"])
+        data = {item["area_code"]: item for item in calls[0]["area_data"]}
+        assert data["3120052"]["comparison"]["transaction_count"] > 0
+        assert data["3130310"]["current"] is None
+        for section in ("profitability", "demand", "rent"):
+            payload = {**query, "section": section}
+            assert client.post("/api/v1/explanations", json=payload).json()["status"] == "completed"
+        assert calls[1]["area_data"][0]["current"].keys() == {"total_sales_krw", "store_count"}
+        assert calls[2]["area_data"][0]["current"].keys() == {"total_sales_krw", "transaction_count"}
+        assert "comparison" not in calls[2]["area_data"][0]
+        assert calls[3]["area_data"][0]["rent_summary"]["monthly_rent_krw"]["used_count"] > 0
+        detail = {**query, "scope": "detail", "section": "location", "location_view": "stores",
+                  "area_codes": ["3120052"], "listing_id": "unused-listing"}
+        assert client.post("/api/v1/explanations", json=detail).json()["status"] == "disabled"
+        assert len(calls) == 4
+
+def test_detail_generation_reused_by_another_server(tmp_path):
+    calls = []
+
+    async def provider(evidence):
+        calls.append(evidence)
+        key = next(key for key in ("observations", "distribution", "rental_count") if key in evidence["facts"])
+        return ExplanationContent(
+            summary="자료를 설명합니다.",
+            blocks=[ExplanationBlock(title="지표", text="제공된 지표를 설명합니다.", evidence_ids=[key])],
+            caveats=[],
+        ), {}
+
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'detail.db'}", llm_enabled=True,
+                        openai_api_key="test", openai_model="test", llm_cache_ttl_seconds=1, _env_file=None)
+    base = {"scope": "detail", "area_codes": ["3120052"]}
+    queries = [
+        {**base, "section": "profitability"},
+        {**base, "section": "demand", "demand_metric": "transactions"},
+        {**base, "section": "demand", "demand_metric": "floating_population"},
+        {**base, "section": "location", "location_view": "rentals"},
+    ]
+    with TestClient(create_app(settings, provider)) as client:
+        first = [client.post("/api/v1/explanations", json=query).json() for query in queries]
+        assert all(result["status"] == "completed" and not result["cache_hit"] for result in first)
+        assert len({result["cache_key"] for result in first}) == 4
+        assert all(item["page"]["scope"] == "detail" for item in calls)
+        assert all("nearby_stores" not in item["facts"] for item in calls)
+
+    with TestClient(create_app(settings, provider)) as client:
+        for query, original in zip(queries, first):
+            result = client.post("/api/v1/explanations", json=query).json()
+            assert result["cache_hit"] and result["content"] == original["content"]
+    assert len(calls) == 4
+
+def test_detail_connection_keeps_comparison_cache_separate(tmp_path):
+    async def provider(evidence):
+        if evidence.get("scope") == "comparison":
+            return content(evidence), {}
+        return ExplanationContent(
+            summary="자료를 설명합니다.",
+            blocks=[ExplanationBlock(title="지표", text="매출 자료를 설명합니다.", evidence_ids=["observations"])],
+            caveats=[],
+        ), {}
+
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'comparison.db'}",
+                        llm_enabled=True, openai_api_key="test", openai_model="test", _env_file=None)
+    with TestClient(create_app(settings, provider)) as client:
+        db = client.app.state.db
+        detail_store = create_engine(f"sqlite:///{tmp_path / 'detail.db'}")
+        try:
+            ExplanationRow.__table__.create(detail_store)
+            db.detail_session = sessionmaker(detail_store)
+            base = {"area_codes": ["3120052"], "section": "profitability"}
+            comparison = client.post("/api/v1/explanations", json={**base, "scope": "comparison"}).json()
+            detail = client.post("/api/v1/explanations", json={**base, "scope": "detail"}).json()
+            assert comparison["status"] == detail["status"] == "completed"
+            with db.session() as session:
+                assert session.scalars(select(ExplanationRow.key)).all() == [comparison["cache_key"]]
+            with db.detail_session() as session:
+                assert session.scalars(select(ExplanationRow.key)).all() == [detail["cache_key"]]
+        finally:
+            detail_store.dispose()

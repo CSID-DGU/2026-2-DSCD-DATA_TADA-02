@@ -17,9 +17,8 @@ from .config import ROOT, Settings
 from .db import Database
 from .explanations import ExplanationService
 from .schemas import (
-    MAX_CANDIDATES,
-    CatalogResponse, ComparisonResponse, ConfigResponse, DetailResponse, ErrorResponse, HealthResponse, ReadyResponse,
-    BrandMenuItem, CatalogResponse, ComparisonResponse, ConfigResponse, DetailResponse, ErrorResponse, HealthResponse, ReadyResponse,
+    MAX_CANDIDATES, BrandMenuItem, CatalogResponse, ComparisonResponse, ConfigResponse,
+    DetailResponse, ErrorResponse, HealthResponse, ReadyResponse,
     ExplanationRequest, ExplanationResponse, QueryContext, Store,
 )
 from .telemetry import Metrics, event, request_id_var, span
@@ -49,7 +48,7 @@ def create_app(settings: Settings | None = None, provider=None) -> FastAPI:
         db.dispose()
 
     app = FastAPI(title="DATA TADA 상권 분석 API", version="0.1.0", lifespan=lifespan,
-                  description=f"카페 상권 최대 {MAX_CANDIDATES}개를 비교합니다. Supabase 모드는 서울시 통계와 발표용 입지 예시를 구분합니다.",
+                  description=f"카페 상권 최대 {MAX_CANDIDATES}개를 비교합니다. Supabase 모드는 서울시 통계와 수집한 임대 광고 및 카페 메뉴를 제공합니다.",
                   responses={422: {"model": ErrorResponse}, 404: {"model": ErrorResponse},
                              500: {"model": ErrorResponse}})
     app.state.db = db
@@ -104,6 +103,10 @@ def create_app(settings: Settings | None = None, provider=None) -> FastAPI:
             if not authorization or not secrets.compare_digest(authorization, expected):
                 raise HTTPException(401, "이 기능에는 서비스 접근 인증이 필요합니다.")
 
+    def authorize_explanations(authorization: Annotated[str | None, Header()] = None):
+        if settings.llm_auth_required:
+            authorize(authorization)
+
     @app.get("/health/live", response_model=HealthResponse, tags=["operations"])
     def live():
         return {"status": "ok"}
@@ -123,7 +126,7 @@ def create_app(settings: Settings | None = None, provider=None) -> FastAPI:
     @app.get("/api/v1/config", response_model=ConfigResponse, tags=["catalog"])
     def config():
         return {"data_mode": settings.data_mode, "llm_enabled": settings.llm_enabled,
-                "llm_auth_required": bool(settings.service_access_token), "max_candidates": MAX_CANDIDATES,
+                "llm_auth_required": settings.llm_auth_required, "max_candidates": MAX_CANDIDATES,
                 "industries": [{"code": "CS100010", "name": "카페"}], "quarters": ["2026Q2"],
                 "demo_area_codes": ["3120052", "3120104", "3120100", "3120050", "3120053"]}
 
@@ -158,7 +161,7 @@ def create_app(settings: Settings | None = None, provider=None) -> FastAPI:
 
     @app.post("/api/v1/explanations", response_model=ExplanationResponse,
               responses={202: {"model": ExplanationResponse}, 502: {"model": ExplanationResponse}, 401: {"model": ErrorResponse}},
-              dependencies=[Depends(authorize)], tags=["explanations"])
+              dependencies=[Depends(authorize_explanations)], tags=["explanations"])
     async def explanations(query: ExplanationRequest, request: Request):
         result = await request.app.state.explanations.explain(query)
         status = 202 if result.status == "running" else 502 if result.status == "failed" else 200

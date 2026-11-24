@@ -6,8 +6,8 @@
 
 | 연결 | 저장소 | 사용 범위 |
 | --- | --- | --- |
-| `SUPABASE_DATABASE_URL` | Supabase PostgreSQL | `DATA_MODE=supabase`에서 상권 목록, 통계, 예측, 수집한 입지 자료를 읽는다. 조회 코드가 있는 FastAPI 서버만 접속한다. |
-| `DATABASE_URL` | 로컬 기본 SQLite. MySQL 연결은 [Compose 예제](../compose.yaml)를 참고한다. | 데모 모드의 상권 목록과 분석 자료, LLM 활성화 시 해설 캐시 및 생성 잠금을 관리한다. |
+| `SUPABASE_DATABASE_URL` | Supabase PostgreSQL | `DATA_MODE=supabase`에서 상권 자료를 읽고 `analysis_cache.explanations`에 상세 해설을 저장한다. 운영에서 `DATABASE_URL`이 SQLite면 비교 해설 캐시도 같은 테이블을 사용한다. FastAPI 서버만 접속한다. |
+| `DATABASE_URL` | 로컬 기본 SQLite. MySQL 연결은 [Compose 예제](../compose.yaml)를 참고한다. | 데모 자료와 해설, 로컬 Supabase 모드의 비교 해설 캐시를 관리한다. 운영 Supabase에 별도 영속 DB를 지정하면 비교 해설에 사용한다. |
 
 운영 서버는 Supabase를 호스트와 인증서까지 확인하는 `sslmode=verify-full`로 연결한다. 공개 루트 인증서는 [`data/certificates/supabase-ca.crt`](../data/certificates/supabase-ca.crt)에 있다. DB 접속 URL은 Cloud Run에서 Secret Manager를 통해 주입한다. 확인한 Supabase 서비스 계정은 아래 ‘API 조회’에 적힌 6개 테이블을 읽을 수 있고, 두 스키마의 11개 테이블에 대한 데이터 쓰기 권한이 없다. 11개 모두 행 수준 보안(RLS)이 켜져 있다.
 

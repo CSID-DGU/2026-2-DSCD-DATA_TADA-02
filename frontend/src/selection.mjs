@@ -1,4 +1,4 @@
-export const MAX_CANDIDATES = 3;
+export const MAX_CANDIDATES = 5;
 
 export function toggleCandidate(selected, code) {
   if (selected.includes(code)) return selected.filter(value => value !== code);
@@ -6,7 +6,14 @@ export function toggleCandidate(selected, code) {
   return [...selected, code];
 }
 
-export function visibleCandidates(selected, offset, width) {
-  const start = Math.max(0, Math.min(offset, Math.max(0, selected.length - width)));
-  return { start, values: selected.slice(start, start + width) };
+export function cardScrollTarget(position, step, maximum, offset = 0) {
+  if (!(step > 0)) return 0;
+  const index = Math.round(position / step) + offset;
+  return Math.min(maximum, Math.max(0, index * step));
+}
+
+export function cardWindow(position, step, maximum, total) {
+  const lastStart = step > 0 ? Math.min(total - 1, Math.max(0, Math.round(maximum / step))) : 0;
+  const start = step > 0 ? Math.min(lastStart, Math.max(0, Math.round(position / step))) : 0;
+  return { start, lastStart, total };
 }

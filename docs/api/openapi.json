@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "DATA TADA 상권 분석 API",
-    "description": "카페 상권 최대 3개를 비교합니다. Supabase 모드는 서울시 통계와 발표용 입지 예시를 구분합니다.",
+    "description": "카페 상권 최대 5개를 비교합니다. Supabase 모드는 서울시 통계와 수집한 임대 광고 및 카페 메뉴를 제공합니다.",
     "version": "0.1.0"
   },
   "paths": {
@@ -25,7 +25,7 @@
             }
           },
           "422": {
-            "description": "Unprocessable Entity",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
@@ -76,7 +76,7 @@
             }
           },
           "422": {
-            "description": "Unprocessable Entity",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
@@ -162,7 +162,7 @@
                 }
               }
             },
-            "description": "Unprocessable Entity"
+            "description": "Unprocessable Content"
           },
           "404": {
             "content": {
@@ -206,7 +206,7 @@
             }
           },
           "422": {
-            "description": "Unprocessable Entity",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
@@ -322,7 +322,7 @@
                 }
               }
             },
-            "description": "Unprocessable Entity"
+            "description": "Unprocessable Content"
           },
           "404": {
             "content": {
@@ -376,7 +376,7 @@
             }
           },
           "422": {
-            "description": "Unprocessable Entity",
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
@@ -456,7 +456,7 @@
                 }
               }
             },
-            "description": "Unprocessable Entity"
+            "description": "Unprocessable Content"
           },
           "404": {
             "content": {
@@ -553,7 +553,73 @@
                 }
               }
             },
-            "description": "Unprocessable Entity"
+            "description": "Unprocessable Content"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/cafes/{store_id}/brand-menu": {
+      "get": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Cafe Brand Menu",
+        "operationId": "cafe_brand_menu_api_v1_cafes__store_id__brand_menu_get",
+        "parameters": [
+          {
+            "name": "store_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Store Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BrandMenuItem"
+                  },
+                  "title": "Response Cafe Brand Menu Api V1 Cafes  Store Id  Brand Menu Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
           },
           "404": {
             "content": {
@@ -632,7 +698,7 @@
                 }
               }
             },
-            "description": "Unprocessable Entity"
+            "description": "Unprocessable Content"
           },
           "404": {
             "content": {
@@ -742,6 +808,62 @@
           "radius_m"
         ],
         "title": "Area"
+      },
+      "BrandMenuItem": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "price_krw": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Krw"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "source_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Date"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "official_menu",
+              "gift_catalog"
+            ],
+            "title": "Channel"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "price_krw",
+          "channel"
+        ],
+        "title": "BrandMenuItem"
       },
       "CatalogResponse": {
         "properties": {
@@ -1301,7 +1423,7 @@
               "type": "string"
             },
             "type": "array",
-            "maxItems": 3,
+            "maxItems": 5,
             "minItems": 1,
             "title": "Area Codes"
           },
@@ -1656,6 +1778,28 @@
               }
             ],
             "title": "Price Krw"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "source_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Date"
           }
         },
         "type": "object",
@@ -1792,7 +1936,7 @@
               "type": "string"
             },
             "type": "array",
-            "maxItems": 3,
+            "maxItems": 5,
             "minItems": 1,
             "title": "Area Codes"
           },
@@ -1935,6 +2079,22 @@
             ],
             "title": "Source Url"
           },
+          "source_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Name"
+          },
+          "is_transfer": {
+            "type": "boolean",
+            "title": "Is Transfer",
+            "default": false
+          },
           "is_demo": {
             "type": "boolean",
             "title": "Is Demo",
@@ -2007,6 +2167,28 @@
               }
             ],
             "title": "Source Url"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
           },
           "distance_m": {
             "anyOf": [

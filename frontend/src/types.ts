@@ -17,7 +17,6 @@ export type Rental = {
   source_name: string | null; is_transfer: boolean; is_demo: boolean;
 };
 export type MenuItem = { name: string; price_krw: number | null; source_url: string | null; source_date: string | null };
-export type BrandMenuItem = MenuItem & { channel: 'official_menu' | 'gift_catalog' };
 export type Store = {
   id: string; name: string; latitude: number; longitude: number; distance_m: number | null;
   menu: MenuItem[]; observed_at: string; source_url: string | null; address: string | null; brand: string | null;
@@ -37,10 +36,11 @@ export type Detail = {
   }[] } | null;
   demand: Record<string, Distribution>; rentals: Rental[]; stores: Store[]; missing_reason: string | null;
 };
+export type AreaSummary = { area_code: string; text: string };
 export type Explanation = {
   status: 'completed' | 'running' | 'disabled' | 'unavailable' | 'failed'; cache_key: string; cache_hit: boolean;
   message: string | null; retry_after_seconds: number | null; prompt_version: string; model: string | null;
-  content: { summary: string; blocks: { title: string; text: string; evidence_ids: string[] }[]; caveats: string[] } | null;
+  content: { summary: string; blocks: { title: string; text: string; evidence_ids: string[] }[]; caveats: string[]; area_summaries?: AreaSummary[] } | null;
   evidence: { facts?: Record<string, unknown> };
 };
 export type Config = { data_mode: string; llm_enabled: boolean; llm_auth_required: boolean; demo_area_codes: string[]; quarters: string[] };

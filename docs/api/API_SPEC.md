@@ -1,6 +1,6 @@
 # API 명세서 v0.1
 
-- 기준: 2026-11-20 서버 코드와 자동 생성 [OpenAPI JSON](openapi.json).
+- 기준: 2026-11-24 서버 코드와 자동 생성 [OpenAPI JSON](openapi.json).
 - 개발 주소: `http://127.0.0.1:8000`.
 - 대화형 명세: `/docs`, 읽기용 명세: `/redoc`, 원본 명세: `/openapi.json`.
 - 공통 형식: JSON, 요청 `Content-Type: application/json`.
@@ -13,7 +13,7 @@
 
 | 필드 | 타입 | 필수/기본값 | 조건 |
 | --- | --- | --- | --- |
-| area_codes | string[] | POST 분석/해설에서 필수 | 1~3개, 중복 불가, 실제 목록의 코드 |
+| area_codes | string[] | POST 분석/해설에서 필수 | 1~5개, 중복 불가, 실제 목록의 코드 |
 | industry_code | string | `CS100010` | 현재 다른 업종은 422 |
 | quarter | string | `2026Q2` | `YYYYQ1`~`YYYYQ4`, 잘못된 형식은 422 |
 
@@ -53,7 +53,7 @@
 
 `GET /api/v1/config`
 
-- 아웃풋: `data_mode`, `llm_enabled`, `llm_auth_required`, `max_candidates=3`, `industries`, `quarters`, `demo_area_codes`. 가상 자료가 있는 상권은 5개이며, 한 번에 비교할 수 있는 상권은 3개다.
+- 아웃풋: `data_mode`, `llm_enabled`, `llm_auth_required`, `max_candidates=5`, `industries`, `quarters`, `demo_area_codes`. 가상 자료가 있는 상권은 5개이며, 한 번에 비교할 수 있는 상권은 최대 5개다.
 - 용도: 프론트가 지원하지 않는 업종이나 기준 분기를 임의로 보여주지 않도록 한다.
 - 보안: API 키와 접근 토큰 값은 응답하지 않는다.
 
@@ -80,7 +80,7 @@
 
 ```json
 {
-  "area_codes": ["3120052", "3120104", "3120100"],
+  "area_codes": ["3120052", "3120104", "3120100", "3120050", "3120053"],
   "industry_code": "CS100010",
   "quarter": "2026Q2"
 }
@@ -88,7 +88,7 @@
 
 - 아웃풋: `meta`, `items[]`.
 - 항목: `area`, `metrics`, `rentals[]`, `observations[]`, `missing_reason`. 과거 분기 자료는 종합해설의 전년 비교와 매출 추이에 사용한다.
-- 순서: 요청의 `area_codes` 순서를 유지한다. 카드 표시 범위는 프론트에서 처리하며 서버는 선택한 최대 3개 전체를 반환한다. 비교와 해설 모두 4개 이상을 요청하면 422다.
+- 순서: 요청의 `area_codes` 순서를 유지한다. 카드 표시 범위는 프론트에서 처리하며 서버는 선택한 최대 5개 전체를 반환한다. 비교와 비교 해설 모두 6개 이상을 요청하면 422다.
 - 화면 재사용: 종합해설/매출/수요성/임대료를 바꿔도 같은 비교 응답을 사용할 수 있다. 기존 section ID `competition`은 종합해설, `profitability`는 매출에 대응한다.
 
 | metrics 필드 | 뜻과 계산 | 단위/결측 |
@@ -152,13 +152,15 @@
 
 ## 6. 페이지별 해설 생성과 캐시
 
+실시간 생성은 상권 비교의 종합해설, 매출, 수요성, 임대료에 적용한다. 상세 분석 요청은 준비 상태를 반환한다. 비교 종합해설의 `content.area_summaries`에는 각 상권의 `area_code`와 한 줄 해설인 `text`가 들어간다. 다른 비교 해설은 한 문단을 `content.summary`에 반환한다.
+
 `POST /api/v1/explanations`
 
 ```json
 {
   "scope": "comparison",
   "section": "competition",
-  "area_codes": ["3120052", "3120104", "3120100"],
+  "area_codes": ["3120052", "3120104", "3120100", "3120050", "3120053"],
   "quarter": "2026Q2",
   "industry_code": "CS100010"
 }
@@ -186,7 +188,7 @@
 | 200 | disabled | 설정 비활성, 메시지 표시, 자동 재시도 없음 |
 | 200 | unavailable | 후보 중 자료 없는 상권이 있음, 메시지 표시 |
 | 502 | failed | 공급자/시간초과/결과 검증 실패, 기본 지표 유지, 사용자 재시도 가능 |
-| 401 | 공통 error | 서비스 접근 토큰이 필요하거나 틀림 |
+| 401 | 공통 error | 토큰 인증 모드에서 해설 접근 토큰이 없거나 틀림 |
 | 404/422 | 공통 error | 알 수 없는 상권/매물 또는 잘못된 조건 |
 
 아웃풋:
@@ -199,11 +201,12 @@
   "content": {
     "summary": "개발용 가상 자료의 요약 예시",
     "blocks": [{"title": "해설 주제", "text": "설명 예시", "evidence_ids": ["3120052.sales_yoy_pct"]}],
-    "caveats": ["해석 범위 예시"]
+    "caveats": [],
+    "area_summaries": [{"area_code": "3120052", "text": "선택 상권의 변화가 나타납니다."}]
   },
   "message": null,
   "retry_after_seconds": null,
-  "prompt_version": "page-commentary-v2-report12",
+  "prompt_version": "comparison-markdown-v1",
   "model": "사용자가 환경변수로 지정한 모델",
   "evidence": {"data_mode": "demo", "quarter": "2026Q2", "facts": {"3120052.sales_yoy_pct": 12.3}}
 }
@@ -216,7 +219,7 @@
 - 생성 잠금: DB에 생성 소유자와 만료 시점을 기록한다. 다른 인스턴스의 동일 요청도 중복 생성을 피한다.
 - 영속 작업 큐 없음: 202가 자동 백그라운드 작업 등록을 뜻하지 않는다. 최초 HTTP 요청이 생성 완료까지 열려 있다. 최초 요청이 끊기거나 서버가 종료되면 잠금 만료 뒤 후속 POST가 재생성한다.
 - 키 보관: OpenAI 키는 서버 환경변수/Secret Manager에 둔다. 브라우저 빌드 변수에 넣지 않는다.
-- 접근 제어: SERVICE_ACCESS_TOKEN이 있으면 해설/metrics에 `Authorization: Bearer ...`가 필요하다. 외부 공개용 사용자 인증은 후속이다.
+- 접근 제어: `SERVICE_ACCESS_TOKEN`이 설정되면 `/metrics`에 `Authorization: Bearer ...`가 필요하다. 해설 API는 `LLM_PUBLIC_ACCESS=true`이면 토큰 없이 호출할 수 있으며, 이 설정이 꺼져 있으면 서비스 토큰 인증을 따른다.
 
 ## 7. 서버 측정 엔드포인트
 
