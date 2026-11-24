@@ -4,7 +4,7 @@
 - 리전: 서울 `asia-northeast3`.
 - 서비스: `data-tada`.
 - 공개 주소: [DATA TADA 서비스](https://data-tada-265941513825.asia-northeast3.run.app).
-- 운영 상태 확인일: 2026-11-24. 리비전 `data-tada-public-ai-1124`, 트래픽 100%.
+- 운영 상태 확인일: 2026-11-25. 리비전 `data-tada-no-ttl-1125`, 트래픽 100%.
 - 이미지 저장소: `asia-northeast3-docker.pkg.dev/data-tada-capstone-20261109/data-tada/service`.
 - 서버 실행 계정: `data-tada-runtime@data-tada-capstone-20261109.iam.gserviceaccount.com`.
 - 데이터: Supabase의 읽기 전용 상권 통계, 기준 예측, 수집 임대 광고, 카페와 메뉴.
@@ -56,7 +56,7 @@ Supabase 접속 정보는 서버 계정만 읽도록 Secret Manager에 보관한
 ## 배포
 
 ```powershell
-gcloud run deploy data-tada --image=asia-northeast3-docker.pkg.dev/data-tada-capstone-20261109/data-tada/service:20261124-41d1cba --project=data-tada-capstone-20261109 --region=asia-northeast3 --no-traffic --tag=review
+gcloud run deploy data-tada --image=asia-northeast3-docker.pkg.dev/data-tada-capstone-20261109/data-tada/service:20261125-bd562c0 --project=data-tada-capstone-20261109 --region=asia-northeast3 --no-traffic --tag=review
 ```
 
 화면과 API는 같은 HTTPS 주소에서 제공한다. 최소 인스턴스는 0개로 설정해 요청이 없을 때 상시 실행을 피하고, 최대 인스턴스는 2개로 제한한다. 사용량에 따라 Cloud Run, Cloud Build, Artifact Registry와 Secret Manager 비용이 발생할 수 있다.
@@ -88,3 +88,5 @@ gcloud run deploy data-tada --image=asia-northeast3-docker.pkg.dev/data-tada-cap
 2026-11-24에는 `jsw`의 `0a028d8`을 Cloud Build `fcfe3418-38dc-4495-9ed6-4856b4f2433a`로 빌드했다. 검증 리비전에서 Supabase 준비 상태, 후보 5개 비교, 해설 경과 시간 화면의 빌드, 무인증 HTTP 401, 저장된 상세 해설 4개를 확인했다. 새 종합해설의 첫 응답은 서버 검증에서 실패했고, 재시도는 후보 5곳 문구를 생성한 뒤 Supabase에 저장했다. `data-tada-ai-timer-1124`로 공개 트래픽 100%를 전환하고 공개 주소에서 지도 1,596개, 후보 5곳 비교, 성수역 매물 26건과 300m 카페 52곳, 종합해설 저장본 적중을 확인했다. 직전 공개 리비전은 `data-tada-pr6fix-1123`이다.
 
 같은 날 방문자 인증을 제거한 `jsw`의 `41d1cba`를 Cloud Build `724520e9-71cc-4d25-b465-6348df8d296d`로 빌드했다. `data-tada-public-ai-1124`에서 공개 해설을 활성화하고 공개 트래픽 100%를 전환했다. 검증 주소에서는 토큰 없이 성수역 수요 해설을 9.5초에 새로 생성하고 두 번째 요청에서 저장본을 불러왔다. 공개 주소의 Chrome에서 입력칸 없이 비교와 상세 해설 본문을 확인했다. 공개 API에서는 저장된 종합해설과 상세 해설 4종을 반환했고, 인증 없는 `/metrics` 요청은 401이었다. 직전 공개 리비전은 `data-tada-ai-timer-1124`다.
+
+2026-11-25에는 `jsw`의 `bd562c0`를 Cloud Build `58bbc936-dda1-48ec-9c53-e96f76f76857`로 빌드해 `data-tada-no-ttl-1125`에 배포했다. 비교 해설의 24시간 유효기간을 제거했다. 검증 주소와 공개 주소의 준비 상태, 기존 비교 및 상세 해설 반환을 확인했다. 공개 트래픽은 새 리비전으로 100% 전환했고 직전 리비전은 `data-tada-public-ai-1124`다.
