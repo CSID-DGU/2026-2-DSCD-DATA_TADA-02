@@ -1,4 +1,4 @@
-import { Area, Bar, BarChart, CartesianGrid, ComposedChart, DefaultTooltipContent, Line, ResponsiveContainer, Tooltip, usePlotArea, useXAxisScale, useYAxisScale, XAxis, YAxis } from 'recharts';
+import { Area, Bar, BarChart, CartesianGrid, ComposedChart, DefaultTooltipContent, DefaultZIndexes, Line, ResponsiveContainer, Tooltip, usePlotArea, useXAxisScale, useYAxisScale, XAxis, YAxis, ZIndexLayer } from 'recharts';
 import AnalysisIcon from './AnalysisIcon';
 import type { Detail, Distribution } from './types';
 
@@ -55,6 +55,7 @@ export function TrendChart({ detail, recent, setRecent }: { detail: Detail; rece
     <div className="chart-container" role="img" aria-label={hasForecast ? '총매출액과 점포당 평균 매출의 과거 실선과 예측 점선' : '총매출액과 점포당 평균 매출의 과거 추세'}>
       <ResponsiveContainer width="100%" height={330}>
         <ComposedChart data={data} margin={{ top: 34, right: 10, bottom: 10, left: 6 }} accessibilityLayer>
+          {hasForecast && <ForecastPeriodBackground lastObservedQuarter={lastObservedQuarter} firstForecastQuarter={forecastPoints[0].quarter} />}
           <CartesianGrid stroke="#dce7ef" strokeDasharray="4 4" vertical={false} />
           <XAxis dataKey="quarter" tick={{ fill: '#405777', fontSize: 12 }} tickFormatter={shortQuarter} tickMargin={8} minTickGap={15} padding={{ left: 22, right: 22 }} />
           <YAxis yAxisId="total" tick={{ fill: totalColor, fontSize: 12 }} domain={['auto', 'auto']} width={43} tickFormatter={v => String(v)} />
@@ -76,22 +77,40 @@ export function TrendChart({ detail, recent, setRecent }: { detail: Detail; rece
             strokeDasharray="7 5" dot={false} isAnimationActive={false} />}
           <SalesChartAnnotations points={data.map(row => ({
             quarter: row.quarter, total: row.total ?? row.forecastTotal, average: row.average ?? row.forecastAverage,
-          }))} observedCount={actual.length} recent={recent} hasForecast={hasForecast} />
+          }))} observedCount={actual.length} recent={recent} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
-    {hasForecast && <p className="sales-forecast-note"><AnalysisIcon name="info" /><span>점선은 예측값이며 실제 매출은 달라질 수 있습니다. {hasRange80 || hasRange90 ? '옅은 영역은 점포당 평균 매출의 예측 범위입니다.' : '점포당 평균 매출의 예측 구간은 제공하지 않습니다.'}</span></p>}
+    {hasForecast && <p className="sales-forecast-note"><AnalysisIcon name="info" /><span>보라색 배경은 예측 기간입니다. 점선은 예측값이며 실제 매출은 달라질 수 있습니다. {hasRange80 || hasRange90 ? '청록색 음영은 점포당 평균 매출의 예측 범위입니다.' : '점포당 평균 매출의 예측 범위는 제공하지 않습니다.'}</span></p>}
     <details className="chart-data"><summary>그래프 수치 표로 보기</summary><div className="table-scroll"><table><thead><tr><th>분기</th><th>총매출액 (억 원)</th><th>점포당 평균 매출액 (만 원)</th><th>자료 구분</th></tr></thead>
       <tbody>{data.map((row, i) => <tr key={row.quarter}><td>{row.quarter}</td><td>{formatNumber(row.total ?? row.forecastTotal)}</td><td>{formatNumber(row.average ?? row.forecastAverage)}</td><td>{i < actual.length ? (isDemo ? '과거 예시' : '관측 통계') : forecastLabel}</td></tr>)}</tbody>
     </table></div></details>
   </section>;
 }
 
-function SalesChartAnnotations({ points, observedCount, recent, hasForecast }: {
+function ForecastPeriodBackground({ lastObservedQuarter, firstForecastQuarter }: {
+  lastObservedQuarter: string | undefined;
+  firstForecastQuarter: string;
+}) {
+  const scale = useXAxisScale();
+  const plot = usePlotArea();
+  if (!scale || !plot) return null;
+
+  const firstForecastX = scale(firstForecastQuarter);
+  if (firstForecastX == null) return null;
+  const lastObservedX = lastObservedQuarter == null ? undefined : scale(lastObservedQuarter);
+  const startX = lastObservedX == null ? plot.x : (lastObservedX + firstForecastX) / 2;
+
+  return <ZIndexLayer zIndex={DefaultZIndexes.grid - 1}>
+    <rect x={startX} y={plot.y} width={plot.x + plot.width - startX} height={plot.height}
+      fill="#e6d9fb" aria-hidden="true" pointerEvents="none" />
+  </ZIndexLayer>;
+}
+
+function SalesChartAnnotations({ points, observedCount, recent }: {
   points: { quarter: string; total: number | null; average: number | null }[];
   observedCount: number;
   recent: boolean;
-  hasForecast: boolean;
 }) {
   const x = useXAxisScale();
   const totalY = useYAxisScale('total');
@@ -100,16 +119,7 @@ function SalesChartAnnotations({ points, observedCount, recent, hasForecast }: {
   if (!x || !totalY || !averageY || !plot) return null;
 
   const pointSpacing = plot.width / Math.max(1, points.length);
-  const firstFuture = points[observedCount];
-  const lastObserved = points[observedCount - 1];
-  const observedX = lastObserved && x(lastObserved.quarter);
-  const futureX = firstFuture && x(firstFuture.quarter);
-  const boundaryX = hasForecast && observedX != null && futureX != null ? (observedX + futureX) / 2 : null;
   return <g className="sales-point-labels" aria-hidden="true" pointerEvents="none">
-    {boundaryX != null && <g>
-      <line x1={boundaryX} x2={boundaryX} y1={plot.y} y2={plot.y + plot.height} stroke="#5976a3" strokeDasharray="5 5" />
-      <text x={boundaryX} y={plot.y - 11} fill="#39537d" textAnchor="middle" className="sales-point-label">예측 시작</text>
-    </g>}
     {points.map(({ quarter, total, average }, index) => {
       const forecast = index >= observedCount;
       const emphasized = index >= observedCount - 1;
