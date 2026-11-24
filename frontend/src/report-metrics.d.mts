@@ -1,5 +1,6 @@
 import type { ComparisonItem, Rental } from './types';
 export const PYEONG_M2: number;
+export function isRentEstimateSample(rental: Rental): boolean;
 export function estimateRent(rentals: Rental[], areaM2: number, quarterlySales: number | null | undefined, floor?: string): {
   count: number; unitRent: number | null; monthlyRent: number | null; salesRatio: number | null;
 };

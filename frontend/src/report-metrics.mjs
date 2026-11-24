@@ -1,7 +1,11 @@
 export const PYEONG_M2 = 3.305785;
 
+export function isRentEstimateSample(rental) {
+  return rental.area_m2 > 0 && rental.monthly_rent_krw != null;
+}
+
 export function estimateRent(rentals, areaM2, quarterlySales, floor = '') {
-  const eligible = rentals.filter(r => (!floor || r.floor === floor) && r.area_m2 > 0 && r.monthly_rent_krw != null);
+  const eligible = rentals.filter(r => (!floor || r.floor === floor) && isRentEstimateSample(r));
   const totalArea = eligible.reduce((sum, r) => sum + r.area_m2, 0);
   const unitRent = totalArea > 0 ? eligible.reduce((sum, r) => sum + r.monthly_rent_krw, 0) / totalArea : null;
   const monthlyRent = unitRent == null || !(areaM2 > 0) ? null : unitRent * areaM2;

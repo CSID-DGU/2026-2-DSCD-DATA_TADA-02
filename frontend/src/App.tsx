@@ -60,6 +60,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [recent, setRecent] = useState(true);
   const [areaPyeong, setAreaPyeong] = useState(20);
+  const [settledAreaPyeong, setSettledAreaPyeong] = useState(areaPyeong);
   const [rentalFloor, setRentalFloor] = useState('');
   const [demandMetric, setDemandMetric] = useState<'transactions' | 'floating_population'>('transactions');
   const [locationView, setLocationView] = useState<'rentals' | 'stores'>('rentals');
@@ -179,9 +180,14 @@ export default function App() {
 
   const storesExplanation = isDetailView && section === 'location' && locationView === 'stores';
   const rentComparison = route.view === 'comparison' && section === 'rent';
+  useEffect(() => {
+    if (areaPyeong === settledAreaPyeong) return;
+    const timer = window.setTimeout(() => setSettledAreaPyeong(areaPyeong), 300);
+    return () => window.clearTimeout(timer);
+  }, [areaPyeong, settledAreaPyeong]);
   const needsListing = storesExplanation && (!requestedDetail || !listingId);
   const canRequestExplanation = !needsListing && !(presentationCommentary && !requestedDetail) &&
-    !(rentComparison && rentalFloor && !comparison);
+    !(rentComparison && (areaPyeong !== settledAreaPyeong || (rentalFloor && !comparison)));
   const showExplanationResult = !isDetailView || !detail || !!requestedDetail;
   const context: Record<string, unknown> = { scope: isDetailView ? 'detail' : 'comparison', section,
     area_codes: isDetailView ? [detailCode] : [...route.codes].sort(), quarter: '2026Q2' };

@@ -1,4 +1,4 @@
-import { estimateRent, PYEONG_M2 } from './report-metrics.mjs';
+import { estimateRent, isRentEstimateSample, PYEONG_M2 } from './report-metrics.mjs';
 import type { ComparisonItem } from './types';
 import AreaDetailButton from './AreaDetailButton';
 import './rent-comparison.css';
@@ -9,13 +9,46 @@ export default function RentComparison({ items, open, areaPyeong, setAreaPyeong,
   items: ComparisonItem[]; open: (code: string) => void; areaPyeong: number; setAreaPyeong: (n: number) => void;
   floor: string; setFloor: (floor: string) => void; demo: boolean;
 }) {
-  const floors = [...new Set(items.flatMap(i => i.rentals.flatMap(r => r.floor ? [r.floor] : [])))].sort();
+  const floorCounts = new Map<string, number>();
+  let total = 0;
+  for (const { rentals } of items) {
+    for (const rental of rentals) {
+      if (!isRentEstimateSample(rental)) continue;
+      const key = rental.floor || '';
+      floorCounts.set(key, (floorCounts.get(key) ?? 0) + 1);
+      total++;
+    }
+  }
+  const floors = [...floorCounts].filter(([label]) => label).sort(([a], [b]) => a.localeCompare(b, 'ko', { numeric: true }));
+  const largestFloor = Math.max(1, ...floors.map(([, count]) => count));
+  const areaLabel = `${areaPyeong}평 (${num(areaPyeong * PYEONG_M2)}㎡)`;
   const estimates = items.map(item => estimateRent(item.rentals, areaPyeong * PYEONG_M2, item.metrics?.average_sales_krw, floor));
   const maximum = Math.max(1, ...estimates.map(e => e.monthlyRent || 0));
   return <section className="panel rent-overview" aria-label="동일 면적 기준 임대료 비교">
-    <div className="rent-toolbar"><label>기준 면적 <select value={areaPyeong} onChange={e => setAreaPyeong(Number(e.target.value))}>
-      {[10, 15, 20, 25, 30, 40, 50].map(n => <option key={n} value={n}>{n}평 ({num(n * PYEONG_M2)}㎡)</option>)}
-    </select></label><label>층 조건 <select value={floor} onChange={e => setFloor(e.target.value)}><option value="">전체 층</option>{floors.map(f => <option key={f}>{f}</option>)}</select></label></div>
+    <div className="rent-toolbar">
+      <div className="rent-area-control">
+        <label htmlFor="rent-area">기준 면적</label>
+        <output htmlFor="rent-area">{areaLabel}</output>
+        <input id="rent-area" type="range" min={10} max={50} step={5} value={areaPyeong} aria-valuetext={areaLabel}
+          onChange={event => setAreaPyeong(event.currentTarget.valueAsNumber)} />
+        <span aria-hidden="true">10평</span><span aria-hidden="true">50평</span>
+      </div>
+      <fieldset className="rent-floor-filter">
+        <legend>층 조건</legend>
+        <button type="button" className="rent-all-floors" aria-pressed={!floor} onClick={() => setFloor('')}>전체 층 {num(total, 0)}건</button>
+        {floors.length > 0 && <>
+          <p>계산에 쓰는 매물 / 막대 높이는 로그 척도</p>
+          <div className="rent-floor-chart">
+            {floors.map(([label, count]) => <button type="button" key={label} aria-pressed={floor === label} onClick={() => setFloor(label)}>
+              <span className="rent-floor-count">{num(count, 0)}건</span>
+              <span className="rent-floor-track" aria-hidden="true"><span style={{ height: `${Math.log1p(count) / Math.log1p(largestFloor) * 100}%` }} /></span>
+              <span className="rent-floor-label">{label}</span>
+            </button>)}
+          </div>
+        </>}
+        {floorCounts.has('') && <p>층 미확인 {num(floorCounts.get('') ?? 0, 0)}건</p>}
+      </fieldset>
+    </div>
     <div className="table-scroll"><table className="rent-table"><thead><tr><th scope="col">상권</th><th scope="col">예상 월 임대료 <small>동일 {areaPyeong}평 기준</small></th><th scope="col">월 환산 매출 대비 비율</th></tr></thead>
       <tbody>{items.map((item, index) => { const e = estimates[index]; return <tr key={item.area.code}>
         <th scope="row">
