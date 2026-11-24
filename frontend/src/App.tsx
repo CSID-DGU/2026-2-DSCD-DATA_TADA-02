@@ -3,7 +3,7 @@ import { api } from './api';
 import { DemandCharts } from './Charts';
 import AreaDetailButton from './AreaDetailButton';
 import ComparisonCarousel from './ComparisonCarousel';
-import ExplanationPanel, { DemoExplanationPanel } from './ExplanationPanel';
+import ExplanationPanel, { DemoExplanationPanel, LoadingIndicator } from './ExplanationPanel';
 import { detailCommentary, PRESENTATION_DATA_VERSION, PRESENTATION_QUARTER } from './demoCommentary';
 import { StoreCard } from './LocationStores';
 import RentComparison from './RentComparison';
@@ -50,6 +50,7 @@ export default function App() {
   const [config, setConfig] = useState<Config | null>(null);
   const [areas, setAreas] = useState<Area[]>([]);
   const [route, setRoute] = useState<Route>(parseRoute);
+  const [introAreaKey, setIntroAreaKey] = useState<string | null>(null);
   const [comparisonResponse, setComparison] = useState<Comparison | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState('');
@@ -134,8 +135,12 @@ export default function App() {
   const comparisonSection = COMPARISON_SECTIONS.find(value => value === route.section) ?? 'competition';
   const tabs: readonly Section[] = route.view === 'detail' ? ['profitability', 'demand', 'location'] : COMPARISON_SECTIONS;
   const section = route.view === 'detail' ? tabs.includes(route.section) ? route.section : 'profitability' : comparisonSection;
+  const comparisonAreaKey = [...route.codes].sort().join(',');
   const openComparison = () => {
-    if (route.view === 'map') setRentalFloor('');
+    if (route.view === 'map') {
+      setRentalFloor('');
+      setIntroAreaKey(comparisonAreaKey);
+    }
     navigate({ ...route, view: 'comparison', section: route.view === 'map' ? 'competition' : comparisonSection });
   };
   const selected = areas.filter(a => route.codes.includes(a.code)).sort((a, b) => route.codes.indexOf(a.code) - route.codes.indexOf(b.code));
@@ -161,14 +166,24 @@ export default function App() {
   }, [areaPyeong, settledAreaPyeong]);
   const commentary = useComparisonCommentary({
     active: route.view === 'comparison' && Boolean(config),
-    areaKey: [...route.codes].sort().join(','),
+    areaKey: comparisonAreaKey,
     quarter: config?.quarters[0] ?? PRESENTATION_QUARTER,
     rentalArea: settledAreaPyeong * PYEONG_M2,
     rentalFloor: floor,
     accessToken,
     authRequired: config?.llm_auth_required ?? false,
   });
-  const overviewSummaries = commentary.entryFor('competition')?.result?.content?.area_summaries ?? [];
+  const overviewCommentary = commentary.entryFor('competition');
+  const overviewFinished = Boolean(overviewCommentary?.result || overviewCommentary?.error);
+  const showOverviewLoading = route.view === 'comparison' && comparisonSection === 'competition' &&
+    introAreaKey === comparisonAreaKey && Boolean(config?.llm_enabled) &&
+    !commentary.requestNeedsAuth && !overviewFinished;
+  useEffect(() => {
+    if (introAreaKey !== null && (route.view !== 'comparison' || introAreaKey !== comparisonAreaKey || overviewFinished)) {
+      setIntroAreaKey(null);
+    }
+  }, [introAreaKey, route.view, comparisonAreaKey, overviewFinished]);
+  const overviewSummaries = overviewCommentary?.result?.content?.area_summaries ?? [];
   const rentPending = rentComparison && areaPyeong !== settledAreaPyeong;
   const activeCommentary = rentPending || isDetailView ? undefined : commentary.entryFor(comparisonSection);
   const context = isDetailView ? { scope: 'detail', section } : commentary.requestFor(comparisonSection);
@@ -270,6 +285,9 @@ export default function App() {
       </>}
       <footer>상권 평균과 예측은 개별 신규점의 매출이나 창업 성공을 보장하지 않습니다. 실제 판단에는 현장 확인과 추가 자료 검토가 필요합니다.</footer>
     </main>
+    {showOverviewLoading && <aside className="comparison-loading" aria-label="종합해설 상태">
+      <LoadingIndicator>AI 종합해설 생성 중</LoadingIndicator>
+    </aside>}
   </>;
 }
 
