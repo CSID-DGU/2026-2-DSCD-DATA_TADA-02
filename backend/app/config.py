@@ -15,12 +15,17 @@ class Settings(BaseSettings):
     supabase_sslrootcert: Path = Path("tmp/supabase-ca.crt")
     seed_on_start: bool = True
     llm_enabled: bool = False
+    llm_public_access: bool = False
     openai_api_key: str = ""
     openai_model: str = ""
     llm_timeout_seconds: float = Field(default=40, ge=1, le=90)
     llm_max_concurrent: int = Field(default=4, ge=1, le=8)
     llm_cache_ttl_seconds: int = Field(default=86400, ge=1)
     service_access_token: str = ""
+
+    @property
+    def llm_auth_required(self) -> bool:
+        return bool(self.service_access_token) and not self.llm_public_access
 
     @model_validator(mode="after")
     def check_deployment(self):
@@ -31,8 +36,8 @@ class Settings(BaseSettings):
             raise ValueError("Production imports must run explicitly, not on startup.")
         if self.llm_enabled and not (self.openai_api_key and self.openai_model):
             raise ValueError("LLM_ENABLED requires OPENAI_API_KEY and OPENAI_MODEL.")
-        if self.app_env == "production" and self.llm_enabled and not self.service_access_token:
-            raise ValueError("Paid LLM endpoints require server-side access control.")
+        if self.app_env == "production" and self.llm_enabled and not (self.llm_public_access or self.service_access_token):
+            raise ValueError("Paid LLM endpoints require access control or explicit public access.")
         if self.data_mode not in {"demo", "supabase"}:
             raise ValueError("DATA_MODE must be demo or supabase.")
         if self.data_mode == "supabase":

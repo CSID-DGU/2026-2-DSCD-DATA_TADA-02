@@ -98,10 +98,30 @@ def test_access_token_is_enforced(tmp_path):
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'auth.db'}", service_access_token="test-access", _env_file=None)
     with TestClient(create_app(settings)) as client:
         query = {"scope": "comparison", "section": "rent", "area_codes": ["3120052"]}
+        assert client.get("/api/v1/config").json()["llm_auth_required"]
         assert client.post("/api/v1/explanations", json=query).status_code == 401
         assert client.get("/metrics").status_code == 401
         assert client.post("/api/v1/explanations", json=query, headers={"Authorization": "Bearer test-access"}).status_code == 200
         assert client.get("/health/live").status_code == 200
+
+
+def test_public_explanations_use_the_server_provider_without_a_visitor_token(tmp_path):
+    async def provider(evidence):
+        return content(evidence), {}
+
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'public.db'}", llm_enabled=True,
+                        llm_public_access=True, service_access_token="operations-only",
+                        openai_api_key="server-only-key", openai_model="test", _env_file=None)
+    with TestClient(create_app(settings, provider)) as client:
+        config = client.get("/api/v1/config")
+        assert config.json()["llm_enabled"] and not config.json()["llm_auth_required"]
+        query = {"scope": "comparison", "section": "competition", "area_codes": ["3120052"]}
+        result = client.post("/api/v1/explanations", json=query)
+        assert result.status_code == 200 and result.json()["status"] == "completed"
+        for response in (config, result):
+            assert "server-only-key" not in response.text and "operations-only" not in response.text
+        assert client.get("/metrics").status_code == 401
+        assert client.get("/metrics", headers={"Authorization": "Bearer operations-only"}).status_code == 200
 
 
 def test_comparison_prompt_inputs_partial_data_and_detail_scope(tmp_path):

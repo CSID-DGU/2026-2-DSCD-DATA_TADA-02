@@ -156,4 +156,4 @@ docs/diagrams/      # PNG와 SVG
 - Cloud Build의 Docker 빌드와 서울 Cloud Run의 실제 웹/API 응답은 2026-11-09 확인했다. 운영 설정은 [배포 문서](cloud-run.md)에 있다. MySQL Compose 실제 실행은 미검증이다.
 - 생산용 DB 변경에는 명시적인 migration을 도입한다. 현재 `create_all`은 초기 생성용이며 운영 중 스키마 변경을 처리하지 않는다.
 - 실제 LLM 호출, 모델별 품질 시험, Langfuse와 Cloud Monitoring의 수집은 후속이다.
-- 현재 서비스 접근 토큰은 시연용 최소 제어다. 외부 공개 시에는 실제 사용자/팀원 인증과 호출량 제한 설계를 추가한다.
+- 운영에서는 공개 해설 설정으로 방문자 토큰 없이 해설을 생성하고, 서비스 접근 토큰으로 서버 측정 엔드포인트를 보호한다.

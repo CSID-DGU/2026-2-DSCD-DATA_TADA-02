@@ -32,10 +32,13 @@ def test_production_supabase_uses_its_existing_cache_for_both_scopes():
         db.dispose()
 
 
-def test_paid_llm_still_requires_access_control():
+def test_paid_llm_requires_access_control_unless_public_access_is_enabled():
     with pytest.raises(ValidationError, match="access control"):
         production_settings(llm_enabled=True, openai_api_key="test", openai_model="test",
                             service_access_token="")
+    settings = production_settings(llm_enabled=True, llm_public_access=True,
+                                   openai_api_key="test", openai_model="test")
+    assert not settings.llm_auth_required
 
 
 def test_demo_production_still_requires_a_persistent_database():
