@@ -50,6 +50,8 @@ export default function ExplanationPanel({ request, config, accessToken }: { req
   const overview = request.scope === 'comparison' && request.section === 'competition';
   const salesDetail = request.scope === 'detail' && request.section === 'profitability';
   const reportLayout = overview || salesDetail;
+  const displayedEvidence = JSON.stringify(result?.evidence || request, (key, value) =>
+    key === 'model_version' || key === 'interval_method' ? undefined : value, 2);
   return <section className={reportLayout ? 'panel explanation report-explanation' : 'panel explanation'} aria-labelledby="explanation-title" aria-live="polite">
     <div className="section-title"><h2 id="explanation-title">{reportLayout ? <AnalysisIcon name="sparkle" /> : <span aria-hidden="true">✧</span>} {overview ? 'AI 종합 해설' : salesDetail ? 'AI 해설' : 'AI 상권 해설'}</h2><span className="badge">{result?.cache_hit ? '저장된 해설' : config.llm_enabled ? '근거 기반 해설' : '연결 준비'}</span></div>
     <div className="explanation-body">
@@ -59,7 +61,7 @@ export default function ExplanationPanel({ request, config, accessToken }: { req
         {result.content.caveats.map(text => <p className="muted" key={text}>{text}</p>)}
       </> : <p>{result.message}</p>}
       {(error || result?.status === 'failed') && <button onClick={() => setRetry(v => v + 1)}>해설 다시 시도</button>}
-      <details><summary>해설에 전달하는 근거 보기</summary><p className="muted">해설의 세부 내용은 추후 조정합니다. 현재는 이 페이지에 대응하는 지표와 선택 조건만 전달합니다.</p><pre>{JSON.stringify(result?.evidence || request, null, 2)}</pre></details>
+      <details><summary>해설에 전달하는 근거 보기</summary><p className="muted">해설의 세부 내용은 추후 조정합니다. 현재는 이 페이지에 대응하는 지표와 선택 조건만 전달합니다.</p><pre>{displayedEvidence}</pre></details>
     </div>
   </section>;
 }

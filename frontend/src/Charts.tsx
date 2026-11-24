@@ -10,7 +10,7 @@ const averageLabel = (value: unknown) => Number(value).toLocaleString('ko-KR', {
 
 export function TrendChart({ detail, recent, setRecent }: { detail: Detail; recent: boolean; setRecent: (recent: boolean) => void }) {
   const isDemo = detail.meta.data_mode === 'demo';
-  const forecastLabel = isDemo ? '가상 예측' : 'Ridge 기준 예측';
+  const forecastLabel = isDemo ? '가상 예측' : '예측';
   const observations = recent ? detail.observations.slice(-12) : detail.observations;
   const forecastPoints = detail.forecast?.points.slice(0, 2) ?? [];
   const hasTotalForecast = forecastPoints.some(point => point.total_sales_krw != null);
@@ -75,7 +75,7 @@ export function TrendChart({ detail, recent, setRecent }: { detail: Detail; rece
         </ComposedChart>
       </ResponsiveContainer>
     </div>
-    {hasForecast && <p className="sales-forecast-note"><AnalysisIcon name="info" /><span>점선은 예측값이며 실제 매출은 달라질 수 있습니다. {hasRange80 || hasRange90 ? '옅은 영역은 점포당 평균 매출의 예측 범위입니다.' : detail.forecast?.interval_method}</span></p>}
+    {hasForecast && <p className="sales-forecast-note"><AnalysisIcon name="info" /><span>점선은 예측값이며 실제 매출은 달라질 수 있습니다. {hasRange80 || hasRange90 ? '옅은 영역은 점포당 평균 매출의 예측 범위입니다.' : '점포당 평균 매출의 예측 구간은 제공하지 않습니다.'}</span></p>}
     <details className="chart-data"><summary>그래프 수치 표로 보기</summary><div className="table-scroll"><table><thead><tr><th>분기</th><th>총매출액 (억 원)</th><th>점포당 평균 매출액 (만 원)</th><th>자료 구분</th></tr></thead>
       <tbody>{data.map((row, i) => <tr key={row.quarter}><td>{row.quarter}</td><td>{formatNumber(row.total ?? row.forecastTotal)}</td><td>{formatNumber(row.average ?? row.forecastAverage)}</td><td>{i < actual.length ? (isDemo ? '과거 예시' : '관측 통계') : forecastLabel}</td></tr>)}</tbody>
     </table></div></details>
