@@ -12,7 +12,7 @@ import SalesDetail from './SalesDetail';
 import { PYEONG_M2 } from './report-metrics.mjs';
 import MapPicker, { LocationMap, type LocationPoint } from './MapPicker';
 import { MAX_CANDIDATES, toggleCandidate } from './selection.mjs';
-import { COMPARISON_SECTIONS, useComparisonCommentary } from './useComparisonCommentary';
+import { COMPARISON_SECTIONS, useComparisonCommentary, useDetailCommentary } from './useComparisonCommentary';
 import type { Area, Comparison, ComparisonItem, Config, Detail, Rental, Section, Store } from './types';
 
 type Route = { view: 'map' | 'comparison' | 'detail'; section: Section; codes: string[]; code: string };
@@ -190,11 +190,10 @@ export default function App() {
   const detailAreaName = detail?.area.name ?? areas.find(area => area.code === detailCode)?.name;
   const presentationCommentary = isDetailView &&
     (section === 'profitability' || section === 'demand') ? detailCommentary(detailCode, section) : null;
-  const demoCommentary = requestedDetail?.current && requestedDetail.meta.quarter === PRESENTATION_QUARTER &&
+  const demoCommentary = !config?.llm_enabled && requestedDetail?.current && requestedDetail.meta.quarter === PRESENTATION_QUARTER &&
     (requestedDetail.meta.data_version === PRESENTATION_DATA_VERSION || requestedDetail.meta.data_version === 'seoul-cafe-20261106-locations-20261120')
     ? presentationCommentary : null;
 
-  const storesExplanation = isDetailView && section === 'location' && locationView === 'stores';
   const rentComparison = route.view === 'comparison' && section === 'rent';
   useEffect(() => {
     if (areaPyeong === settledAreaPyeong) return;
@@ -210,6 +209,16 @@ export default function App() {
     accessToken,
     authRequired: config?.llm_auth_required ?? false,
   });
+  const detailRequest = isDetailView && requestedDetail &&
+    (section === 'profitability' || section === 'demand' || (section === 'location' && locationView === 'rentals'))
+    ? {
+        scope: 'detail' as const, section, area_codes: [requestedDetail.area.code] as [string],
+        quarter: requestedDetail.meta.quarter,
+        ...(section === 'demand' ? { demand_metric: demandMetric } : {}),
+        ...(section === 'location' ? { location_view: 'rentals' as const } : {}),
+      } : null;
+  const detailAI = useDetailCommentary(config?.llm_enabled ? detailRequest : null,
+    accessToken, config?.llm_auth_required ?? false);
   const overviewCommentary = commentary.entryFor('competition');
   const overviewFinished = Boolean(overviewCommentary?.result || overviewCommentary?.error);
   const showOverviewLoading = route.view === 'comparison' && comparisonSection === 'competition' &&
@@ -222,8 +231,8 @@ export default function App() {
   }, [introAreaKey, route.view, comparisonAreaKey, overviewFinished]);
   const overviewSummaries = overviewCommentary?.result?.content?.area_summaries ?? [];
   const rentPending = rentComparison && areaPyeong !== settledAreaPyeong;
-  const activeCommentary = rentPending || isDetailView ? undefined : commentary.entryFor(comparisonSection);
-  const context = isDetailView ? { scope: 'detail', section } : commentary.requestFor(comparisonSection);
+  const activeCommentary = isDetailView ? detailAI.entry : rentPending ? undefined : commentary.entryFor(comparisonSection);
+  const context = isDetailView ? detailRequest ?? { scope: 'detail', section } : commentary.requestFor(comparisonSection);
 
   if (!config) return <main className="startup"><h1>상권 분석</h1>{error ? <><p role="alert">서버에 연결하지 못했습니다: {error}</p><button onClick={() => setLoadVersion(v => v + 1)}>다시 연결</button></> : <p>상권 위치 목록을 불러오고 있습니다.</p>}</main>;
 
@@ -313,14 +322,13 @@ export default function App() {
             </div>
           </>}
         </> : <div className="panel"><h2>이 분기의 카페 자료 없음</h2><p>{detail.missing_reason}</p><p>자료가 없다는 뜻이며 매출이나 점포 수가 0이라는 뜻은 아닙니다.</p></div>)}
-        {!(storesExplanation && requestedDetail && !listingId) && <>
-          {!isDetailView && config.llm_auth_required && <label className="auth-input">해설 서비스 접근 인증<input type="password" value={accessToken} autoComplete="off" onChange={e => setAccessToken(e.target.value)} placeholder="접근 토큰, 이 화면의 메모리에만 보관" /></label>}
+        {(!isDetailView || detailRequest) && <>
+          {config.llm_auth_required && <label className="auth-input">해설 서비스 접근 인증<input type="password" value={accessToken} autoComplete="off" onChange={e => setAccessToken(e.target.value)} placeholder="접근 토큰, 이 화면의 메모리에만 보관" /></label>}
           {demoCommentary ? <DemoExplanationPanel {...demoCommentary} reportLayout={section === 'profitability'} />
             : <ExplanationPanel request={context} config={config}
                 result={activeCommentary?.result} error={activeCommentary?.error}
-                requestNeedsAuth={!isDetailView && commentary.requestNeedsAuth}
-                onRetry={!isDetailView ? () => commentary.retry(comparisonSection) : undefined}
-                waitingMessage={isDetailView ? '상세 분석 해설을 준비 중입니다.' : undefined} />}
+                requestNeedsAuth={isDetailView ? detailAI.requestNeedsAuth : commentary.requestNeedsAuth}
+                onRetry={isDetailView ? detailAI.retry : () => commentary.retry(comparisonSection)} />}
         </>}
         {(isDetailView ? detail : !loading && comparison) && <>
           <details className="panel methods"><summary>계산 근거와 자료 기준 보기</summary><p>금액의 원래 단위는 원입니다. 점포당 평균 매출 = 분기 총매출 ÷ 같은 분기 카페 점포 수, 점포당 거래 건수 = 총거래 건수 ÷ 점포 수, 건당 평균 결제금액 = 총매출 ÷ 총거래 건수입니다.</p><p>전년 동분기 대비 변화율 = (현재 값 ÷ 1년 전 같은 분기 값 - 1) × 100입니다. 분모가 0이거나 자료가 없으면 값을 계산하지 않습니다.</p><p>종합해설의 평균 여건은 매출과 거래 건수의 변화율을 점포 수 변화율과 각각 비교합니다. 상권의 성장만으로 점포당 평균 여건의 개선을 판단하지 않습니다. 임대료는 매물의 면적당 월세를 설정 면적으로 환산하고, 점포당 분기 평균 매출을 3으로 나눈 월 환산값과 비교합니다.</p></details>

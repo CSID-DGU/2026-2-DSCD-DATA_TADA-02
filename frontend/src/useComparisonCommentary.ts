@@ -4,7 +4,7 @@ import type { Explanation } from './types';
 
 export const COMPARISON_SECTIONS = ['competition', 'profitability', 'demand', 'rent'] as const;
 type ComparisonSection = typeof COMPARISON_SECTIONS[number];
-type Request = {
+type ComparisonRequest = {
   scope: 'comparison';
   section: ComparisonSection;
   area_codes: string[];
@@ -12,6 +12,15 @@ type Request = {
   rental_area_m2?: number;
   rental_floor?: string;
 };
+type DetailRequest = {
+  scope: 'detail';
+  section: 'profitability' | 'demand' | 'location';
+  area_codes: [string];
+  quarter: string;
+  demand_metric?: 'transactions' | 'floating_population';
+  location_view?: 'rentals';
+};
+type Request = ComparisonRequest | DetailRequest;
 type Entry = { result?: Explanation; error?: string };
 type Session = {
   group: string;
@@ -36,8 +45,7 @@ function nextPoll(signal: AbortSignal, seconds: number) {
   });
 }
 
-async function loadExplanation(request: Request, session: Session, update: () => void) {
-  const key = requestKey(request);
+async function loadExplanation(key: string, session: Session, update: () => void) {
   const signal = session.controller.signal;
   const started = performance.now();
   session.results.set(key, {});
@@ -84,8 +92,8 @@ export function useComparisonCommentary({ active, areaKey, quarter, rentalArea, 
   const current = session.current?.group === group && session.current.token === accessToken
     ? session.current : null;
 
-  const requestFor = useCallback((section: ComparisonSection): Request => {
-    const base: Request = { scope: 'comparison', section, area_codes: areaKey ? areaKey.split(',') : [], quarter };
+  const requestFor = useCallback((section: ComparisonSection): ComparisonRequest => {
+    const base: ComparisonRequest = { scope: 'comparison', section, area_codes: areaKey ? areaKey.split(',') : [], quarter };
     return section === 'rent' ? { ...base, rental_area_m2: rentalArea, rental_floor: rentalFloor } : base;
   }, [areaKey, quarter, rentalArea, rentalFloor]);
 
@@ -98,8 +106,8 @@ export function useComparisonCommentary({ active, areaKey, quarter, rentalArea, 
       session.current = work;
     }
     for (const section of COMPARISON_SECTIONS) {
-      const request = requestFor(section);
-      if (!work.results.has(requestKey(request))) void loadExplanation(request, work, redraw);
+      const key = requestKey(requestFor(section));
+      if (!work.results.has(key)) void loadExplanation(key, work, redraw);
     }
   }, [active, areaKey, group, requestFor, accessToken, requestNeedsAuth]);
 
@@ -113,7 +121,41 @@ export function useComparisonCommentary({ active, areaKey, quarter, rentalArea, 
     requestFor,
     entryFor: (section: ComparisonSection) => current?.results.get(requestKey(requestFor(section))),
     retry: (section: ComparisonSection) => {
-      if (current && !requestNeedsAuth) void loadExplanation(requestFor(section), current, redraw);
+      if (current && !requestNeedsAuth) void loadExplanation(requestKey(requestFor(section)), current, redraw);
+    },
+  };
+}
+
+export function useDetailCommentary(request: DetailRequest | null, accessToken: string, authRequired: boolean) {
+  const session = useRef<Session | null>(null);
+  const [, redraw] = useReducer((revision: number) => revision + 1, 0);
+  const requestNeedsAuth = authRequired && !accessToken;
+  const group = request ? request.quarter + ':' + request.area_codes[0] : '';
+  const key = request ? requestKey(request) : '';
+  const current = session.current?.group === group && session.current.token === accessToken
+    ? session.current : null;
+
+  useEffect(() => {
+    if (!key || requestNeedsAuth) return;
+    let work = session.current;
+    if (!work || work.group !== group || work.token !== accessToken) {
+      work?.controller.abort();
+      work = { group, token: accessToken, controller: new AbortController(), results: new Map() };
+      session.current = work;
+    }
+    if (!work.results.has(key)) void loadExplanation(key, work, redraw);
+  }, [group, key, accessToken, requestNeedsAuth]);
+
+  useEffect(() => () => {
+    session.current?.controller.abort();
+    session.current = null;
+  }, []);
+
+  return {
+    requestNeedsAuth,
+    entry: current?.results.get(key),
+    retry: () => {
+      if (key && current && !requestNeedsAuth) void loadExplanation(key, current, redraw);
     },
   };
 }

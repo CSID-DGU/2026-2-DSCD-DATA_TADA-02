@@ -41,6 +41,13 @@ Supabase 접속 정보는 서버 계정만 읽도록 Secret Manager에 보관한
 
 현재 서버는 실제 데이터를 Supabase에서 읽는다. LLM이 꺼져 있어 로컬 해설 캐시는 읽거나 쓰지 않으며, 시작할 때 데이터 적재나 테이블 생성을 하지 않는다. LLM을 켜거나 데모 모드를 운영하려면 영속 DB가 필요하며 설정 검증이 이를 강제한다. Cloud Run 인스턴스의 로컬 파일은 영속 저장소로 사용하지 않는다. [Cloud Run 파일 시스템](https://docs.cloud.google.com/run/docs/container-contract#file_system)
 
+
+### 상세 분석 해설 저장소
+
+운영에서 LLM을 켜기 전에 [해설 저장 테이블](../scripts/sql/explanation_cache_schema.sql)을 준비한다. 해설 전용 계정에 스키마 `USAGE`와 `explanations` 테이블의 `SELECT`, `INSERT`, `UPDATE`만 부여한다. `DATABASE_URL`은 이 계정으로 접속하고 `analysis_cache`를 기본 스키마로 사용하게 설정한다. 기존 통계 조회 연결인 `SUPABASE_DATABASE_URL`과 분리한다.
+
+운영 DB를 연결한 상태에서 검수 폴더에 대해 [적재 스크립트](../scripts/import_detail_commentary.py)를 한 번 실행한다. 서비스와 적재 도구는 같은 분기, 데이터와 프롬프트 버전, 모델을 기준으로 해설을 찾는다. 새 리비전의 요청이 저장된 해설을 읽는지 확인한 뒤, 접근 토큰으로 보호한 상태에서 생성과 저장을 점검한다.
+
 ## 배포
 
 ```powershell

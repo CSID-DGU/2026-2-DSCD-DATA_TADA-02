@@ -125,6 +125,41 @@ def test_comparison_prompt_inputs_partial_data_and_detail_scope(tmp_path):
         assert calls[2]["area_data"][0]["current"].keys() == {"total_sales_krw", "transaction_count"}
         assert "comparison" not in calls[2]["area_data"][0]
         assert calls[3]["area_data"][0]["rent_summary"]["monthly_rent_krw"]["used_count"] > 0
-        detail = {**query, "scope": "detail", "section": "profitability", "area_codes": ["3120052"]}
+        detail = {**query, "scope": "detail", "section": "location", "location_view": "stores",
+                  "area_codes": ["3120052"], "listing_id": "unused-listing"}
         assert client.post("/api/v1/explanations", json=detail).json()["status"] == "disabled"
         assert len(calls) == 4
+
+def test_detail_generation_reused_by_another_server(tmp_path):
+    calls = []
+
+    async def provider(evidence):
+        calls.append(evidence)
+        key = next(key for key in ("observations", "distribution", "rental_count") if key in evidence["facts"])
+        return ExplanationContent(
+            summary="자료를 설명합니다.",
+            blocks=[ExplanationBlock(title="지표", text="제공된 지표를 설명합니다.", evidence_ids=[key])],
+            caveats=[],
+        ), {}
+
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'detail.db'}", llm_enabled=True,
+                        openai_api_key="test", openai_model="test", llm_cache_ttl_seconds=1, _env_file=None)
+    base = {"scope": "detail", "area_codes": ["3120052"]}
+    queries = [
+        {**base, "section": "profitability"},
+        {**base, "section": "demand", "demand_metric": "transactions"},
+        {**base, "section": "demand", "demand_metric": "floating_population"},
+        {**base, "section": "location", "location_view": "rentals"},
+    ]
+    with TestClient(create_app(settings, provider)) as client:
+        first = [client.post("/api/v1/explanations", json=query).json() for query in queries]
+        assert all(result["status"] == "completed" and not result["cache_hit"] for result in first)
+        assert len({result["cache_key"] for result in first}) == 4
+        assert all(item["page"]["scope"] == "detail" for item in calls)
+        assert all("nearby_stores" not in item["facts"] for item in calls)
+
+    with TestClient(create_app(settings, provider)) as client:
+        for query, original in zip(queries, first):
+            result = client.post("/api/v1/explanations", json=query).json()
+            assert result["cache_hit"] and result["content"] == original["content"]
+    assert len(calls) == 4
