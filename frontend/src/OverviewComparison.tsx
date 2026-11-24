@@ -1,4 +1,5 @@
 import AnalysisIcon from './AnalysisIcon';
+import AreaDetailButton from './AreaDetailButton';
 import { averageOutlook, overviewSituation, PYEONG_M2 } from './report-metrics.mjs';
 import type { ComparisonItem } from './types';
 
@@ -60,6 +61,6 @@ export function OverviewCard({ item, quarter, open }: { item: ComparisonItem; qu
     })}</div>
     <p className="overview-outlook">{m ? averageOutlook(m.sales_yoy_pct, m.stores_yoy_pct, m.transactions_yoy_pct) : item.missing_reason || '전년 동분기 비교 자료 부족'}</p>
     <dl className="overview-considerations"><dt>월세</dt><dd>{rents.length ? `${num(Math.min(...rents))}~${num(Math.max(...rents))}만 원/월` : '매물 자료 없음'}</dd><dt>매물 면적</dt><dd>{sizes.length ? `${num(Math.min(...sizes))}~${num(Math.max(...sizes))}평` : '면적 미확보'}</dd></dl>
-    <button className="text-link" onClick={open}>이 상권 상세분석 <span aria-hidden="true">→</span></button>
+    <AreaDetailButton areaName={item.area.name} onClick={open} />
   </article>;
 }
