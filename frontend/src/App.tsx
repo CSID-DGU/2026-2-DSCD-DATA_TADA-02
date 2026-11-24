@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from './api';
 import { DemandCharts } from './Charts';
 import AreaDetailButton from './AreaDetailButton';
+import ComparisonCarousel from './ComparisonCarousel';
 import ExplanationPanel, { DemoExplanationPanel } from './ExplanationPanel';
 import { detailCommentary, PRESENTATION_DATA_VERSION, PRESENTATION_QUARTER } from './demoCommentary';
 import { StoreCard } from './LocationStores';
@@ -11,7 +12,7 @@ import SalesDetail from './SalesDetail';
 import DetailAreaPicker from './DetailAreaPicker';
 import { PYEONG_M2 } from './report-metrics.mjs';
 import MapPicker, { LocationMap } from './MapPicker';
-import { MAX_CANDIDATES, toggleCandidate, visibleCandidates } from './selection.mjs';
+import { MAX_CANDIDATES, toggleCandidate } from './selection.mjs';
 import type { Area, Comparison, ComparisonItem, Config, Detail, Section, Store } from './types';
 
 type Route = { view: 'map' | 'comparison' | 'detail'; section: Section; codes: string[]; code: string };
@@ -54,8 +55,6 @@ export default function App() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
-  const [offset, setOffset] = useState(0);
-  const [width, setWidth] = useState(window.innerWidth < 760 ? 1 : window.innerWidth < 1100 ? 2 : 3);
   const [recent, setRecent] = useState(true);
   const [areaPyeong, setAreaPyeong] = useState(20);
   const [rentalFloor, setRentalFloor] = useState('');
@@ -76,18 +75,14 @@ export default function App() {
   }, [loadVersion]);
 
   const navigate = useCallback((next: Route) => {
-    setNotice(''); setRoute(next); setOffset(0);
+    setNotice(''); setRoute(next);
     const params = new URLSearchParams({ view: next.view, section: next.section, areas: next.codes.join(','), area: next.code });
     history.pushState(null, '', `#${params}`);
   }, []);
   useEffect(() => {
-    const back = () => { setPendingComparison(null); setRoute(parseRoute()); setOffset(0); };
+    const back = () => { setPendingComparison(null); setRoute(parseRoute()); };
     window.addEventListener('popstate', back); window.addEventListener('hashchange', back);
     return () => { window.removeEventListener('popstate', back); window.removeEventListener('hashchange', back); };
-  }, []);
-  useEffect(() => {
-    const resize = () => setWidth(window.innerWidth < 760 ? 1 : window.innerWidth < 1100 ? 2 : 3);
-    window.addEventListener('resize', resize); return () => window.removeEventListener('resize', resize);
   }, []);
 
   useEffect(() => {
@@ -161,8 +156,6 @@ export default function App() {
     }
   };
   const selected = areas.filter(a => route.codes.includes(a.code)).sort((a, b) => route.codes.indexOf(a.code) - route.codes.indexOf(b.code));
-  const visible = visibleCandidates(comparison?.items || [], offset, width);
-  const [first, last] = [visible.start + 1, Math.min((comparison?.items.length || 0), visible.start + width)];
   const floor = comparison?.items.some(item => item.rentals.some(rental => rental.floor === rentalFloor)) ? rentalFloor : '';
   const demoCommentary = route.view === 'detail' && !loading && config?.llm_enabled === false &&
     detail?.area.code === detailCode && detail.current && detail.meta.quarter === PRESENTATION_QUARTER &&
@@ -215,11 +208,11 @@ export default function App() {
         {loading && <p role="status" className="panel">분석 자료를 불러오고 있습니다.</p>}
         {error && <div role="alert" className="notice alert">{error} <button onClick={() => setLoadVersion(v => v + 1)}>다시 시도</button></div>}
         {!loading && comparison && route.view === 'comparison' && <>
-          <div className="section-title"><div><h2>{section === 'profitability' ? '점포당 평균 매출 비교' : section === 'competition' ? '선택한 상권의 주요 지표 비교' : section === 'demand' ? '총 거래 건수와 평균 결제금액 비교' : '같은 면적 기준 임대료와 매출 대비 비율'}</h2><p className="muted">{section === 'rent' ? '기준 면적과 층 조건을 설정해 후보 상권을 비교하세요.' : section === 'competition' ? quarterLabel(comparison.meta.quarter) + ' 기준 (전년 동분기 대비)' : '분기 기준 / 변화율은 전년 동분기 대비'}</p></div>{(section === 'profitability' || (section === 'competition' && comparison.items.length > width)) && <div className="carousel-controls"><button aria-label="이전 후보 카드" disabled={visible.start === 0} onClick={() => setOffset(visible.start - 1)}>이전</button><span aria-live="polite">{first}~{last} / 전체 {comparison.items.length}개</span><button aria-label="다음 후보 카드" disabled={last >= comparison.items.length} onClick={() => setOffset(visible.start + 1)}>다음</button></div>}</div>
+          <div className="section-title"><div><h2>{section === 'profitability' ? '점포당 평균 매출 비교' : section === 'competition' ? '선택한 상권의 주요 지표 비교' : section === 'demand' ? '총 거래 건수와 평균 결제금액 비교' : '같은 면적 기준 임대료와 매출 대비 비율'}</h2><p className="muted">{section === 'rent' ? '기준 면적과 층 조건을 설정해 후보 상권을 비교하세요.' : section === 'competition' ? quarterLabel(comparison.meta.quarter) + ' 기준 (전년 동분기 대비)' : '분기 기준 / 변화율은 전년 동분기 대비'}</p></div></div>
           {section === 'competition' && <OverviewLegend quarter={comparison.meta.quarter} />}
-          {section === 'profitability' || section === 'competition' ? <div className="comparison-cards">{visible.values.map(item => section === 'competition'
+          {section === 'profitability' || section === 'competition' ? <ComparisonCarousel key={section}>{comparison.items.map(item => section === 'competition'
             ? <OverviewCard key={item.area.code} item={item} quarter={comparison.meta.quarter} open={() => openDetail(item.area.code)} />
-            : <ComparisonCard key={item.area.code} item={item} maximum={Math.max(...comparison.items.map(i => i.metrics?.average_sales_krw || 0))} open={() => openDetail(item.area.code)} />)}</div>
+            : <ComparisonCard key={item.area.code} item={item} maximum={Math.max(...comparison.items.map(i => i.metrics?.average_sales_krw || 0))} open={() => openDetail(item.area.code)} />)}</ComparisonCarousel>
             : section === 'demand' ? <DemandComparison items={comparison.items} open={code => openDetail(code)} />
             : <RentComparison items={comparison.items} open={code => openDetail(code, 'rent')} areaPyeong={areaPyeong} setAreaPyeong={setAreaPyeong} floor={floor} setFloor={setRentalFloor} demo={isDemo} />}
           {section !== 'rent' && section !== 'competition' && <div className="notice info">평균 매출은 같은 상권, 업종, 분기의 총매출을 점포 수로 나눈 값입니다. 개별 점포의 매출과 다를 수 있으며 일부 점포에 매출이 집중될 수 있습니다.</div>}
