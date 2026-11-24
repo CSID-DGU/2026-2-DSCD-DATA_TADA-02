@@ -130,7 +130,7 @@ class ExplanationService:
 
     def claim(self, key: str, owner: str, *, detail: bool = False) -> tuple[str, dict]:
         now = time.time()
-        sessions = self.db.detail_session if detail else self.db.session
+        sessions = self.db.detail_session if detail else self.db.comparison_session
         with sessions.begin() as session:
             row = session.get(ExplanationRow, key)
             if row and row.status == "completed" and row.expires_at > now:
@@ -156,7 +156,7 @@ class ExplanationService:
 
     def finish(self, key: str, owner: str, content: ExplanationContent | None, *, detail: bool = False):
         expires_at = PERMANENT_EXPIRY if detail else time.time() + self.settings.llm_cache_ttl_seconds
-        sessions = self.db.detail_session if detail else self.db.session
+        sessions = self.db.detail_session if detail else self.db.comparison_session
         with sessions.begin() as session:
             changed = session.execute(update(ExplanationRow).where(
                 ExplanationRow.key == key, ExplanationRow.owner == owner,

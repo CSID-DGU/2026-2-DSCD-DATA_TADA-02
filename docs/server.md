@@ -19,8 +19,8 @@ flowchart LR
 | 브라우저 | React, TypeScript, Leaflet, Recharts | 상권 선택, 비교와 상세 화면, 지도와 차트 표시 |
 | HTTP 서버 | FastAPI, Uvicorn, Pydantic | 화면 파일 제공, 요청 검증, 분석 자료 조회와 응답, 선택적 해설 생성 |
 | 데이터 연결 | SQLAlchemy, psycopg | Supabase 모드에서 PostgreSQL 통계 및 예측 읽기 |
-| 애플리케이션 DB | SQLAlchemy와 `DATABASE_URL` | 데모 자료, 비교 해설 캐시와 생성 잠금 관리. 로컬 기본값은 SQLite다. |
-| 상세 해설 DB 연결 | SQLAlchemy와 `SUPABASE_DATABASE_URL` | Supabase 모드에서 같은 DB의 `analysis_cache.explanations`를 사용한다. 데모 모드에서는 `DATABASE_URL`을 사용한다. |
+| 애플리케이션 DB | SQLAlchemy와 `DATABASE_URL` | 데모 자료와 로컬 비교 해설 캐시를 관리한다. 로컬 기본값은 SQLite다. |
+| Supabase 해설 DB | SQLAlchemy와 `SUPABASE_DATABASE_URL` | `analysis_cache.explanations`에 상세 해설을 저장한다. 운영에서 `DATABASE_URL`이 SQLite면 비교 해설 캐시와 생성 잠금도 같은 테이블을 사용한다. |
 | 배포 | Docker 이미지 1개, Cloud Run 서비스 1개 | Docker의 Node 단계에서 프론트를 빌드하고, Python 이미지가 API와 결과 파일을 한 주소에서 제공한다. |
 
 [`Dockerfile`](../Dockerfile)은 Python 3.13 이미지에 `frontend/dist`와 백엔드, 시작 스크립트를 복사한다. [`scripts/start_container.py`](../scripts/start_container.py)는 `backend.app.main:app`을 `0.0.0.0:$PORT`에 Uvicorn 워커 1개로 띄운다. 컨테이너의 기본 포트는 8080이다. 개발할 때 [`frontend/vite.config.ts`](../frontend/vite.config.ts)는 `/api`와 `/health`를 `127.0.0.1:8000`의 FastAPI로 전달한다.

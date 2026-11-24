@@ -2,6 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from backend.app.config import ROOT, Settings
+from backend.app.db import Database
 
 
 def production_settings(**overrides):
@@ -19,10 +20,22 @@ def test_read_only_supabase_deployment_does_not_require_a_writable_cache():
     assert not settings.llm_enabled and not settings.seed_on_start
 
 
-def test_paid_llm_still_requires_a_persistent_cache():
-    with pytest.raises(ValidationError, match="persistent database"):
+def test_production_supabase_uses_its_existing_cache_for_both_scopes():
+    settings = production_settings(llm_enabled=True, openai_api_key="test", openai_model="test",
+                                   service_access_token="test", database_url="sqlite:///:memory:")
+    db = Database(settings)
+    try:
+        assert db.comparison_session is db.detail_session
+        assert db.comparison_session is not db.session
+        assert db.comparison_session.kw["bind"].get_execution_options()["schema_translate_map"] == {None: "analysis_cache"}
+    finally:
+        db.dispose()
+
+
+def test_paid_llm_still_requires_access_control():
+    with pytest.raises(ValidationError, match="access control"):
         production_settings(llm_enabled=True, openai_api_key="test", openai_model="test",
-                            service_access_token="test")
+                            service_access_token="")
 
 
 def test_demo_production_still_requires_a_persistent_database():

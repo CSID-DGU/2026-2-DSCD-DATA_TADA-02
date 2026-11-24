@@ -45,10 +45,14 @@ class Database:
             **({"connect_args": {"check_same_thread": False, "timeout": 10}} if url.startswith("sqlite") else {}),
         )
         self.session = sessionmaker(self.engine, expire_on_commit=False)
+        self.comparison_session = self.session
         self.detail_session = self.session
+        self.llm_enabled = settings.llm_enabled
         if self.remote:
             detail_engine = self.remote.engine.execution_options(schema_translate_map={None: "analysis_cache"})
             self.detail_session = sessionmaker(detail_engine, expire_on_commit=False)
+            if settings.app_env == "production" and url.startswith("sqlite"):
+                self.comparison_session = self.detail_session
 
     def initialize(self, seed: bool):
         # Production schema creation/import is an explicit operator command.
@@ -67,6 +71,10 @@ class Database:
         else:
             with self.session() as session:
                 session.scalars(select(AreaRow.code).limit(1)).one()
+        if self.llm_enabled:
+            for sessions in dict.fromkeys((self.comparison_session, self.detail_session)):
+                with sessions() as session:
+                    session.scalars(select(ExplanationRow.key).limit(1)).first()
 
     def dispose(self):
         self.engine.dispose()

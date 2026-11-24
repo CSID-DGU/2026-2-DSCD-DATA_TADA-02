@@ -39,14 +39,14 @@ gcloud builds submit . --tag=asia-northeast3-docker.pkg.dev/data-tada-capstone-2
 
 Supabase 접속 정보는 서버 계정만 읽도록 Secret Manager에 보관한다. 공개 루트 인증서는 이미지에 포함하며 DB 접속에 호스트 이름과 인증서 검증을 사용한다. [Cloud Run 비밀 설정](https://docs.cloud.google.com/run/docs/configuring/services/secrets)
 
-현재 서버는 실제 데이터를 Supabase에서 읽는다. LLM이 꺼져 있어 로컬 해설 캐시는 읽거나 쓰지 않으며, 시작할 때 데이터 적재나 테이블 생성을 하지 않는다. LLM을 켜거나 데모 모드를 운영하려면 영속 DB가 필요하며 설정 검증이 이를 강제한다. Cloud Run 인스턴스의 로컬 파일은 영속 저장소로 사용하지 않는다. [Cloud Run 파일 시스템](https://docs.cloud.google.com/run/docs/container-contract#file_system)
+현재 운영 리비전은 LLM이 꺼져 있어 해설 캐시를 사용하지 않는다. 서버 시작 시 데이터 적재나 테이블 생성을 하지 않는다. Cloud Run 인스턴스의 로컬 파일은 영속 저장소로 사용하지 않는다. [Cloud Run 파일 시스템](https://docs.cloud.google.com/run/docs/container-contract#file_system)
 
 
-### 상세 분석 해설 저장소
+### AI 해설 활성화
 
-검수본은 기존 Supabase의 `analysis_cache.explanations`에 저장되어 있다. `DATA_MODE=supabase`에서 상세 해설도 기존 `SUPABASE_DATABASE_URL`로 연결한다. 기존 서버 계정 `data_tada_app`에는 이 스키마의 `USAGE`와 해설 테이블의 `SELECT`, `INSERT`, `UPDATE` 권한이 필요하다.
+상세 해설과 검수본은 기존 Supabase의 `analysis_cache.explanations`에 저장한다. 운영의 Supabase 모드에서 `DATABASE_URL`이 기본 SQLite 값이면 비교 해설도 이 테이블을 사용한다. 두 해설은 기존 `SUPABASE_DATABASE_URL`과 연결 풀을 함께 사용한다. 기존 서버 계정 `data_tada_app`에는 이 스키마의 `USAGE`와 테이블의 `SELECT`, `INSERT`, `UPDATE` 권한이 필요하다. [해설 테이블 정의](../scripts/sql/explanation_cache_schema.sql) / [검수본 적재 도구](../scripts/import_detail_commentary.py)
 
-프로덕션에서 LLM을 켤 때 `DATABASE_URL`에는 비교 해설 캐시용 영속 DB를 설정한다. [상세 해설 테이블 정의](../scripts/sql/explanation_cache_schema.sql) / [검수본 적재 도구](../scripts/import_detail_commentary.py)
+해설을 활성화할 리비전에는 `LLM_ENABLED=true`와 `OPENAI_MODEL=gpt-6.1-terra`를 지정한다. Secret Manager에서 운영용 OpenAI 키와 발표용 서비스 접근 토큰의 버전을 각각 `OPENAI_API_KEY`, `SERVICE_ACCESS_TOKEN`에 연결한다. 기존 Cloud Run 실행 계정은 두 비밀 버전을 읽을 수 있어야 한다. 화면에서 접근 토큰을 입력한 뒤 해설을 사용할 수 있다. [Cloud Run 비밀 설정](https://docs.cloud.google.com/run/docs/configuring/services/secrets)
 
 ## 배포
 
@@ -55,6 +55,8 @@ gcloud run deploy data-tada --image=asia-northeast3-docker.pkg.dev/data-tada-cap
 ```
 
 화면과 API는 같은 HTTPS 주소에서 제공한다. 최소 인스턴스는 0개로 설정해 요청이 없을 때 상시 실행을 피하고, 최대 인스턴스는 2개로 제한한다. 사용량에 따라 Cloud Run, Cloud Build, Artifact Registry와 Secret Manager 비용이 발생할 수 있다.
+
+AI 해설을 배포할 때는 위 명령의 이미지 태그를 새 빌드로 바꾸고, 앞 절의 모델 설정과 비밀 참조를 추가한다. 검증 리비전은 `--no-traffic --tag=review`로 먼저 띄운다. 검증 주소의 `/health/ready`는 LLM 활성화 시 해설 테이블 조회도 확인한다. `/api/v1/config`에서 LLM 및 접근 인증 활성화를 확인하고, 해설 API의 무인증 요청이 401을 반환하는지, 인증 후 상세 검수본 재사용과 후보 비교가 동작하는지 확인한 뒤 공개 트래픽을 전환한다.
 
 ## 배포 확인
 

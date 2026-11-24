@@ -24,9 +24,8 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def check_deployment(self):
-        # The read-only Supabase service never uses the cache while LLM is disabled.
-        cache_required = self.llm_enabled or self.data_mode != "supabase"
-        if self.app_env == "production" and cache_required and self.database_url.startswith("sqlite"):
+        # Production Supabase uses its existing persistent cache when DATABASE_URL is SQLite.
+        if self.app_env == "production" and self.data_mode != "supabase" and self.database_url.startswith("sqlite"):
             raise ValueError("Production requires a persistent database for the explanation cache.")
         if self.app_env == "production" and self.seed_on_start:
             raise ValueError("Production imports must run explicitly, not on startup.")
