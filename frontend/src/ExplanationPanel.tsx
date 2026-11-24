@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
-import { api } from './api';
 import AnalysisIcon from './AnalysisIcon';
 import type { Commentary } from './demoCommentary';
-import type { AreaSummary, Config, Explanation } from './types';
+import type { Config, Explanation } from './types';
 
 export function DemoExplanationPanel({ question, lead, paragraphs, note, reportLayout = false }: Commentary & { reportLayout?: boolean }) {
   return <section className={reportLayout ? 'panel explanation demo-explanation report-explanation' : 'panel explanation demo-explanation'} aria-labelledby="explanation-title" aria-live="polite">
@@ -16,57 +14,15 @@ export function DemoExplanationPanel({ question, lead, paragraphs, note, reportL
   </section>;
 }
 
-export default function ExplanationPanel({ request, config, accessToken, canRequest, showResult, waitingMessage, onAreaSummaries }: {
+export default function ExplanationPanel({ request, config, result, error, requestNeedsAuth, waitingMessage, onRetry }: {
   request: Record<string, unknown>;
   config: Config;
-  accessToken: string;
-  canRequest: boolean;
-  showResult: boolean;
+  result?: Explanation;
+  error?: string;
+  requestNeedsAuth: boolean;
   waitingMessage?: string;
-  onAreaSummaries?: (summaries: AreaSummary[]) => void;
+  onRetry?: () => void;
 }) {
-  const [loaded, setLoaded] = useState<{ request: string; result: Explanation | null; error?: string } | null>(null);
-  const [retry, setRetry] = useState(0);
-  const serialized = canRequest ? JSON.stringify(request) : null;
-  const requestNeedsAuth = request.scope === 'comparison' && config.llm_auth_required && !accessToken;
-  useEffect(() => {
-    if (!serialized || requestNeedsAuth) return;
-    const requestBody = serialized;
-    let active = true;
-    const controller = new AbortController();
-    let timeout: ReturnType<typeof setTimeout> | undefined;
-    const started = performance.now();
-    setLoaded(null);
-    async function load(attempt = 0) {
-      try {
-        const response = await api<Explanation>('/explanations', {
-          method: 'POST', body: requestBody, signal: controller.signal,
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-        });
-        if (!active) return;
-        const timedOut = response.status === 'running' && attempt >= 35;
-        setLoaded({ request: requestBody, result: response,
-          error: timedOut ? '생성 대기가 길어졌습니다. 잠시 후 다시 시도하세요.' : undefined });
-        if (response.status === 'running' && attempt < 35) timeout = setTimeout(() => load(attempt + 1), (response.retry_after_seconds || 2) * 1000);
-        if (response.status !== 'running') performance.measure('ui:commentary-ready', { start: started, end: performance.now() });
-      } catch (error) {
-        if (active && !(error instanceof DOMException && error.name === 'AbortError')) {
-          setLoaded({ request: requestBody, result: null, error: String(error instanceof Error ? error.message : error) });
-        }
-      }
-    }
-    void load();
-    return () => { active = false; controller.abort(); if (timeout) clearTimeout(timeout); };
-  }, [serialized, retry, requestNeedsAuth, accessToken]);
-
-  const areaSummaries = loaded?.request === serialized && !requestNeedsAuth ? loaded?.result?.content?.area_summaries : undefined;
-  useEffect(() => {
-    if (areaSummaries) onAreaSummaries?.(areaSummaries);
-  }, [areaSummaries, onAreaSummaries]);
-
-  const displayed = showResult && !requestNeedsAuth && loaded?.request === serialized ? loaded : null;
-  const result = displayed?.result;
-  const error = displayed?.error;
   const overview = request.scope === 'comparison' && request.section === 'competition';
   const salesDetail = request.scope === 'detail' && request.section === 'profitability';
   const reportLayout = overview || salesDetail;
@@ -80,8 +36,8 @@ export default function ExplanationPanel({ request, config, accessToken, canRequ
         {result.content.blocks.map((block, i) => <div className="explanation-row" key={i}><span className="number">{i + 1}</span><strong>{block.title}</strong><p>{block.text}</p></div>)}
         {result.content.caveats.map(text => <p className="muted" key={text}>{text}</p>)}
       </> : <p>{result.message}</p>}
-      {(error || result?.status === 'failed') && <button onClick={() => setRetry(v => v + 1)}>해설 다시 시도</button>}
-      {showResult && canRequest && <details><summary>해설에 전달하는 근거 보기</summary><p className="muted">선택한 화면의 지표와 조건입니다.</p><pre>{displayedEvidence}</pre></details>}
+      {onRetry && (error || result?.status === 'failed') && <button onClick={onRetry}>해설 다시 시도</button>}
+      {result && <details><summary>해설에 전달하는 근거 보기</summary><p className="muted">선택한 화면의 지표와 조건입니다.</p><pre>{displayedEvidence}</pre></details>}
     </div>
   </section>;
 }
