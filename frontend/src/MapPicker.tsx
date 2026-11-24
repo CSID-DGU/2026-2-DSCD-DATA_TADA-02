@@ -127,13 +127,20 @@ export default function MapPicker({ areas, selected, onToggle }: { areas: Area[]
 
 export type LocationPoint = { kind: 'rental' | 'store'; id: string };
 
+const locationIcons = {
+  rental: L.divIcon({ className: 'location-marker location-marker-rental', iconSize: [24, 24], iconAnchor: [12, 12],
+    html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14M7 20V5h10v15M10 9h.1m3.9 0h.1M10 13h.1m3.9 0h.1M11 20v-3h2v3"/></svg>' }),
+  store: L.divIcon({ className: 'location-marker location-marker-store', iconSize: [22, 22], iconAnchor: [11, 11],
+    html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h12v4a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Zm12 1h2a2 2 0 0 1 0 4h-2M3 20h15M8 5V3m4 2V3"/></svg>' }),
+};
+
 export function LocationMap({ area, rentals, stores, selectedRentalId, selectedStoreId, hovered, radius, onSelectRental, onSelectStore, demo }: {
   area: Area; rentals: Rental[]; stores: Store[]; selectedRentalId: string; selectedStoreId: string;
   hovered: LocationPoint | null; radius?: number;
   onSelectRental: (id: string) => void; onSelectStore: (id: string) => void; demo: boolean;
 }) {
   const element = useRef<HTMLDivElement>(null);
-  const highlights = useRef<{ layer: L.LayerGroup; renderer: L.SVG } | null>(null);
+  const markers = useRef<Record<LocationPoint['kind'], Map<string, L.Marker>> | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const [tileError, setTileError] = useState(false);
   const selectedRental = rentals.find(rental => rental.id === selectedRentalId);
@@ -144,47 +151,45 @@ export function LocationMap({ area, rentals, stores, selectedRentalId, selectedS
     const map = baseMap(element.current, [area.latitude, area.longitude], 16);
     mapRef.current = map;
     const layer = L.layerGroup().addTo(map);
+    const byKind = { rental: new Map<string, L.Marker>(), store: new Map<string, L.Marker>() };
+    markers.current = byKind;
     map.eachLayer(item => { if (item instanceof L.TileLayer) item.on('tileerror', () => setTileError(true)); });
     const ring = radius && referenceRental ? L.circle([referenceRental.latitude, referenceRental.longitude], { radius, color: '#009da5', dashArray: '7 6', fillOpacity: .07 }).addTo(layer) : null;
+    const addMarker = (point: Pick<Rental, 'id' | 'latitude' | 'longitude'>, kind: LocationPoint['kind'], name: string, select: (id: string) => void) => {
+      const marker = L.marker([point.latitude, point.longitude], { icon: locationIcons[kind], riseOnHover: true })
+        .bindTooltip(escape(name), { direction: 'top', offset: [0, -14] }).on('click', () => select(point.id)).addTo(layer);
+      marker.getElement()?.setAttribute('aria-label', `${kind === 'rental' ? '임대 매물' : '카페'} ${name}`);
+      byKind[kind].set(point.id, marker);
+    };
     for (const rental of rentals) {
-      L.circleMarker([rental.latitude, rental.longitude], { radius: 9, color: '#fff', weight: 3, fillColor: '#009da5', fillOpacity: 1 })
-        .bindTooltip(escape(rental.title), { direction: 'top', offset: [0, -10] }).on('click', () => onSelectRental(rental.id)).addTo(layer);
+      addMarker(rental, 'rental', rental.title, onSelectRental);
     }
     for (const store of stores) {
-      L.circleMarker([store.latitude, store.longitude], { radius: stores.length > 15 ? 6 : 9, color: '#fff', weight: 2, fillColor: '#009da5', fillOpacity: 1 })
-        .bindTooltip(escape(store.name), { direction: 'top', offset: [0, -10] }).on('click', () => onSelectStore(store.id)).addTo(layer);
+      addMarker(store, 'store', store.name, onSelectStore);
     }
-    const pane = map.createPane('location-highlights');
-    pane.style.zIndex = '450';
-    pane.style.pointerEvents = 'none';
-    highlights.current = { layer: L.layerGroup().addTo(map), renderer: L.svg({ pane: 'location-highlights' }) };
     if (ring) map.fitBounds(ring.getBounds(), { padding: [22, 22], maxZoom: 17 });
     else if (rentals.length + stores.length > 0) {
       map.fitBounds(L.latLngBounds([...rentals, ...stores].map(item => [item.latitude, item.longitude])), { padding: [24, 24], maxZoom: 17 });
     }
     const observer = new ResizeObserver(() => map.invalidateSize()); observer.observe(element.current);
-    return () => { observer.disconnect(); highlights.current = null; mapRef.current = null; map.remove(); };
+    return () => { observer.disconnect(); markers.current = null; mapRef.current = null; map.remove(); };
   }, [area, rentals, stores, referenceRental, radius, onSelectRental, onSelectStore]);
 
   useEffect(() => {
-    const overlay = highlights.current;
-    if (!overlay) return;
-    overlay.layer.clearLayers();
-    for (const point of [selectedRental, selectedStore]) {
-      if (!point) continue;
-      L.circleMarker([point.latitude, point.longitude], {
-        renderer: overlay.renderer, interactive: false, radius: 12, color: '#fff', weight: 3,
-        fillColor: '#071d43', fillOpacity: 1, className: 'location-marker-selected',
-      }).addTo(overlay.layer);
+    const byKind = markers.current;
+    if (!byKind) return;
+    for (const [kind, selectedId] of [['rental', selectedRentalId], ['store', selectedStoreId]] as const) {
+      for (const [id, marker] of byKind[kind]) {
+        const node = marker.getElement();
+        const selected = id === selectedId;
+        const pointed = hovered?.kind === kind && hovered.id === id;
+        node?.classList.toggle('location-marker-selected', selected);
+        node?.classList.toggle('location-marker-hovered', pointed);
+        node?.setAttribute('aria-pressed', String(selected));
+        marker.setZIndexOffset(pointed ? 1000 : selected ? 500 : 0);
+      }
     }
-    const hoveredPoint = hovered && (hovered.kind === 'rental' ? rentals : stores).find(point => point.id === hovered.id);
-    if (hoveredPoint) {
-      L.circleMarker([hoveredPoint.latitude, hoveredPoint.longitude], {
-        renderer: overlay.renderer, interactive: false, radius: 16, color: '#a76d06', weight: 3,
-        fill: false, className: 'location-marker-hovered',
-      }).addTo(overlay.layer);
-    }
-  }, [area, rentals, stores, referenceRental, radius, onSelectRental, onSelectStore, selectedRental, selectedStore, hovered]);
+  }, [area, rentals, stores, referenceRental, radius, onSelectRental, onSelectStore, selectedRentalId, selectedStoreId, hovered]);
 
   useEffect(() => {
     const selected = selectedStore ?? selectedRental;

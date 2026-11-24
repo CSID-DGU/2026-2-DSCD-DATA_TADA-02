@@ -3,6 +3,19 @@
 .location-card.selected { border-color: var(--teal); background: #f0fcfc; }
 .location-card h3 .rental-name { margin: 0; }
 
+.location-marker {
+  display: grid;
+  place-items: center;
+  border: 2px solid white;
+  color: white;
+  box-shadow: 0 1px 4px #0a1f4366;
+}
+.location-marker-rental { border-radius: 6px; background: #263f68; }
+.location-marker-store { border-radius: 50%; background: #007680; }
+.location-marker svg { width: 88%; height: 88%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.location-marker-selected { box-shadow: 0 0 0 2px #071d43; }
+.location-marker:is(:hover, :focus-visible, .location-marker-hovered) { outline: 2px solid #a76d06; outline-offset: 3px; }
+
 .store-row > small {
   display: block;
   margin: 5px 0;
