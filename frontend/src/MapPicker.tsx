@@ -129,9 +129,9 @@ export type LocationPoint = { kind: 'rental' | 'store'; id: string };
 
 const locationIcons = {
   rental: L.divIcon({ className: 'location-marker location-marker-rental', iconSize: [24, 24], iconAnchor: [12, 12],
-    html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14M7 20V5h10v15M10 9h.1m3.9 0h.1M10 13h.1m3.9 0h.1M11 20v-3h2v3"/></svg>' }),
+    html: '<span class="location-marker-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20h14M7 20V5h10v15M10 9h.1m3.9 0h.1M10 13h.1m3.9 0h.1M11 20v-3h2v3"/></svg></span>' }),
   store: L.divIcon({ className: 'location-marker location-marker-store', iconSize: [22, 22], iconAnchor: [11, 11],
-    html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h12v4a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Zm12 1h2a2 2 0 0 1 0 4h-2M3 20h15M8 5V3m4 2V3"/></svg>' }),
+    html: '<span class="location-marker-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8h12v4a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Zm12 1h2a2 2 0 0 1 0 4h-2M3 20h15M8 5V3m4 2V3"/></svg></span>' }),
 };
 
 export function LocationMap({ area, rentals, stores, selectedRentalId, selectedStoreId, hovered, radius, onSelectRental, onSelectStore, demo }: {
