@@ -194,6 +194,6 @@
 | --- | --- | --- |
 | `areas` | `code VARCHAR(32)` PK, `payload JSON` 필수 | 데모 상권 위치 목록. [`commercial_areas.json`](../data/catalog/commercial_areas.json)에서 가져온다. |
 | `analysis_snapshots` | `key VARCHAR(100)` PK, `payload JSON` 필수 | 데모의 상권, 업종, 분기별 분석 자료. 키 예시는 `demo:3120052:CS100010:2026Q2`다. [`snapshots.json`](../data/demo/snapshots.json)이 원본이다. |
-| `explanations` | `key VARCHAR(64)` PK, `status VARCHAR(20)`, `owner VARCHAR(36)`, `lease_until FLOAT`, `expires_at FLOAT`, `payload JSON`. 모든 컬럼 필수. | 해설 키는 SHA-256 문자열이다. 상태는 `running`, `completed`, `failed`를 사용한다. `owner`는 생성 요청 식별자고 두 만료 시각은 Unix epoch 초다. `payload`는 완료 해설 또는 빈 객체다. |
+| `explanations` | `key VARCHAR(64)` PK, `status VARCHAR(20)`, `owner VARCHAR(36)`, `lease_until FLOAT`, `expires_at FLOAT`, `payload JSON`. 모든 컬럼 필수. | 해설 키는 SHA-256 문자열이다. 상태는 `running`, `completed`, `failed`를 사용한다. `owner`는 생성 요청 식별자고 생성 잠금의 만료 시각 `lease_until`은 Unix epoch 초다. `expires_at`은 이전 버전과의 호환을 위한 필드다. 같은 키의 완료 해설은 시간 제한 없이 반환한다. `payload`는 완료 해설 또는 빈 객체다. |
 
 애플리케이션 DB의 세 테이블은 SQLAlchemy 모델로 정의한다. 로컬 설정의 `SEED_ON_START=true`는 테이블을 준비하며 데모 모드에서는 JSON 원본을 가져온다. Compose 예제의 `init`은 [`scripts/import_demo.py`](../scripts/import_demo.py)를 실행하고, 성공한 뒤 서버가 시작된다. 운영 설정 `SEED_ON_START=false`는 서버 시작 시 테이블 생성과 자료 적재를 수행하지 않는다. 이 저장소에는 운영 PostgreSQL 스키마를 일괄 적용하는 마이그레이션 경로가 연결되어 있지 않다.

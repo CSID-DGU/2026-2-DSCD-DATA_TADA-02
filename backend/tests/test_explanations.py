@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 from backend.app.config import Settings
-from backend.app.db import ExplanationRow
+from backend.app.db import PERMANENT_EXPIRY, ExplanationRow
 from backend.app.explanations import ExplanationService
 from backend.app.main import create_app
 from backend.app.schemas import ExplanationBlock, ExplanationContent, ExplanationRequest
@@ -35,9 +35,14 @@ def test_cache_model_context_and_failure_isolation(tmp_path):
     query = {"scope": "comparison", "section": "competition", "area_codes": ["3120052", "3120104"]}
     with TestClient(create_app(settings, provider)) as client:
         first = client.post("/api/v1/explanations", json=query).json()
+        with client.app.state.db.comparison_session.begin() as session:
+            stored = session.get(ExplanationRow, first["cache_key"])
+            assert stored.expires_at == PERMANENT_EXPIRY
+            stored.expires_at = 1  # Simulate a completed row from the former TTL policy.
         second = client.post("/api/v1/explanations", json={**query, "area_codes": query["area_codes"][::-1]}).json()
         assert first["status"] == "completed" and not first["cache_hit"]
         assert second["cache_hit"] and first["cache_key"] == second["cache_key"]
+        assert first["content"] == second["content"]
         assert len(calls) == 1
         changed = client.post("/api/v1/explanations", json={**query, "section": "profitability"}).json()
         assert changed["cache_key"] != first["cache_key"] and len(calls) == 2
@@ -166,7 +171,7 @@ def test_detail_generation_reused_by_another_server(tmp_path):
         ), {}
 
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'detail.db'}", llm_enabled=True,
-                        openai_api_key="test", openai_model="test", llm_cache_ttl_seconds=1, _env_file=None)
+                        openai_api_key="test", openai_model="test", _env_file=None)
     base = {"scope": "detail", "area_codes": ["3120052"]}
     queries = [
         {**base, "section": "profitability"},

@@ -10,8 +10,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sqlalchemy.exc import IntegrityError
 
 from backend.app.config import Settings
-from backend.app.db import Database, ExplanationRow
-from backend.app.detail_explanations import PERMANENT_EXPIRY, SECTIONS, detail_evidence, detail_key, load_detail_prompt
+from backend.app.db import PERMANENT_EXPIRY, Database, ExplanationRow
+from backend.app.detail_explanations import SECTIONS, detail_evidence, detail_key, load_detail_prompt
 from backend.app.explanations import validate_content
 from backend.app.schemas import ExplanationContent
 

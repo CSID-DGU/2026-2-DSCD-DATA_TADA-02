@@ -24,6 +24,10 @@ class SnapshotRow(Base):
     payload: Mapped[dict] = mapped_column(JSON)
 
 
+# Keep completed rows readable by older revisions during a rollout or rollback.
+PERMANENT_EXPIRY = 253402300799.0
+
+
 class ExplanationRow(Base):
     __tablename__ = "explanations"
     key: Mapped[str] = mapped_column(String(64), primary_key=True)

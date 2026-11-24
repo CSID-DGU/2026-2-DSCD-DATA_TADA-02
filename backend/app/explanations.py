@@ -12,9 +12,9 @@ from sqlalchemy.exc import IntegrityError
 from .analysis import AnalysisService
 from .comparison_explanations import COMPARISON_VERSION, build_comparison_evidence, load_comparison_prompt
 from .config import Settings
-from .db import Database, ExplanationRow
+from .db import PERMANENT_EXPIRY, Database, ExplanationRow
 from .detail_explanations import (
-    PERMANENT_EXPIRY, build_detail_evidence, detail_key, detail_tab, has_detail_data,
+    build_detail_evidence, detail_key, detail_tab, has_detail_data,
     load_detail_prompt, prompt_version as detail_prompt_version,
 )
 from .schemas import ExplanationContent, ExplanationRequest, ExplanationResponse
@@ -133,7 +133,7 @@ class ExplanationService:
         sessions = self.db.detail_session if detail else self.db.comparison_session
         with sessions.begin() as session:
             row = session.get(ExplanationRow, key)
-            if row and row.status == "completed" and row.expires_at > now:
+            if row and row.status == "completed":
                 return "cached", row.payload
             if row and row.status == "running" and row.lease_until > now:
                 return "running", {}
@@ -142,7 +142,6 @@ class ExplanationService:
                     ExplanationRow.key == key,
                     or_(
                         and_(ExplanationRow.status == "running", ExplanationRow.lease_until <= now),
-                        and_(ExplanationRow.status == "completed", ExplanationRow.expires_at <= now),
                         ExplanationRow.status == "failed",
                     ),
                 ).values(status="running", owner=owner,
@@ -155,13 +154,12 @@ class ExplanationService:
         return "claimed", {}
 
     def finish(self, key: str, owner: str, content: ExplanationContent | None, *, detail: bool = False):
-        expires_at = PERMANENT_EXPIRY if detail else time.time() + self.settings.llm_cache_ttl_seconds
         sessions = self.db.detail_session if detail else self.db.comparison_session
         with sessions.begin() as session:
             changed = session.execute(update(ExplanationRow).where(
                 ExplanationRow.key == key, ExplanationRow.owner == owner,
             ).values(status="completed" if content else "failed", payload=content.model_dump() if content else {},
-                     lease_until=0, expires_at=expires_at if content else 0))
+                     lease_until=0, expires_at=PERMANENT_EXPIRY if content else 0))
             if content and changed.rowcount != 1:
                 raise RuntimeError("Lease ownership lost")
 

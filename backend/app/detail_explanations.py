@@ -13,7 +13,6 @@ FILES = {"sales": "sales.md", "transactions": "demand.md",
          "floating_population": "demand.md", "rentals": "rentals.md"}
 SECTIONS = {"sales": "profitability", "transactions": "demand",
             "floating_population": "demand", "rentals": "location"}
-PERMANENT_EXPIRY = 253402300799.0
 RENT_FIELDS = ("monthly_rent_krw", "deposit_krw", "area_m2", "floor")
 
 

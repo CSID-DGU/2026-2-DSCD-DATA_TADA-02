@@ -20,7 +20,6 @@ class Settings(BaseSettings):
     openai_model: str = ""
     llm_timeout_seconds: float = Field(default=40, ge=1, le=90)
     llm_max_concurrent: int = Field(default=4, ge=1, le=8)
-    llm_cache_ttl_seconds: int = Field(default=86400, ge=1)
     service_access_token: str = ""
 
     @property
