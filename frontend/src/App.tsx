@@ -1,19 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api } from './api';
 import { DemandCharts } from './Charts';
 import AreaDetailButton from './AreaDetailButton';
 import ComparisonCarousel from './ComparisonCarousel';
 import ExplanationPanel, { DemoExplanationPanel, LoadingIndicator } from './ExplanationPanel';
 import { detailCommentary, PRESENTATION_DATA_VERSION, PRESENTATION_QUARTER } from './demoCommentary';
-import { StoreCard } from './LocationStores';
+import { LocationCard, StoreCard } from './LocationStores';
 import RentComparison from './RentComparison';
 import OverviewComparison, { quarterLabel } from './OverviewComparison';
 import SalesDetail from './SalesDetail';
 import { PYEONG_M2 } from './report-metrics.mjs';
-import MapPicker, { LocationMap } from './MapPicker';
+import MapPicker, { LocationMap, type LocationPoint } from './MapPicker';
 import { MAX_CANDIDATES, toggleCandidate } from './selection.mjs';
 import { COMPARISON_SECTIONS, useComparisonCommentary } from './useComparisonCommentary';
-import type { Area, Comparison, ComparisonItem, Config, Detail, Section, Store } from './types';
+import type { Area, Comparison, ComparisonItem, Config, Detail, Rental, Section, Store } from './types';
 
 type Route = { view: 'map' | 'comparison' | 'detail'; section: Section; codes: string[]; code: string };
 const sectionLabels: Record<Section, string> = { profitability: '매출', competition: '종합해설', demand: '수요성', rent: '임대료', location: '입지/주변환경' };
@@ -22,6 +22,7 @@ const money = (value: number | null | undefined) => value == null ? '미확보' 
 const listingMoney = (value: number | null) => value == null ? '미확보' :
   value % 10000 === 0 ? `${number(value / 10000)}만 원` : `${number(value)}원`;
 const NO_STORES: Store[] = [];
+const NO_RENTALS: Rental[] = [];
 const PRESENTATION_CANDIDATES = [
   '3120052', // 성수역
   '3120030', // 중부경찰서(영화인의거리)
@@ -63,6 +64,10 @@ export default function App() {
   const [demandMetric, setDemandMetric] = useState<'transactions' | 'floating_population'>('transactions');
   const [locationView, setLocationView] = useState<'rentals' | 'stores'>('rentals');
   const [listingId, setListingId] = useState('');
+  const [selectedStoreId, setSelectedStoreId] = useState('');
+  const [hoveredLocation, setHoveredLocation] = useState<LocationPoint | null>(null);
+  const [mapSelection, setMapSelection] = useState<LocationPoint | null>(null);
+  const locationList = useRef<HTMLElement>(null);
   const [radius, setRadius] = useState<100 | 300 | 500>(300);
   const [nearby, setNearby] = useState<{ key: string; items: Store[]; error?: string } | null>(null);
   const [accessToken, setAccessToken] = useState('');
@@ -101,7 +106,12 @@ export default function App() {
       : api<Comparison>('/comparisons', { method: 'POST', body: JSON.stringify({ area_codes: route.codes }), signal: controller.signal });
     promise.then(result => {
       if (!active) return;
-      if ('observations' in result) { setDetail(result); setListingId(result.rentals[0]?.id || ''); }
+      if ('observations' in result) {
+        setDetail(result);
+        setListingId(result.rentals[0]?.id || '');
+        setSelectedStoreId('');
+        setHoveredLocation(null);
+      }
       else setComparison(result);
       requestAnimationFrame(() => { if (active) performance.measure('ui:charts-ready', { start: started, end: performance.now() }); });
     }).catch(err => { if (active && err.name !== 'AbortError') setError(err.message); }).finally(() => { if (active) setLoading(false); });
@@ -112,6 +122,25 @@ export default function App() {
   const nearbyKey = detail && listingId ? `${detail.area.code}:${detail.meta.quarter}:${listingId}:${radius}` : '';
   const nearbyResult = nearby?.key === nearbyKey ? nearby : null;
   const stores = listingId ? nearbyResult?.items ?? NO_STORES : detail?.stores ?? NO_STORES;
+  const rentals = detail?.rentals ?? NO_RENTALS;
+  const mapRentals = useMemo(() => locationView === 'stores' ? rentals.filter(rental => rental.id === listingId) : rentals,
+    [locationView, rentals, listingId]);
+
+  useEffect(() => {
+    setHoveredLocation(null);
+  }, [route.view, route.section, locationView, nearbyKey]);
+
+  useLayoutEffect(() => {
+    if (!mapSelection) return;
+    const list = locationList.current;
+    const cardType = mapSelection.kind === 'rental' ? 'rental-item' : 'store-row';
+    const card = list?.querySelector(`.${cardType}[data-location-id="${CSS.escape(mapSelection.id)}"]`);
+    if (!card || !list) return;
+    const bounds = list.getBoundingClientRect();
+    const target = card.getBoundingClientRect();
+    if (target.top >= bounds.top && target.bottom <= bounds.bottom) return;
+    list.scrollTop += target.top - bounds.top - 12;
+  }, [mapSelection]);
 
   useEffect(() => {
     if (route.view !== 'detail' || route.section !== 'location' || locationView !== 'stores' || !listingId || !detail) return;
@@ -131,6 +160,14 @@ export default function App() {
     });
   }, []);
   const selectListing = useCallback((id: string) => setListingId(id), []);
+  const selectRentalOnMap = useCallback((id: string) => {
+    setListingId(id);
+    setMapSelection({ kind: 'rental', id });
+  }, []);
+  const selectStoreOnMap = useCallback((id: string) => {
+    setSelectedStoreId(id);
+    setMapSelection({ kind: 'store', id });
+  }, []);
   const openDetail = (code: string, section = route.section) => navigate({ ...route, view: 'detail', code, section: section === 'rent' ? 'location' : section === 'competition' ? 'profitability' : section });
   const comparisonSection = COMPARISON_SECTIONS.find(value => value === route.section) ?? 'competition';
   const tabs: readonly Section[] = route.view === 'detail' ? ['profitability', 'demand', 'location'] : COMPARISON_SECTIONS;
@@ -256,17 +293,23 @@ export default function App() {
               {listingId && <label>탐색 반경<select value={radius} onChange={e => setRadius(Number(e.target.value) as 100 | 300 | 500)}>{[100, 300, 500].map(r => <option key={r} value={r}>{r}m</option>)}</select></label>}
             </div>}
             <div className="location-layout">
-              <aside className="panel location-list">{locationView === 'rentals' ? <>
+              <aside ref={locationList} className="panel location-list">{locationView === 'rentals' ? <>
                 <h2>{isDemo ? '예시 매물' : '임대 매물'} {detail.rentals.length}건</h2>
-                <RentalList rentals={detail.rentals} selectedId={listingId} select={selectListing} nearby={() => setLocationView('stores')} />
+                <RentalList rentals={rentals} selectedId={listingId} select={selectListing} nearby={() => setLocationView('stores')}
+                  onHover={id => setHoveredLocation(id ? { kind: 'rental', id } : null)} />
               </> : <>
                 <h2>{listingId ? `반경 ${radius}m 내 카페` : '상권 안의 카페'}{(!listingId || (nearbyResult && !nearbyResult.error)) && ` ${stores.length}곳`}</h2>
                 {nearbyResult?.error && listingId ? <p role="alert">{nearbyResult.error}</p> :
                   listingId && !nearbyResult ? <p role="status">주변 카페를 불러오는 중입니다.</p> :
                   stores.length === 0 ? <p className="muted">이 범위에서 수집된 카페가 없습니다.</p> :
-                  stores.map(store => <StoreCard key={store.id} store={store} />)}
+                  stores.map(store => <StoreCard key={store.id} store={store} selected={store.id === selectedStoreId}
+                    onSelect={() => setSelectedStoreId(store.id)}
+                    onHover={hovered => setHoveredLocation(hovered ? { kind: 'store', id: store.id } : null)} />)}
               </>}</aside>
-              <LocationMap area={detail.area} rentals={locationView === 'stores' ? detail.rentals.filter(r => r.id === listingId) : detail.rentals} stores={locationView === 'stores' ? stores : NO_STORES} selectedId={listingId} radius={locationView === 'stores' && listingId ? radius : undefined} onSelect={selectListing} demo={isDemo} />
+              <LocationMap area={detail.area} rentals={mapRentals} stores={locationView === 'stores' ? stores : NO_STORES}
+                selectedRentalId={listingId} selectedStoreId={selectedStoreId} hovered={hoveredLocation}
+                radius={locationView === 'stores' && listingId ? radius : undefined}
+                onSelectRental={selectRentalOnMap} onSelectStore={selectStoreOnMap} demo={isDemo} />
             </div>
           </>}
         </> : <div className="panel"><h2>이 분기의 카페 자료 없음</h2><p>{detail.missing_reason}</p><p>자료가 없다는 뜻이며 매출이나 점포 수가 0이라는 뜻은 아닙니다.</p></div>)}
@@ -326,9 +369,11 @@ function DemandComparison({ items, open }: { items: ComparisonItem[]; open: (cod
     })}</tbody>
   </table></div>;
 }
-function RentalList({ rentals, selectedId, select, nearby }: { rentals: Detail['rentals']; selectedId?: string; select?: (id: string) => void; nearby?: () => void }) {
-  return <div className="rental-list">{rentals.map(r => <article key={r.id} className={`rental-item ${selectedId === r.id ? 'selected' : ''}`}>
-    {select ? <button className="rental-name" onClick={() => select(r.id)} aria-pressed={selectedId === r.id}>{r.title}</button> : <h3>{r.title}</h3>}
+function RentalList({ rentals, selectedId, select, nearby, onHover }: {
+  rentals: Rental[]; selectedId: string; select: (id: string) => void; nearby: () => void; onHover: (id: string | null) => void;
+}) {
+  return <div className="rental-list">{rentals.map(r => <LocationCard key={r.id} className="rental-item" id={r.id} title={r.title}
+    selected={selectedId === r.id} onSelect={() => select(r.id)} onHover={hovered => onHover(hovered ? r.id : null)}>
     <strong className="rent-price">월세 {listingMoney(r.monthly_rent_krw)}</strong>
     <p>보증금 {listingMoney(r.deposit_krw)}</p>
     <p>{r.area_m2 == null ? '면적 미확보' : `${number(r.area_m2, 1)}㎡`} / {r.floor || '층 미확보'}</p>
@@ -336,6 +381,6 @@ function RentalList({ rentals, selectedId, select, nearby }: { rentals: Detail['
     {r.maintenance_fee_krw != null && <p>관리비 {listingMoney(r.maintenance_fee_krw)}</p>}
     {r.is_transfer && <small>권리금 매물의 월세 및 보증금입니다.</small>}
     {r.source_url && <a href={r.source_url} target="_blank" rel="noopener noreferrer">광고 원문 보기</a>}
-    {nearby && selectedId === r.id && <button className="primary" onClick={nearby}>이 매물 주변 점포 보기 →</button>}
-  </article>)}{!rentals.length && <p className="muted">이 상권에서 수집된 임대 매물이 없습니다.</p>}</div>;
+    {selectedId === r.id && <button type="button" className="primary" onClick={nearby}>이 매물 주변 점포 보기 →</button>}
+  </LocationCard>)}{!rentals.length && <p className="muted">이 상권에서 수집된 임대 매물이 없습니다.</p>}</div>;
 }

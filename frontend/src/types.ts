@@ -17,7 +17,6 @@ export type Rental = {
   source_name: string | null; is_transfer: boolean; is_demo: boolean;
 };
 export type MenuItem = { name: string; price_krw: number | null; source_url: string | null; source_date: string | null };
-export type BrandMenuItem = MenuItem & { channel: 'official_menu' | 'gift_catalog' };
 export type Store = {
   id: string; name: string; latitude: number; longitude: number; distance_m: number | null;
   menu: MenuItem[]; observed_at: string; source_url: string | null; address: string | null; brand: string | null;

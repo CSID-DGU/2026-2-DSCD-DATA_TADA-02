@@ -125,31 +125,70 @@ export default function MapPicker({ areas, selected, onToggle }: { areas: Area[]
   </div>;
 }
 
-export function LocationMap({ area, rentals, stores, selectedId, radius, onSelect, demo }: { area: Area; rentals: Rental[]; stores: Store[]; selectedId: string; radius?: number; onSelect: (id: string) => void; demo: boolean }) {
+export type LocationPoint = { kind: 'rental' | 'store'; id: string };
+
+export function LocationMap({ area, rentals, stores, selectedRentalId, selectedStoreId, hovered, radius, onSelectRental, onSelectStore, demo }: {
+  area: Area; rentals: Rental[]; stores: Store[]; selectedRentalId: string; selectedStoreId: string;
+  hovered: LocationPoint | null; radius?: number;
+  onSelectRental: (id: string) => void; onSelectStore: (id: string) => void; demo: boolean;
+}) {
   const element = useRef<HTMLDivElement>(null);
+  const highlights = useRef<{ layer: L.LayerGroup; renderer: L.SVG } | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
   const [tileError, setTileError] = useState(false);
+  const selectedRental = rentals.find(rental => rental.id === selectedRentalId);
+  const selectedStore = stores.find(store => store.id === selectedStoreId);
+  const referenceRental = radius ? selectedRental : undefined;
   useEffect(() => {
     if (!element.current) return;
     const map = baseMap(element.current, [area.latitude, area.longitude], 16);
+    mapRef.current = map;
     const layer = L.layerGroup().addTo(map);
     map.eachLayer(item => { if (item instanceof L.TileLayer) item.on('tileerror', () => setTileError(true)); });
-    const listing = rentals.find(r => r.id === selectedId);
-    const ring = radius && listing ? L.circle([listing.latitude, listing.longitude], { radius, color: '#009da5', dashArray: '7 6', fillOpacity: .07 }).addTo(layer) : null;
+    const ring = radius && referenceRental ? L.circle([referenceRental.latitude, referenceRental.longitude], { radius, color: '#009da5', dashArray: '7 6', fillOpacity: .07 }).addTo(layer) : null;
     for (const rental of rentals) {
-      const selected = rental.id === selectedId;
-      L.circleMarker([rental.latitude, rental.longitude], { radius: selected ? 13 : 9, color: '#fff', weight: 3, fillColor: selected ? '#071d43' : '#009da5', fillOpacity: 1 })
-        .bindTooltip(escape(rental.title)).on('click', () => onSelect(rental.id)).addTo(layer);
+      L.circleMarker([rental.latitude, rental.longitude], { radius: 9, color: '#fff', weight: 3, fillColor: '#009da5', fillOpacity: 1 })
+        .bindTooltip(escape(rental.title), { direction: 'top', offset: [0, -10] }).on('click', () => onSelectRental(rental.id)).addTo(layer);
     }
     for (const store of stores) {
-      L.circleMarker([store.latitude, store.longitude], { radius: stores.length > 15 ? 6 : 9, color: '#fff', weight: 2, fillColor: '#009da5', fillOpacity: 1 }).bindTooltip(escape(store.name)).addTo(layer);
-      if (stores.length <= 12) label(layer, store.latitude, store.longitude, store.name);
+      L.circleMarker([store.latitude, store.longitude], { radius: stores.length > 15 ? 6 : 9, color: '#fff', weight: 2, fillColor: '#009da5', fillOpacity: 1 })
+        .bindTooltip(escape(store.name), { direction: 'top', offset: [0, -10] }).on('click', () => onSelectStore(store.id)).addTo(layer);
     }
+    const pane = map.createPane('location-highlights');
+    pane.style.zIndex = '450';
+    pane.style.pointerEvents = 'none';
+    highlights.current = { layer: L.layerGroup().addTo(map), renderer: L.svg({ pane: 'location-highlights' }) };
     if (ring) map.fitBounds(ring.getBounds(), { padding: [22, 22], maxZoom: 17 });
     else if (rentals.length + stores.length > 0) {
       map.fitBounds(L.latLngBounds([...rentals, ...stores].map(item => [item.latitude, item.longitude])), { padding: [24, 24], maxZoom: 17 });
     }
     const observer = new ResizeObserver(() => map.invalidateSize()); observer.observe(element.current);
-    return () => { observer.disconnect(); map.remove(); };
-  }, [area, rentals, stores, selectedId, radius, onSelect]);
+    return () => { observer.disconnect(); highlights.current = null; mapRef.current = null; map.remove(); };
+  }, [area, rentals, stores, referenceRental, radius, onSelectRental, onSelectStore]);
+
+  useEffect(() => {
+    const overlay = highlights.current;
+    if (!overlay) return;
+    overlay.layer.clearLayers();
+    for (const point of [selectedRental, selectedStore]) {
+      if (!point) continue;
+      L.circleMarker([point.latitude, point.longitude], {
+        renderer: overlay.renderer, interactive: false, radius: 12, color: '#fff', weight: 3,
+        fillColor: '#071d43', fillOpacity: 1, className: 'location-marker-selected',
+      }).addTo(overlay.layer);
+    }
+    const hoveredPoint = hovered && (hovered.kind === 'rental' ? rentals : stores).find(point => point.id === hovered.id);
+    if (hoveredPoint) {
+      L.circleMarker([hoveredPoint.latitude, hoveredPoint.longitude], {
+        renderer: overlay.renderer, interactive: false, radius: 16, color: '#a76d06', weight: 3,
+        fill: false, className: 'location-marker-hovered',
+      }).addTo(overlay.layer);
+    }
+  }, [area, rentals, stores, referenceRental, radius, onSelectRental, onSelectStore, selectedRental, selectedStore, hovered]);
+
+  useEffect(() => {
+    const selected = selectedStore ?? selectedRental;
+    if (selected) mapRef.current?.panInside([selected.latitude, selected.longitude], { padding: [24, 24] });
+  }, [selectedStore, selectedRental]);
   return <div className="map-shell"><div ref={element} className="map-canvas detail-map" role="region" aria-label="임대 매물과 카페 지도" /><p className="map-caption">{demo ? '개발용 예시 위치입니다.' : '공개 자료에서 확보한 위치입니다.'}</p>{tileError && <p role="status">배경지도를 불러오지 못했습니다. 왼쪽 목록에서 위치와 조건을 볼 수 있습니다.</p>}</div>;
 }
