@@ -21,7 +21,7 @@ export default function RentComparison({ items, open, areaPyeong, setAreaPyeong,
         <th scope="row">
           {item.area.name}
           <div className="rent-area-meta">
-            <small>계산에 사용한 매물 {e.count}건</small>
+            <small>매물 {e.count}건</small>
             <AreaDetailButton areaName={item.area.name} onClick={() => open(item.area.code)} />
           </div>
         </th>
