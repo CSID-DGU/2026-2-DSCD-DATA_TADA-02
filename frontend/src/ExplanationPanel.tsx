@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from './api';
 import AnalysisIcon from './AnalysisIcon';
 import type { Commentary } from './demoCommentary';
-import type { Config, Explanation } from './types';
+import type { AreaSummary, Config, Explanation } from './types';
 
 export function DemoExplanationPanel({ question, lead, paragraphs, note, reportLayout = false }: Commentary & { reportLayout?: boolean }) {
   return <section className={reportLayout ? 'panel explanation demo-explanation report-explanation' : 'panel explanation demo-explanation'} aria-labelledby="explanation-title" aria-live="polite">
@@ -16,18 +16,19 @@ export function DemoExplanationPanel({ question, lead, paragraphs, note, reportL
   </section>;
 }
 
-export default function ExplanationPanel({ request, config, accessToken, canRequest, showResult, waitingMessage }: {
+export default function ExplanationPanel({ request, config, accessToken, canRequest, showResult, waitingMessage, onAreaSummaries }: {
   request: Record<string, unknown>;
   config: Config;
   accessToken: string;
   canRequest: boolean;
   showResult: boolean;
   waitingMessage?: string;
+  onAreaSummaries?: (summaries: AreaSummary[]) => void;
 }) {
   const [loaded, setLoaded] = useState<{ request: string; result: Explanation | null; error?: string } | null>(null);
   const [retry, setRetry] = useState(0);
   const serialized = canRequest ? JSON.stringify(request) : null;
-  const requestNeedsAuth = config.llm_auth_required && !accessToken;
+  const requestNeedsAuth = request.scope === 'comparison' && config.llm_auth_required && !accessToken;
   useEffect(() => {
     if (!serialized || requestNeedsAuth) return;
     const requestBody = serialized;
@@ -58,6 +59,11 @@ export default function ExplanationPanel({ request, config, accessToken, canRequ
     return () => { active = false; controller.abort(); if (timeout) clearTimeout(timeout); };
   }, [serialized, retry, requestNeedsAuth, accessToken]);
 
+  const areaSummaries = loaded?.request === serialized && !requestNeedsAuth ? loaded?.result?.content?.area_summaries : undefined;
+  useEffect(() => {
+    if (areaSummaries) onAreaSummaries?.(areaSummaries);
+  }, [areaSummaries, onAreaSummaries]);
+
   const displayed = showResult && !requestNeedsAuth && loaded?.request === serialized ? loaded : null;
   const result = displayed?.result;
   const error = displayed?.error;
@@ -75,7 +81,7 @@ export default function ExplanationPanel({ request, config, accessToken, canRequ
         {result.content.caveats.map(text => <p className="muted" key={text}>{text}</p>)}
       </> : <p>{result.message}</p>}
       {(error || result?.status === 'failed') && <button onClick={() => setRetry(v => v + 1)}>해설 다시 시도</button>}
-      {showResult && canRequest && <details><summary>해설에 전달하는 근거 보기</summary><p className="muted">해설의 세부 내용은 추후 조정합니다. 현재는 이 페이지에 대응하는 지표와 선택 조건만 전달합니다.</p><pre>{displayedEvidence}</pre></details>}
+      {showResult && canRequest && <details><summary>해설에 전달하는 근거 보기</summary><p className="muted">선택한 화면의 지표와 조건입니다.</p><pre>{displayedEvidence}</pre></details>}
     </div>
   </section>;
 }

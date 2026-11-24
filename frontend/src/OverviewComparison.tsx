@@ -26,7 +26,7 @@ function OverviewLegend({ quarter }: { quarter: string }) {
   </div>;
 }
 
-export default function OverviewComparison({ comparison, open }: { comparison: Comparison; open: (code: string) => void }) {
+export default function OverviewComparison({ comparison, open, summaries }: { comparison: Comparison; open: (code: string) => void; summaries?: Record<string, string> }) {
   const { items, meta: { quarter } } = comparison;
   const previousQuarter = previousQuarterOf(quarter);
   const maxima = overviewBarMaxima(items, quarter, previousQuarter);
@@ -34,14 +34,14 @@ export default function OverviewComparison({ comparison, open }: { comparison: C
     <OverviewLegend quarter={quarter} />
     <ComparisonCarousel>
       {items.map(item => <OverviewCard key={item.area.code} item={item} quarter={quarter}
-        previousQuarter={previousQuarter} maxima={maxima} open={() => open(item.area.code)} />)}
+        previousQuarter={previousQuarter} maxima={maxima} summary={summaries?.[item.area.code]} open={() => open(item.area.code)} />)}
     </ComparisonCarousel>
   </>;
 }
 
-function OverviewCard({ item, quarter, previousQuarter, maxima, open }: {
+function OverviewCard({ item, quarter, previousQuarter, maxima, summary, open }: {
   item: ComparisonItem; quarter: string; previousQuarter: string;
-  maxima: ReturnType<typeof overviewBarMaxima>; open: () => void;
+  maxima: ReturnType<typeof overviewBarMaxima>; summary?: string; open: () => void;
 }) {
   const current = item.observations.find(row => row.quarter === quarter);
   const previous = item.observations.find(row => row.quarter === previousQuarter);
@@ -76,7 +76,7 @@ function OverviewCard({ item, quarter, previousQuarter, maxima, open }: {
         </span>
       </section>;
     })}</div>
-    <p className="overview-outlook">{m ? averageOutlook(m.sales_yoy_pct, m.stores_yoy_pct, m.transactions_yoy_pct) : item.missing_reason || '전년 동분기 비교 자료 부족'}</p>
+    <p className="overview-outlook">{summary || (m ? averageOutlook(m.sales_yoy_pct, m.stores_yoy_pct, m.transactions_yoy_pct) : item.missing_reason || '전년 동분기 비교 자료 부족')}</p>
     <dl className="overview-considerations"><dt>월세</dt><dd>{rents.length ? `${num(Math.min(...rents))}~${num(Math.max(...rents))}만 원/월` : '매물 자료 없음'}</dd><dt>매물 면적</dt><dd>{sizes.length ? `${num(Math.min(...sizes))}~${num(Math.max(...sizes))}평` : '면적 미확보'}</dd></dl>
     <AreaDetailButton areaName={item.area.name} onClick={open} />
   </article>;

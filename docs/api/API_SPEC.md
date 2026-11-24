@@ -152,6 +152,8 @@
 
 ## 6. 페이지별 해설 생성과 캐시
 
+실시간 생성은 상권 비교의 종합해설, 매출, 수요성, 임대료에 적용한다. 상세 분석 요청은 준비 상태를 반환한다. 비교 종합해설의 `content.area_summaries`에는 각 상권의 `area_code`와 한 줄 해설인 `text`가 들어간다. 다른 비교 해설은 한 문단을 `content.summary`에 반환한다.
+
 `POST /api/v1/explanations`
 
 ```json
@@ -199,11 +201,12 @@
   "content": {
     "summary": "개발용 가상 자료의 요약 예시",
     "blocks": [{"title": "해설 주제", "text": "설명 예시", "evidence_ids": ["3120052.sales_yoy_pct"]}],
-    "caveats": ["해석 범위 예시"]
+    "caveats": [],
+    "area_summaries": [{"area_code": "3120052", "text": "선택 상권의 변화가 나타납니다."}]
   },
   "message": null,
   "retry_after_seconds": null,
-  "prompt_version": "page-commentary-v2-report12",
+  "prompt_version": "comparison-markdown-v1",
   "model": "사용자가 환경변수로 지정한 모델",
   "evidence": {"data_mode": "demo", "quarter": "2026Q2", "facts": {"3120052.sales_yoy_pct": 12.3}}
 }

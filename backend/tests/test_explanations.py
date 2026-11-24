@@ -9,10 +9,15 @@ from backend.app.schemas import ExplanationBlock, ExplanationContent, Explanatio
 
 
 def content(evidence):
-    ids = list(evidence["facts"])
-    return ExplanationContent(summary="개발용 가상 자료 해설", blocks=[
-        ExplanationBlock(title="수치 관계", text="제공된 가상 수치를 설명합니다.", evidence_ids=ids[:1]),
-    ], caveats=["실제 분석 결과가 아닙니다."])
+    overview = evidence["section"] == "competition"
+    ids = evidence["area_data"][0]["evidence_ids"]
+    return ExplanationContent(
+        summary="개발용 가상 자료 해설",
+        blocks=[ExplanationBlock(title="수치 관계", text="제공된 가상 수치를 설명합니다.", evidence_ids=ids[:1])] if overview else [],
+        caveats=[],
+        area_summaries=[{"area_code": area["area_code"], "text": "가상 상권의 상황을 설명합니다."}
+                        for area in evidence["area_data"]] if overview else [],
+    )
 
 
 def test_cache_model_context_and_failure_isolation(tmp_path):
@@ -54,7 +59,7 @@ def test_provider_failure_invalid_evidence_and_timeout_leave_analysis_available(
     settings = Settings(database_url=f"sqlite:///{tmp_path / 'failure.db'}", llm_enabled=True,
                         openai_api_key="test", openai_model="test", llm_timeout_seconds=1, _env_file=None)
     with TestClient(create_app(settings, failing)) as client:
-        query = {"scope": "detail", "section": "profitability", "area_codes": ["3120052"]}
+        query = {"scope": "comparison", "section": "competition", "area_codes": ["3120052"]}
         for provider in (failing, invalid, slow):
             client.app.state.explanations.provider = provider
             response = client.post("/api/v1/explanations", json=query)
@@ -94,3 +99,32 @@ def test_access_token_is_enforced(tmp_path):
         assert client.get("/metrics").status_code == 401
         assert client.post("/api/v1/explanations", json=query, headers={"Authorization": "Bearer test-access"}).status_code == 200
         assert client.get("/health/live").status_code == 200
+
+
+def test_comparison_prompt_inputs_partial_data_and_detail_scope(tmp_path):
+    calls = []
+
+    async def provider(evidence):
+        calls.append(evidence)
+        return content(evidence), {}
+
+    settings = Settings(database_url=f"sqlite:///{tmp_path / 'compare.db'}", llm_enabled=True,
+                        openai_api_key="test", openai_model="test", _env_file=None)
+    query = {"scope": "comparison", "section": "competition", "area_codes": ["3120052", "3130310"]}
+    with TestClient(create_app(settings, provider)) as client:
+        result = client.post("/api/v1/explanations", json=query).json()
+        assert result["status"] == "completed"
+        assert {item["area_code"] for item in result["content"]["area_summaries"]} == set(query["area_codes"])
+        data = {item["area_code"]: item for item in calls[0]["area_data"]}
+        assert data["3120052"]["comparison"]["transaction_count"] > 0
+        assert data["3130310"]["current"] is None
+        for section in ("profitability", "demand", "rent"):
+            payload = {**query, "section": section}
+            assert client.post("/api/v1/explanations", json=payload).json()["status"] == "completed"
+        assert calls[1]["area_data"][0]["current"].keys() == {"total_sales_krw", "store_count"}
+        assert calls[2]["area_data"][0]["current"].keys() == {"total_sales_krw", "transaction_count"}
+        assert "comparison" not in calls[2]["area_data"][0]
+        assert calls[3]["area_data"][0]["rent_summary"]["monthly_rent_krw"]["used_count"] > 0
+        detail = {**query, "scope": "detail", "section": "profitability", "area_codes": ["3120052"]}
+        assert client.post("/api/v1/explanations", json=detail).json()["status"] == "disabled"
+        assert len(calls) == 4

@@ -12,7 +12,7 @@ import SalesDetail from './SalesDetail';
 import { PYEONG_M2 } from './report-metrics.mjs';
 import MapPicker, { LocationMap } from './MapPicker';
 import { MAX_CANDIDATES, toggleCandidate } from './selection.mjs';
-import type { Area, Comparison, ComparisonItem, Config, Detail, Section, Store } from './types';
+import type { Area, AreaSummary, Comparison, ComparisonItem, Config, Detail, Section, Store } from './types';
 
 type Route = { view: 'map' | 'comparison' | 'detail'; section: Section; codes: string[]; code: string };
 const sectionLabels: Record<Section, string> = { profitability: '매출', competition: '종합해설', demand: '수요성', rent: '임대료', location: '입지/주변환경' };
@@ -52,6 +52,7 @@ export default function App() {
   const [route, setRoute] = useState<Route>(parseRoute);
   const [pendingComparison, setPendingComparison] = useState<Route | null>(null);
   const comparisonDialog = useRef<HTMLDialogElement>(null);
+  const [overviewCommentary, setOverviewCommentary] = useState<{ key: string; summaries: Record<string, string> } | null>(null);
   const [comparisonResponse, setComparison] = useState<Comparison | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState('');
@@ -165,8 +166,12 @@ export default function App() {
   const isDetailView = route.view === 'detail';
   const requestedDetail = detail?.area.code === detailCode ? detail : null;
   const updatingDetail = isDetailView && detail && !requestedDetail && !error;
+  const overviewKey = [...route.codes].sort().join(',');
+  const saveOverviewSummaries = useCallback((summaries: AreaSummary[]) => {
+    setOverviewCommentary({ key: overviewKey, summaries: Object.fromEntries(summaries.map(item => [item.area_code, item.text])) });
+  }, [overviewKey]);
   const detailAreaName = detail?.area.name ?? areas.find(area => area.code === detailCode)?.name;
-  const presentationCommentary = isDetailView && config?.llm_enabled === false &&
+  const presentationCommentary = isDetailView &&
     (section === 'profitability' || section === 'demand') ? detailCommentary(detailCode, section) : null;
   const demoCommentary = requestedDetail?.current && requestedDetail.meta.quarter === PRESENTATION_QUARTER &&
     (requestedDetail.meta.data_version === PRESENTATION_DATA_VERSION || requestedDetail.meta.data_version === 'seoul-cafe-20261106-locations-20261120')
@@ -230,7 +235,8 @@ export default function App() {
         {error && <div role="alert" className="notice alert">{error} <button onClick={() => setLoadVersion(v => v + 1)}>다시 시도</button></div>}
         {!loading && comparison && route.view === 'comparison' && <>
           <div className="section-title"><div><h2>{section === 'profitability' ? '점포당 평균 매출 비교' : section === 'competition' ? '선택한 상권의 주요 지표 비교' : section === 'demand' ? '총 거래 건수와 평균 결제금액 비교' : '같은 면적 기준 임대료와 매출 대비 비율'}</h2><p className="muted">{section === 'rent' ? '기준 면적과 층 조건을 설정해 후보 상권을 비교하세요.' : section === 'competition' ? quarterLabel(comparison.meta.quarter) + ' 기준 (전년 동분기 대비)' : '분기 기준 / 변화율은 전년 동분기 대비'}</p></div></div>
-          {section === 'competition' ? <OverviewComparison comparison={comparison} open={openDetail} />
+          {section === 'competition' ? <OverviewComparison comparison={comparison} open={openDetail}
+            summaries={overviewCommentary?.key === overviewKey ? overviewCommentary.summaries : undefined} />
             : section === 'profitability' ? <ComparisonCarousel>{comparison.items.map(item =>
               <ComparisonCard key={item.area.code} item={item} maximum={Math.max(...comparison.items.map(i => i.metrics?.average_sales_krw || 0))} open={() => openDetail(item.area.code)} />
             )}</ComparisonCarousel>
@@ -266,11 +272,12 @@ export default function App() {
           </>}
         </> : <div className="panel"><h2>이 분기의 카페 자료 없음</h2><p>{detail.missing_reason}</p><p>자료가 없다는 뜻이며 매출이나 점포 수가 0이라는 뜻은 아닙니다.</p></div>)}
         {!(storesExplanation && requestedDetail && !listingId) && <>
-          {!demoCommentary && config.llm_auth_required && <label className="auth-input">해설 서비스 접근 인증<input type="password" value={accessToken} autoComplete="off" onChange={e => setAccessToken(e.target.value)} placeholder="접근 토큰, 이 화면의 메모리에만 보관" /></label>}
+          {!isDetailView && config.llm_auth_required && <label className="auth-input">해설 서비스 접근 인증<input type="password" value={accessToken} autoComplete="off" onChange={e => setAccessToken(e.target.value)} placeholder="접근 토큰, 이 화면의 메모리에만 보관" /></label>}
           {demoCommentary ? <DemoExplanationPanel {...demoCommentary} reportLayout={section === 'profitability'} />
             : <ExplanationPanel request={context} config={config} accessToken={accessToken}
-                canRequest={canRequestExplanation} showResult={showExplanationResult}
-                waitingMessage={error && (!canRequestExplanation || !showExplanationResult) ? '지표를 다시 불러오면 해설을 확인할 수 있습니다.' : undefined} />}
+                canRequest={!isDetailView && canRequestExplanation} showResult={showExplanationResult}
+                onAreaSummaries={!isDetailView && section === 'competition' ? saveOverviewSummaries : undefined}
+                waitingMessage={isDetailView ? '상세 분석 해설을 준비 중입니다.' : error && !canRequestExplanation ? '지표를 다시 불러오면 해설을 확인할 수 있습니다.' : undefined} />}
         </>}
         {(isDetailView ? detail : !loading && comparison) && <>
           <details className="panel methods"><summary>계산 근거와 자료 기준 보기</summary><p>금액의 원래 단위는 원입니다. 점포당 평균 매출 = 분기 총매출 ÷ 같은 분기 카페 점포 수, 점포당 거래 건수 = 총거래 건수 ÷ 점포 수, 건당 평균 결제금액 = 총매출 ÷ 총거래 건수입니다.</p><p>전년 동분기 대비 변화율 = (현재 값 ÷ 1년 전 같은 분기 값 - 1) × 100입니다. 분모가 0이거나 자료가 없으면 값을 계산하지 않습니다.</p><p>종합해설의 평균 여건은 매출과 거래 건수의 변화율을 점포 수 변화율과 각각 비교합니다. 상권의 성장만으로 점포당 평균 여건의 개선을 판단하지 않습니다. 임대료는 매물의 면적당 월세를 설정 면적으로 환산하고, 점포당 분기 평균 매출을 3으로 나눈 월 환산값과 비교합니다.</p></details>
