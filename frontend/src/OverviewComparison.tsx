@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import AnalysisIcon from './AnalysisIcon';
 import AreaDetailButton from './AreaDetailButton';
 import ComparisonCarousel from './ComparisonCarousel';
@@ -66,7 +67,7 @@ function OverviewCard({ item, quarter, previousQuarter, maxima, open }: {
           {([[before, 'previous'], [now, 'current']] as const).map(([value, period]) =>
             <div key={period} className={value == null ? 'missing-bar' : undefined}>
               <small>{valueText(value)}</small>
-              <span className={`${period}-bar`} style={{ height: overviewBarRatio(value, maxima[key]) * 66 }} />
+              <span className={`${period}-bar`} style={{ '--bar-ratio': overviewBarRatio(value, maxima[key]) } as CSSProperties} />
             </div>
           )}
         </div>

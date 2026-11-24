@@ -49,11 +49,11 @@
 .overview-indicators { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
 .overview-indicator { text-align: center; min-width: 0; }
 .overview-indicator h4 { font-size: 13px; background: #e7f3fc; padding: 7px 2px; border-radius: 7px; margin: 0 0 8px; white-space: nowrap; }
-.paired-bars { display: flex; justify-content: center; gap: 3px; height: 93px; align-items: flex-end; border-bottom: 1px solid var(--line); }
+.paired-bars { --bar-max-height: 120px; display: flex; justify-content: center; gap: 3px; height: calc(var(--bar-max-height) + 27px); align-items: flex-end; border-bottom: 1px solid var(--line); }
 .paired-bars > div { display: flex; flex: 1; min-width: 0; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
 .paired-bars small { font-size: clamp(9px, 1vw, 12px); white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
 .paired-bars .missing-bar small { color: var(--muted); white-space: normal; }
-.paired-bars span { display: block; width: 100%; max-width: 42px; border-radius: 6px 6px 0 0; min-height: 0; }
+.paired-bars span { display: block; width: 100%; max-width: 42px; height: calc(var(--bar-max-height) * var(--bar-ratio)); border-radius: 6px 6px 0 0; min-height: 0; }
 .overview-rate { display: inline-flex; align-items: center; gap: 4px; font-weight: 750; font-size: 13px; color: #006d66; background: #dff7f3; padding: 4px 8px; border-radius: 999px; margin-top: 10px; }
 .overview-rate.negative { color: #b5231c; background: #fce9e8; }
 .overview-rate.neutral { color: #4d627a; background: #edf2f7; }
