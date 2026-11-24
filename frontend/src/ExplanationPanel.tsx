@@ -36,7 +36,7 @@ export default function ExplanationPanel({ request, config, result, error, reque
   const displayedEvidence = JSON.stringify(result?.evidence || request, (key, value) =>
     key === 'model_version' || key === 'interval_method' ? undefined : value, 2);
   return <section className={reportLayout ? 'panel explanation report-explanation' : 'panel explanation'} aria-labelledby="explanation-title" aria-live="polite">
-    <div className="section-title"><h2 id="explanation-title">{reportLayout ? <AnalysisIcon name="sparkle" /> : <span aria-hidden="true">✧</span>} {overview ? 'AI 종합 해설' : salesDetail ? 'AI 해설' : 'AI 상권 해설'}</h2><span className="badge">{result?.cache_hit ? '저장된 해설' : config.llm_enabled ? '근거 기반 해설' : '연결 준비'}</span></div>
+    <div className="section-title"><h2 id="explanation-title">{reportLayout ? <AnalysisIcon name="sparkle" /> : <span aria-hidden="true">✧</span>} {overview ? 'AI 종합 해설' : salesDetail ? 'AI 해설' : 'AI 상권 해설'}</h2></div>
     <div className="explanation-body">
       {requestNeedsAuth ? <p>서비스 접근 인증을 입력하면 해설을 볼 수 있습니다.</p> : error ? <p role="alert">{error}</p> : !result ? (waitingMessage ? <p>{waitingMessage}</p> : config.llm_enabled ?
         <LoadingIndicator>AI 해설 생성 중</LoadingIndicator> : <p>AI 해설을 준비하고 있습니다.</p>) : result.content ? <>
