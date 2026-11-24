@@ -33,21 +33,22 @@ export default function RentComparison({ items, open, areaPyeong, setAreaPyeong,
           onChange={event => setAreaPyeong(event.currentTarget.valueAsNumber)} />
         <span aria-hidden="true">10평</span><span aria-hidden="true">50평</span>
       </div>
-      <fieldset className="rent-floor-filter">
-        <legend>층 조건</legend>
-        <button type="button" className="rent-all-floors" aria-pressed={!floor} onClick={() => setFloor('')}>전체 층 {num(total, 0)}건</button>
-        {floors.length > 0 && <>
-          <p>계산에 쓰는 매물 / 막대 높이는 로그 척도</p>
+      <div className="rent-floor-filter" role="group" aria-labelledby="rent-floor-title">
+        <div className="rent-floor-controls">
+          <span id="rent-floor-title">층 조건</span>
+          <button type="button" className="rent-all-floors" aria-pressed={!floor} onClick={() => setFloor('')}>전체 층 {num(total, 0)}건</button>
+          {floors.length > 0 && <p>막대 높이는 로그 척도</p>}
+          {floorCounts.has('') && <p>층 미확인 {num(floorCounts.get('') ?? 0, 0)}건</p>}
+        </div>
+        {floors.length > 0 &&
           <div className="rent-floor-chart">
             {floors.map(([label, count]) => <button type="button" key={label} aria-pressed={floor === label} onClick={() => setFloor(label)}>
               <span className="rent-floor-count">{num(count, 0)}건</span>
               <span className="rent-floor-track" aria-hidden="true"><span style={{ height: `${Math.log1p(count) / Math.log1p(largestFloor) * 100}%` }} /></span>
               <span className="rent-floor-label">{label}</span>
             </button>)}
-          </div>
-        </>}
-        {floorCounts.has('') && <p>층 미확인 {num(floorCounts.get('') ?? 0, 0)}건</p>}
-      </fieldset>
+          </div>}
+      </div>
     </div>
     <div className="table-scroll"><table className="rent-table"><thead><tr><th scope="col">상권</th><th scope="col">예상 월 임대료 <small>동일 {areaPyeong}평 기준</small></th><th scope="col">월 환산 매출 대비 비율</th></tr></thead>
       <tbody>{items.map((item, index) => { const e = estimates[index]; return <tr key={item.area.code}>
