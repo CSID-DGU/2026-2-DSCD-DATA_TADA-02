@@ -9,7 +9,6 @@ import { StoreCard } from './LocationStores';
 import RentComparison from './RentComparison';
 import OverviewComparison, { quarterLabel } from './OverviewComparison';
 import SalesDetail from './SalesDetail';
-import DetailAreaPicker from './DetailAreaPicker';
 import { PYEONG_M2 } from './report-metrics.mjs';
 import MapPicker, { LocationMap } from './MapPicker';
 import { MAX_CANDIDATES, toggleCandidate } from './selection.mjs';
@@ -199,15 +198,23 @@ export default function App() {
       {route.view === 'map' ? <>
         <MapPicker areas={areas} selected={route.codes} onToggle={toggle} />
         <div className="map-actions"><button className="primary" disabled={!route.codes.length} onClick={() => openComparison('competition')}>선택한 {route.codes.length}개 상권 비교하기</button></div>
-      </> : route.view === 'detail' && !detailCode ? <DetailAreaPicker areas={areas} selectedCode="" suggestedCodes={config.demo_area_codes} onSelect={code => openDetail(code, 'profitability')} />
-        : route.view === 'comparison' && !route.codes.length ? <div className="panel"><p>비교할 상권을 먼저 선택하세요.</p><button onClick={() => navigate({ ...route, view: 'map' })}>상권 선택</button></div> : <>
+      </> : (route.view === 'detail' ? !detailCode : !route.codes.length) ? <div className="panel">
+        <p>{route.view === 'detail' ? '지도에서 상세분석할 상권을 먼저 선택하세요.' : '비교할 상권을 먼저 선택하세요.'}</p>
+        <button onClick={() => navigate({ ...route, view: 'map' })}>상권 선택</button>
+      </div> : <>
         <nav className="section-tabs" aria-label="분석 항목">{tabs.map(tab => <button key={tab} className={section === tab ? 'active' : ''} aria-current={section === tab ? 'page' : undefined} onClick={() => navigate({ ...route, section: tab })}>{sectionLabels[tab]}</button>)}</nav>
         {demoCommentary && <div className="explanation-jump"><button onClick={() => {
           const title = document.getElementById('explanation-title');
           title?.closest('section')?.scrollIntoView({ block: 'start' });
           title?.focus({ preventScroll: true });
         }}>AI 상권 해설 바로 보기 ↓</button></div>}
-        {route.view === 'detail' && <DetailAreaPicker areas={areas} selectedCode={detailCode} suggestedCodes={route.codes} onSelect={code => openDetail(code)} compact />}
+        {route.view === 'detail' && selected.some(area => area.code !== detailCode) && <label className="detail-area-switch">
+          후보 상권 전환
+          <select value={detailCode} onChange={event => openDetail(event.target.value, section)}>
+            {!selected.some(area => area.code === detailCode) && <option value={detailCode} disabled>후보를 선택하세요</option>}
+            {selected.map(area => <option key={area.code} value={area.code}>{area.name}</option>)}
+          </select>
+        </label>}
         {loading && <p role="status" className="panel">분석 자료를 불러오고 있습니다.</p>}
         {error && <div role="alert" className="notice alert">{error} <button onClick={() => setLoadVersion(v => v + 1)}>다시 시도</button></div>}
         {!loading && comparison && route.view === 'comparison' && <>

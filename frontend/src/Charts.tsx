@@ -1,4 +1,4 @@
-import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, usePlotArea, useXAxisScale, useYAxisScale, XAxis, YAxis } from 'recharts';
+import { Area, Bar, BarChart, CartesianGrid, ComposedChart, DefaultTooltipContent, Line, ResponsiveContainer, Tooltip, usePlotArea, useXAxisScale, useYAxisScale, XAxis, YAxis } from 'recharts';
 import AnalysisIcon from './AnalysisIcon';
 import type { Detail, Distribution } from './types';
 
@@ -12,6 +12,7 @@ export function TrendChart({ detail, recent, setRecent }: { detail: Detail; rece
   const isDemo = detail.meta.data_mode === 'demo';
   const forecastLabel = isDemo ? '가상 예측' : '예측';
   const observations = recent ? detail.observations.slice(-12) : detail.observations;
+  const lastObservedQuarter = observations.at(-1)?.quarter;
   const forecastPoints = detail.forecast?.points.slice(0, 2) ?? [];
   const hasTotalForecast = forecastPoints.some(point => point.total_sales_krw != null);
   const hasAverageForecast = forecastPoints.some(point => point.average_sales_krw != null);
@@ -58,9 +59,13 @@ export function TrendChart({ detail, recent, setRecent }: { detail: Detail; rece
           <XAxis dataKey="quarter" tick={{ fill: '#405777', fontSize: 12 }} tickFormatter={shortQuarter} tickMargin={8} minTickGap={15} padding={{ left: 22, right: 22 }} />
           <YAxis yAxisId="total" tick={{ fill: totalColor, fontSize: 12 }} domain={['auto', 'auto']} width={43} tickFormatter={v => String(v)} />
           <YAxis yAxisId="average" orientation="right" tick={{ fill: averageColor, fontSize: 12 }} domain={['auto', 'auto']} width={57} tickFormatter={averageLabel} />
-          <Tooltip labelFormatter={label => typeof label === 'string' ? shortQuarter(label) : label} formatter={(value, name) => [
-            Array.isArray(value) ? value.map(averageLabel).join('~') : formatNumber(value), name,
-          ]} />
+          <Tooltip
+            content={props => <DefaultTooltipContent {...props} payload={props.label === lastObservedQuarter
+              ? props.payload.filter(({ dataKey }) => dataKey !== 'forecastTotal' && dataKey !== 'forecastAverage')
+              : props.payload} />}
+            labelFormatter={label => typeof label === 'string' ? shortQuarter(label) : label}
+            formatter={(value, name) => [Array.isArray(value) ? value.map(averageLabel).join('~') : formatNumber(value), name]}
+          />
           {hasRange90 && <Area yAxisId="average" dataKey="range90" type="linear" name="점포당 90% 범위 (만 원)" fill="#b9eceb" fillOpacity={.35} stroke="none" />}
           {hasRange80 && <Area yAxisId="average" dataKey="range80" type="linear" name="점포당 80% 범위 (만 원)" fill="#6fd3d2" fillOpacity={.4} stroke="none" />}
           <Line yAxisId="total" dataKey="total" name="총매출액 (억 원)" stroke={totalColor} strokeWidth={2.5} dot={{ r: 3, fill: totalColor }} connectNulls={false} isAnimationActive={false} />
