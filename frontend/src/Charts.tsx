@@ -82,7 +82,7 @@ export function TrendChart({ detail, recent, setRecent }: { detail: Detail; rece
         </ComposedChart>
       </ResponsiveContainer>
     </div>
-    {hasForecast && <p className="sales-forecast-note"><AnalysisIcon name="info" /><span>보라색 배경은 예측선이 이어지는 구간입니다. 실제 매출은 예측값과 다를 수 있습니다. {hasRange80 || hasRange90 ? '청록색 음영은 점포당 평균 매출의 예측 범위입니다.' : '점포당 평균 매출의 예측 범위는 제공하지 않습니다.'}</span></p>}
+    {hasForecast && <p className="sales-forecast-note"><AnalysisIcon name="info" /><span>보라색 배경은 예측선이 이어지는 구간입니다. 실제 매출은 예측값과 다를 수 있습니다.{(hasRange80 || hasRange90) && ' 청록색 음영은 점포당 평균 매출의 예측 범위입니다.'}</span></p>}
     <details className="chart-data"><summary>그래프 수치 표로 보기</summary><div className="table-scroll"><table><thead><tr><th>분기</th><th>총매출액 (억 원)</th><th>점포당 평균 매출액 (만 원)</th><th>자료 구분</th></tr></thead>
       <tbody>{data.map((row, i) => <tr key={row.quarter}><td>{row.quarter}</td><td>{formatNumber(row.total ?? row.forecastTotal)}</td><td>{formatNumber(row.average ?? row.forecastAverage)}</td><td>{i < actual.length ? (isDemo ? '과거 예시' : '관측 통계') : forecastLabel}</td></tr>)}</tbody>
     </table></div></details>
