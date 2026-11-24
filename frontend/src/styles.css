@@ -16,3 +16,16 @@
 .explanation-jump{display:flex;justify-content:flex-end;margin:-9px 0 13px}
 .explanation-jump button,.presentation-return button{font-size:13px;font-weight:700;color:#086d75}
 .presentation-return button{margin:4px}
+
+.site-header nav .presentation-preset {
+  align-self: center;
+  height: auto;
+  padding: 8px 13px;
+  border: 1px solid #d6ac36;
+  border-radius: 8px;
+  background: #ffe080;
+  color: #533900;
+}
+.site-header nav .presentation-preset:hover {
+  background: #ffd45b;
+}

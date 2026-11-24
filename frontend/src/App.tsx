@@ -7,28 +7,28 @@ import { StoreCard } from './LocationStores';
 import RentComparison from './RentComparison';
 import { OverviewCard } from './OverviewComparison';
 import DetailAreaPicker from './DetailAreaPicker';
-import PresentationPicker, { presentationCodes } from './PresentationPicker';
 import { PYEONG_M2 } from './report-metrics.mjs';
 import MapPicker, { LocationMap } from './MapPicker';
 import { MAX_CANDIDATES, toggleCandidate, visibleCandidates } from './selection.mjs';
 import type { Area, Comparison, ComparisonItem, Config, Detail, Section, Store } from './types';
 
-type SelectionView = 'presentation' | 'map';
-type Route = { view: SelectionView | 'comparison' | 'detail'; selectionView: SelectionView; section: Section; codes: string[]; code: string };
+type Route = { view: 'map' | 'comparison' | 'detail'; section: Section; codes: string[]; code: string };
 const sectionLabels: Record<Section, string> = { profitability: '매출', competition: '종합해설', demand: '수요성', rent: '임대료', location: '입지/주변환경' };
 const number = (value: number | null | undefined, digits = 0) => value == null ? '자료 없음' : value.toLocaleString('ko-KR', { maximumFractionDigits: digits });
 const money = (value: number | null | undefined) => value == null ? '미확보' : `${number(value / 10000)}만 원`;
 const listingMoney = (value: number | null) => value == null ? '미확보' :
   value % 10000 === 0 ? `${number(value / 10000)}만 원` : `${number(value)}원`;
 const NO_STORES: Store[] = [];
+const presentationCandidates = {
+  supabase: ['3120052', '3120003', '3110565'], // 성수역, 광화문역, 홍익대
+  demo: ['3120052', '3120053', '3120104'],
+};
 
 function parseRoute(): Route {
   const params = new URLSearchParams(location.hash.slice(1));
   const view = params.get('view');
   const section = params.get('section');
-  const screen = view === 'comparison' || view === 'detail' || view === 'map' ? view : 'presentation';
-  const selectionView = screen === 'presentation' || (screen !== 'map' && params.get('from') === 'presentation') ? 'presentation' : 'map';
-  return { view: screen, selectionView, section: section && Object.hasOwn(sectionLabels, section) ? section as Section : screen === 'detail' ? 'profitability' : 'competition',
+  return { view: view === 'comparison' || view === 'detail' ? view : 'map', section: section && Object.hasOwn(sectionLabels, section) ? section as Section : view === 'detail' ? 'profitability' : 'competition',
     codes: [...new Set((params.get('areas') || '').split(',').filter(Boolean))].slice(0, MAX_CANDIDATES), code: params.get('area') || '' };
 }
 
@@ -72,7 +72,7 @@ export default function App() {
 
   const navigate = useCallback((next: Route) => {
     setNotice(''); setRoute(next); setOffset(0);
-    const params = new URLSearchParams({ view: next.view, from: next.selectionView, section: next.section, areas: next.codes.join(','), area: next.code });
+    const params = new URLSearchParams({ view: next.view, section: next.section, areas: next.codes.join(','), area: next.code });
     history.pushState(null, '', `#${params}`);
   }, []);
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function App() {
   const codesKey = route.codes.join(',');
   const detailCode = route.code || route.codes[0] || '';
   useEffect(() => {
-    if (!config || (route.view !== 'comparison' && route.view !== 'detail') || (route.view === 'detail' ? !detailCode : !route.codes.length)) return;
+    if (!config || route.view === 'map' || (route.view === 'detail' ? !detailCode : !route.codes.length)) return;
     let active = true;
     const controller = new AbortController();
     const started = performance.now();
@@ -148,33 +148,33 @@ export default function App() {
   if (!config) return <main className="startup"><h1>상권 분석</h1>{error ? <><p role="alert">서버에 연결하지 못했습니다: {error}</p><button onClick={() => setLoadVersion(v => v + 1)}>다시 연결</button></> : <p>상권 위치 목록을 불러오고 있습니다.</p>}</main>;
 
   const isDemo = config.data_mode === 'demo';
-  const demoCodes = presentationCodes(config.data_mode);
-  const showPresentation = () => navigate({ ...route, view: 'presentation', selectionView: 'presentation',
-    codes: route.codes.filter(code => demoCodes.includes(code)), code: '' });
+  const selectPresentationCandidates = () => {
+    const candidates = isDemo ? presentationCandidates.demo : presentationCandidates.supabase;
+    navigate({ view: 'map', section: 'competition', codes: candidates, code: '' });
+  };
+
   return <>
     <a className="skip-link" href="#main" onClick={event => { event.preventDefault(); document.getElementById('main')?.focus(); }}>본문으로 이동</a>
-    <header className="site-header"><button className="brand" onClick={showPresentation} aria-label="발표용 후보 선택으로 이동"><span className="brand-pin" aria-hidden="true">⌖</span> 상권 분석</button>
+    <header className="site-header"><button className="brand" onClick={() => navigate({ ...route, view: 'map' })}><span className="brand-pin" aria-hidden="true">⌖</span> 상권 분석</button>
       <nav aria-label="주 메뉴">
-        <button className={route.view === 'map' ? 'active' : ''} onClick={() => navigate({ ...route, view: 'map', selectionView: 'map' })}>상권 탐색</button>
-        <button className={route.view === 'comparison' ? 'active' : ''} disabled={!route.codes.length} onClick={() => navigate({ ...route, view: 'comparison', section: route.view === 'presentation' ? 'competition' : section === 'location' ? 'rent' : section })}>후보 상권 비교</button>
+        <button className={route.view === 'map' ? 'active' : ''} onClick={() => navigate({ ...route, view: 'map' })}>상권 탐색</button>
+        <button className={route.view === 'comparison' ? 'active' : ''} disabled={!route.codes.length} onClick={() => navigate({ ...route, view: 'comparison', section: section === 'location' ? 'rent' : section })}>후보 상권 비교</button>
         <button className={route.view === 'detail' ? 'active' : ''} aria-current={route.view === 'detail' ? 'page' : undefined} onClick={() => openDetail(detailCode, 'profitability')}>상세 상권 분석</button>
+        <button className="presentation-preset" onClick={selectPresentationCandidates}>발표용</button>
       </nav><span className="header-meta">DATA TADA</span>
     </header>
     <main id="main" className="workspace" tabIndex={-1}>
-      {route.view !== 'presentation' && <p className="breadcrumb">상권 분석 / {route.view === 'map' ? '관심 상권 선택' : route.view === 'detail' ? '상세 상권 분석' : '후보 상권 비교'}</p>}
+      <p className="breadcrumb">상권 분석 / {route.view === 'map' ? '관심 상권 선택' : route.view === 'detail' ? '상세 상권 분석' : '후보 상권 비교'}</p>
       {route.view === 'detail' && route.codes.length > 0 && <button className="back-link" onClick={() => navigate({ ...route, view: 'comparison', section: section === 'location' ? 'rent' : section })}>후보 상권 비교로 돌아가기</button>}
-      <div className="page-heading"><div><h1>{route.view === 'presentation' ? '발표용 상권 후보 선택' : route.view === 'map' ? '어떤 상권을 비교해 볼까요?' : route.view === 'detail' ? (detailCode ? `${areas.find(a => a.code === detailCode)?.name || ''} 상세분석` : '상세 상권 분석') : '후보 상권 비교'}</h1><p>{route.view === 'presentation' ? '후보별 자료를 먼저 확인하고 관심 상권을 선택하세요.' : route.view === 'map' ? `지도에서 관심 있는 상권을 최대 ${MAX_CANDIDATES}개까지 선택하세요.` : route.view === 'comparison' ? '관심 있는 상권의 카페를 같은 기준으로 비교해 보세요.' : '선택한 상권의 흐름과 주변 정보를 확인하세요.'}</p></div><div className="context-controls"><label className="sr-only" htmlFor="industry">업종</label><select id="industry" aria-label="업종"><option>카페</option></select><select aria-label="기준 분기"><option>2026년 2분기</option></select><span className="badge demo-badge">{isDemo ? '개발용 가상 분석' : '서울시 상권 통계'}</span></div></div>
+      <div className="page-heading"><div><h1>{route.view === 'map' ? '어떤 상권을 비교해 볼까요?' : route.view === 'detail' ? (detailCode ? `${areas.find(a => a.code === detailCode)?.name || ''} 상세분석` : '상세 상권 분석') : '후보 상권 비교'}</h1><p>{route.view === 'map' ? `지도에서 관심 있는 상권을 최대 ${MAX_CANDIDATES}개까지 선택하세요.` : route.view === 'comparison' ? '관심 있는 상권의 카페를 같은 기준으로 비교해 보세요.' : '선택한 상권의 흐름과 주변 정보를 확인하세요.'}</p></div><div className="context-controls"><label className="sr-only" htmlFor="industry">업종</label><select id="industry" aria-label="업종"><option>카페</option></select><select aria-label="기준 분기"><option>2026년 2분기</option></select><span className="badge demo-badge">{isDemo ? '개발용 가상 분석' : '서울시 상권 통계'}</span></div></div>
       <div className="notice info">{isDemo ? '상권 위치를 제외한 분석과 입지 자료는 개발용 가상 예시입니다.' : '매출, 거래, 점포와 유동인구는 서울시 상권 통계입니다. 예측은 Ridge 기준 모델 결과입니다. 임대 광고와 카페 메뉴는 수집 시점의 공개 자료입니다.'}</div>
       {notice && <p className="notice alert" role="alert">{notice}</p>}
-      {(route.view === 'map' || route.view === 'comparison') && <div className="candidate-toolbar"><div className="candidate-chips" aria-label="선택한 후보 상권">{selected.map((area, i) => <span className="candidate-chip" key={area.code}><b>{i + 1}</b>{area.name}{route.view === 'map' ? <button aria-label={`${area.name} 선택 해제`} onClick={() => toggle(area.code)}>×</button> : <button aria-label={`${area.name} 상세 보기`} onClick={() => openDetail(area.code)}>↗</button>}</span>)}{!selected.length && <span className="muted">아직 선택한 후보가 없습니다.</span>}</div><span className="muted">{route.codes.length} / {MAX_CANDIDATES}개</span>{route.view !== 'map' && <button onClick={() => navigate({ ...route, view: route.selectionView, code: '' })}>후보 변경</button>}</div>}
-      {route.view === 'presentation' ? <PresentationPicker codes={demoCodes} areas={areas} selected={route.codes}
-        onToggle={toggle} onDetail={code => openDetail(code, 'profitability')}
-        onCompare={codes => navigate({ ...route, view: 'comparison', selectionView: 'presentation', section: 'competition', codes, code: '' })} />
-        : route.view === 'map' ? <>
+      {route.view !== 'detail' && <div className="candidate-toolbar"><div className="candidate-chips" aria-label="선택한 후보 상권">{selected.map((area, i) => <span className="candidate-chip" key={area.code}><b>{i + 1}</b>{area.name}{route.view === 'map' ? <button aria-label={`${area.name} 선택 해제`} onClick={() => toggle(area.code)}>×</button> : <button aria-label={`${area.name} 상세 보기`} onClick={() => openDetail(area.code)}>↗</button>}</span>)}{!selected.length && <span className="muted">아직 선택한 후보가 없습니다.</span>}</div><span className="muted">{route.codes.length} / {MAX_CANDIDATES}개</span>{route.view !== 'map' && <button onClick={() => navigate({ ...route, view: 'map' })}>후보 변경</button>}</div>}
+      {route.view === 'map' ? <>
         <MapPicker areas={areas} selected={route.codes} onToggle={toggle} />
         <div className="map-actions"><button className="primary" disabled={!route.codes.length} onClick={() => navigate({ ...route, view: 'comparison', section: 'competition' })}>선택한 {route.codes.length}개 상권 비교하기</button></div>
       </> : route.view === 'detail' && !detailCode ? <DetailAreaPicker areas={areas} selectedCode="" suggestedCodes={config.demo_area_codes} onSelect={code => openDetail(code, 'profitability')} />
-        : route.view === 'comparison' && !route.codes.length ? <div className="panel"><p>비교할 상권을 먼저 선택하세요.</p><button onClick={() => navigate({ ...route, view: route.selectionView })}>상권 선택</button></div> : <>
+        : route.view === 'comparison' && !route.codes.length ? <div className="panel"><p>비교할 상권을 먼저 선택하세요.</p><button onClick={() => navigate({ ...route, view: 'map' })}>상권 선택</button></div> : <>
         <nav className="section-tabs" aria-label="분석 항목">{tabs.map(tab => <button key={tab} className={section === tab ? 'active' : ''} aria-current={section === tab ? 'page' : undefined} onClick={() => navigate({ ...route, section: tab })}>{sectionLabels[tab]}</button>)}</nav>
         {demoCommentary && <div className="explanation-jump"><button onClick={() => {
           const title = document.getElementById('explanation-title');
