@@ -49,7 +49,7 @@
 .overview-indicators { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
 .overview-indicator { text-align: center; min-width: 0; }
 .overview-indicator h4 { font-size: 13px; background: #e7f3fc; padding: 7px 2px; border-radius: 7px; margin: 0 0 8px; white-space: nowrap; }
-.paired-bars { --bar-max-height: 120px; display: flex; justify-content: center; gap: 3px; height: calc(var(--bar-max-height) + 27px); align-items: flex-end; border-bottom: 1px solid var(--line); }
+.paired-bars { --bar-max-height: 190px; display: flex; justify-content: center; gap: 3px; height: calc(var(--bar-max-height) + 27px); align-items: flex-end; border-bottom: 1px solid var(--line); }
 .paired-bars > div { display: flex; flex: 1; min-width: 0; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
 .paired-bars small { font-size: clamp(9px, 1vw, 12px); white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
 .paired-bars .missing-bar small { color: var(--muted); white-space: normal; }

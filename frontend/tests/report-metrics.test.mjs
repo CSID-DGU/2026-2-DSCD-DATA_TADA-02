@@ -48,7 +48,7 @@ test('overview uses shared maxima across candidates and both comparison quarters
   ];
   const maxima = overviewBarMaxima(entries, '2026Q2', '2025Q2');
   assert.deepEqual(maxima, { total_sales_krw: 500, store_count: 10, transaction_count: 100_000 });
-  for (const [value, ratio] of [[100_000, 1], [25_000, .5], [1_000, .1], [0, 0], [null, 0]]) {
+  for (const [value, ratio] of [[100_000, 1], [25_000, .25], [1_000, .01], [0, 0], [null, 0]]) {
     assert.equal(overviewBarRatio(value, maxima.transaction_count), ratio);
   }
   assert.equal(overviewBarRatio(null, 0), 0);

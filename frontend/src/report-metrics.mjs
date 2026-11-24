@@ -48,5 +48,5 @@ export function overviewBarMaxima(items, quarter, previousQuarter) {
 }
 
 export function overviewBarRatio(value, maximum) {
-  return value > 0 && maximum > 0 ? Math.sqrt(value / maximum) : 0;
+  return value > 0 && maximum > 0 ? value / maximum : 0;
 }

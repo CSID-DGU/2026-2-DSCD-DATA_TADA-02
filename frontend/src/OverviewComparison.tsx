@@ -17,7 +17,7 @@ const previousQuarterOf = (quarter: string) => `${Number(quarter.slice(0, 4)) - 
 
 function OverviewLegend({ quarter }: { quarter: string }) {
   return <div className="comparison-legend" role="group" aria-label="비교 기간과 막대 척도">
-    <span className="overview-scale-note">지표별 공통 척도 (제곱근)</span>
+    <span className="overview-scale-note">지표별 공통 선형 척도</span>
     {([['previous', previousQuarterOf(quarter)], ['current', quarter]] as const).map(([period, value]) =>
       <span key={period}><span className="overview-swatches" aria-hidden="true">
         {indicators.map(metric => <i key={metric.key} className={`overview-${metric.color} ${period}-bar`} />)}
