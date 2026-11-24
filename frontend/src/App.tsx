@@ -23,10 +23,13 @@ const listingMoney = (value: number | null) => value == null ? '미확보' :
   value % 10000 === 0 ? `${number(value / 10000)}만 원` : `${number(value)}원`;
 const NO_STORES: Store[] = [];
 const COMPARISON_PREVIEW_DELAY_MS = 1000;
-const presentationCandidates = {
-  supabase: ['3120052', '3120003', '3110565'], // 성수역, 광화문역, 홍익대
-  demo: ['3120052', '3120053', '3120104'],
-};
+const PRESENTATION_CANDIDATES = [
+  '3120052', // 성수역
+  '3120030', // 중부경찰서(영화인의거리)
+  '3120186', // 가로수길
+  '3120006', // 종각역
+  '3110565', // 홍익대
+];
 
 function parseRoute(): Route {
   const params = new URLSearchParams(location.hash.slice(1));
@@ -172,7 +175,7 @@ export default function App() {
   const isDemo = config.data_mode === 'demo';
   const [analysisYear, analysisQuarter] = config.quarters[0].split('Q');
   const selectPresentationCandidates = () => {
-    const candidates = isDemo ? presentationCandidates.demo : presentationCandidates.supabase;
+    const candidates = isDemo ? config.demo_area_codes : PRESENTATION_CANDIDATES;
     navigate({ view: 'map', section: 'competition', codes: candidates, code: '' });
   };
 
